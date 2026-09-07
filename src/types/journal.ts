@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+export const StudentAttendanceSchema = z.object({
+  status: z.enum(['present', 'absent', 'excused']).default('present'),
+  grade: z.string().optional(),
+  comment: z.string().optional(),
+});
+
+export type StudentAttendance = z.infer<typeof StudentAttendanceSchema>;
+
 export const JournalEntrySchema = z.object({
   id: z.string(),
   date: z.string(), // YYYY-MM-DD
@@ -15,6 +23,7 @@ export const JournalEntrySchema = z.object({
   status: z.enum(['completed', 'rescheduled', 'canceled']).default('completed'),
   completedAt: z.string().default(() => new Date().toISOString()),
   notes: z.string().optional(),
+  attendance: z.record(StudentAttendanceSchema).default({}),
 });
 
 export type JournalEntry = z.infer<typeof JournalEntrySchema>;
