@@ -95,6 +95,7 @@ export class JournalService {
     topic: string;
     topicIndex?: number;
     notes?: string;
+    attendance?: Record<string, import('../types/journal.js').StudentAttendance>;
   }): JournalEntry {
     const cleanGroup = params.group.trim();
     const effectiveDate = params.date || new Date().toISOString().split('T')[0];
@@ -116,6 +117,7 @@ export class JournalService {
       status: 'completed',
       completedAt: new Date().toISOString(),
       notes: params.notes,
+      attendance: params.attendance || {},
     };
 
     // Проверяем, нет ли уже такой записи
