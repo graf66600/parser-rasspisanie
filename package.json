@@ -1,0 +1,28 @@
+{
+  "name": "schedule-parser-bot",
+  "version": "1.0.0",
+  "description": "Telegram-бот для парсинга расписания из Excel и напоминания о парах преподавателю (Трипольский)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test:parser": "tsx src/testParser.ts"
+  },
+  "keywords": ["telegram", "telegraf", "schedule", "excel", "bot"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "node-cron": "^3.0.3",
+    "telegraf": "^4.16.3",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
