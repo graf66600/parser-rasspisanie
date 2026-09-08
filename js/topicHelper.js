@@ -63,6 +63,8 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     text: lesson.text || lesson.topic,
     number: lesson.number || targetIndex + 1,
     lessonObj: lesson,
+    homework: lesson.homework || '',
+    type: lesson.type || 'theory',
   };
 }
 
@@ -123,7 +125,7 @@ export function renderTopicSuggestions(group, onSelect) {
     `;
     chip.addEventListener('click', () => {
       if (typeof onSelect === 'function') {
-        onSelect(lesson.text || lesson.topic);
+        onSelect(lesson.text || lesson.topic, lesson.homework, num, lesson.type);
       }
       container.classList.add('hidden');
     });

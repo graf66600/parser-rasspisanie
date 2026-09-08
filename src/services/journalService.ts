@@ -94,6 +94,8 @@ export class JournalService {
     classroom?: string;
     topic: string;
     topicIndex?: number;
+    courseLessonNumber?: number;
+    type?: 'theory' | 'practice' | 'exam' | 'other';
     notes?: string;
     attendance?: Record<string, import('../types/journal.js').StudentAttendance>;
   }): JournalEntry {
@@ -101,6 +103,19 @@ export class JournalService {
     const effectiveDate = params.date || new Date().toISOString().split('T')[0];
     const id = `${cleanGroup}_${effectiveDate}_${params.lessonNumber}`;
     const dateFormatted = this.formatDateReadable(effectiveDate);
+
+    // Определяем тип занятия (теория/практика/зачет), если не передан
+    let entryType: 'theory' | 'practice' | 'exam' | 'other' = params.type || 'theory';
+    if (!params.type) {
+      const lower = (params.topic || '').toLowerCase();
+      if (lower.includes('зачет') || lower.includes('дифференцированный')) {
+        entryType = 'exam';
+      } else if (lower.includes('практик')) {
+        entryType = 'practice';
+      } else if (lower.includes('лекци') || lower.includes('теория')) {
+        entryType = 'theory';
+      }
+    }
 
     const newEntry: JournalEntry = {
       id,
@@ -114,6 +129,8 @@ export class JournalService {
       classroom: params.classroom || '',
       topic: params.topic,
       topicIndex: params.topicIndex,
+      courseLessonNumber: params.courseLessonNumber,
+      type: entryType,
       status: 'completed',
       completedAt: new Date().toISOString(),
       notes: params.notes,
@@ -128,22 +145,41 @@ export class JournalService {
       this.entries.push(newEntry);
     }
 
+    // Пересчитываем сквозные номера пар по курсу для этой группы
+    this.refreshCourseLessonNumbers(cleanGroup);
+
     this.saveJournal();
     return newEntry;
   }
 
   /**
-   * Получить историю проведенных занятий для конкретной группы
+   * Обновляет сквозные порядковые номера пар (courseLessonNumber = 1, 2, 3...)
+   * для указанной группы в хронологическом порядке
+   */
+  public refreshCourseLessonNumbers(groupName: string): void {
+    const clean = this.normalizeGroup(groupName);
+    const groupEntries = this.entries
+      .filter((e) => this.normalizeGroup(e.group) === clean || clean.includes(this.normalizeGroup(e.group)))
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.lessonNumber - b.lessonNumber;
+      });
+
+    groupEntries.forEach((entry, idx) => {
+      entry.courseLessonNumber = idx + 1;
+    });
+  }
+
+  /**
+   * Получить историю проведенных занятий для конкретной группы со сквозной нумерацией
    */
   public getGroupHistory(groupName: string): JournalEntry[] {
+    this.refreshCourseLessonNumbers(groupName);
     const clean = this.normalizeGroup(groupName);
     return this.entries
       .filter((e) => this.normalizeGroup(e.group) === clean || clean.includes(this.normalizeGroup(e.group)))
       .sort((a, b) => {
-        // Сортировка по дате (по возрастанию) и номеру пары
-        if (a.date !== b.date) {
-          return a.date.localeCompare(b.date);
-        }
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
         return a.lessonNumber - b.lessonNumber;
       });
   }

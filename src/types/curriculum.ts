@@ -6,6 +6,7 @@ export const CurriculumLessonSchema = z.object({
   section: z.string().default(''),
   topic: z.string().default(''),
   text: z.string(),
+  homework: z.string().optional(),
 });
 
 export type CurriculumLesson = z.infer<typeof CurriculumLessonSchema>;

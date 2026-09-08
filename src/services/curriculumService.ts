@@ -169,6 +169,29 @@ export class CurriculumService {
   }
 
   /**
+   * Получить статистику программы по количеству лекций и практик
+   */
+  public getProgramStats(groupName: string): {
+    totalLessons: number;
+    theoryTotal: number;
+    practiceTotal: number;
+    title: string;
+  } | null {
+    const program = this.findProgramForGroup(groupName);
+    if (!program) return null;
+    const theoryTotal = program.lessons.filter(
+      (l) => l.type === 'theory' || l.text.toLowerCase().includes('лекци') || l.text.toLowerCase().includes('теория')
+    ).length;
+    const practiceTotal = program.lessons.length - theoryTotal;
+    return {
+      totalLessons: program.lessons.length,
+      theoryTotal,
+      practiceTotal,
+      title: program.title,
+    };
+  }
+
+  /**
    * Получить список всех программ с темами
    */
   public getAllPrograms(): CurriculumProgram[] {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v7';
+const CACHE_NAME = 'schedule-pwa-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const STATIC_ASSETS = [
   './css/base.css',
   './css/schedule.css',
   './css/journal.css',
+  './css/journalStats.css',
   './css/attendance.css',
   './css/history.css',
   './css/modals.css',
@@ -15,6 +16,8 @@ const STATIC_ASSETS = [
   './js/state.js',
   './js/scheduleView.js',
   './js/journalView.js',
+  './js/journalStats.js',
+  './js/journalAttendance.js',
   './js/topicHelper.js',
   './js/studentsView.js',
   './js/uploadView.js',

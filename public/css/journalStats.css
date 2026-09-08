@@ -1,0 +1,224 @@
+﻿/* ==========================================================================
+   JOURNAL STATS & COURSE PROGRESS STYLES
+   ========================================================================== */
+
+.journal-stats-container {
+  width: 100%;
+}
+
+.stats-card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stats-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.stats-icon-badge {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.stats-title-text-wrap {
+  min-width: 0;
+}
+
+.stats-main-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.25;
+  margin: 0;
+  word-break: break-word;
+}
+
+.stats-sub-title {
+  font-size: 10.5px;
+  color: #94a3b8;
+  margin: 1px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.stats-total-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-chip {
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stat-chip-theory {
+  background: rgba(30, 58, 138, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.stat-chip-practice {
+  background: rgba(6, 78, 59, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.stat-chip-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.stat-chip-theory .stat-chip-label b {
+  color: #93c5fd;
+}
+
+.stat-chip-practice .stat-chip-label b {
+  color: #6ee7b7;
+}
+
+.stat-chip-values {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.stat-chip-done {
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.stat-chip-divider {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.stat-chip-total {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.stat-chip-left {
+  font-size: 10px;
+  color: #94a3b8;
+  word-break: break-word;
+}
+
+.stat-chip-left b {
+  color: #f1f5f9;
+}
+
+.stats-progress-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stats-progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.stats-progress-text {
+  color: #94a3b8;
+}
+
+.stats-progress-text b {
+  color: #f1f5f9;
+}
+
+.stats-progress-pct {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.stats-progress-track {
+  width: 100%;
+  height: 6px;
+  background: #1e293b;
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+.stats-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* КУРСОВОЙ НОМЕР ПАРЫ В ФОРМЕ */
+.course-pair-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* БЕЙДЖИ ТИПА ЗАНЯТИЯ В ИСТОРИИ */
+.history-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.badge-theory {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.badge-practice {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}

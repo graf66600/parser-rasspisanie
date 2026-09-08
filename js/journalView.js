@@ -1,5 +1,5 @@
-// ==========================================================================
-// JOURNAL VIEW & ATTENDANCE LOGIC
+﻿// ==========================================================================
+// JOURNAL VIEW & HISTORY LOGIC
 // ==========================================================================
 import { state } from './state.js';
 import {
@@ -7,93 +7,10 @@ import {
   updateTopicDatalist,
   renderTopicSuggestions,
 } from './topicHelper.js';
+import { renderJournalStats } from './journalStats.js';
+import { updateJournalStudents } from './journalAttendance.js';
 
-export function updateJournalStudents() {
-  const groupSel = document.getElementById('journalGroupSelect');
-  if (!groupSel) return;
-  const group = groupSel.value;
-  const listEl = document.getElementById('journalStudentsList');
-  const countEl = document.getElementById('studentsCountLabel');
-  if (!listEl) return;
-
-  const students = state.studentsByGroup[group] || [];
-  if (countEl) countEl.textContent = students.length;
-
-  if (students.length === 0) {
-    listEl.innerHTML = `
-      <div style="text-align: center; color: #64748b; padding: 16px 12px; font-size: 12px; background: rgba(15,23,42,0.4); border-radius: 12px; border: 1px dashed #334155;">
-        В группе ${group} пока нет студентов.<br>
-        <span style="color: #94a3b8; font-size: 11px;">Перейдите во вкладку «Студенты», чтобы добавить.</span>
-      </div>`;
-    return;
-  }
-
-  listEl.innerHTML = '';
-  students.forEach((student, idx) => {
-    const row = document.createElement('div');
-    row.className = 'student-row';
-    row.setAttribute('data-student', student);
-
-    row.innerHTML = `
-      <div class="student-header">
-        <div class="student-info">
-          <span class="student-num">${idx + 1}</span>
-          <span class="student-name">${student}</span>
-        </div>
-        <span class="student-badge badge-present" data-badge>Был</span>
-      </div>
-
-      <div class="student-controls">
-        <div class="attendance-toggle" role="group">
-          <button type="button" data-val="present" class="status-btn active status-present" title="Присутствовал">
-            <span class="status-icon">✓</span> <span>Был</span>
-          </button>
-          <button type="button" data-val="absent" class="status-btn status-absent" title="Отсутствовал">
-            <span class="status-icon">✕</span> <span>Н</span>
-          </button>
-          <button type="button" data-val="excused" class="status-btn status-excused" title="Уважительная причина">
-            <span class="status-icon">☕</span> <span>У</span>
-          </button>
-        </div>
-
-        <div class="grade-wrapper">
-          <label class="grade-label">Оценка:</label>
-          <select class="grade-select" title="Оценка за занятие">
-            <option value="">—</option>
-            <option value="5">5</option>
-            <option value="4">4</option>
-            <option value="3">3</option>
-            <option value="2">2</option>
-          </select>
-        </div>
-      </div>
-    `;
-
-    const badge = row.querySelector('[data-badge]');
-    const btns = row.querySelectorAll('.status-btn');
-    btns.forEach((b) => {
-      b.addEventListener('click', () => {
-        btns.forEach((other) => other.classList.remove('active'));
-        b.classList.add('active');
-        const val = b.getAttribute('data-val');
-        if (badge) {
-          if (val === 'present') {
-            badge.className = 'student-badge badge-present';
-            badge.textContent = 'Был';
-          } else if (val === 'absent') {
-            badge.className = 'student-badge badge-absent';
-            badge.textContent = '✕ Не был';
-          } else if (val === 'excused') {
-            badge.className = 'student-badge badge-excused';
-            badge.textContent = '☕ Уважит.';
-          }
-        }
-      });
-    });
-
-    listEl.appendChild(row);
-  });
-}
+export { updateJournalStudents };
 
 export function autoFillTopicForGroup(group, lessonNum) {
   if (!group) {
@@ -105,22 +22,40 @@ export function autoFillTopicForGroup(group, lessonNum) {
   const dateInput = document.getElementById('journalDateInput');
   const date = dateInput?.value || new Date().toISOString().split('T')[0];
   const topicInput = document.getElementById('journalTopicInput');
+  const notesInput = document.getElementById('journalNotesInput');
+  const courseBadge = document.getElementById('coursePairBadge');
 
   const rec = getRecommendedLesson(group, lessonNum, date);
   if (topicInput && rec?.text) {
     topicInput.value = rec.text;
   }
+  if (notesInput && rec?.homework) {
+    notesInput.value = rec.homework;
+  }
+  if (courseBadge && rec?.number) {
+    const typeLabel = rec.type === 'theory' ? 'Лекция' : 'Практика';
+    courseBadge.textContent = `Пара №${rec.number} по счёту [${typeLabel}]`;
+  }
 
   updateTopicDatalist(group);
-  renderTopicSuggestions(group, (chosen) => {
-    if (topicInput) topicInput.value = chosen;
+  renderTopicSuggestions(group, (chosenTopic, chosenHw, chosenNum, chosenType) => {
+    if (topicInput) topicInput.value = chosenTopic;
+    if (notesInput && chosenHw) notesInput.value = chosenHw;
+    if (courseBadge && chosenNum) {
+      const typeLbl = chosenType === 'theory' ? 'Лекция' : 'Практика';
+      courseBadge.textContent = `Пара №${chosenNum} по счёту [${typeLbl}]`;
+    }
   });
+
+  renderJournalStats(group);
 }
 
 export function loadJournalHistory() {
   const local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
   state.journalEntries = local;
   renderJournalHistory();
+  const g = document.getElementById('journalGroupSelect')?.value;
+  renderJournalStats(g);
 
   fetch('./api/journal')
     .then((r) => r.json())
@@ -128,6 +63,7 @@ export function loadJournalHistory() {
       if (d.success && d.entries) {
         state.journalEntries = d.entries;
         renderJournalHistory();
+        renderJournalStats(document.getElementById('journalGroupSelect')?.value);
       }
     })
     .catch(() => {});
@@ -142,10 +78,27 @@ export function renderJournalHistory() {
     return;
   }
 
+  const sortedAll = [...state.journalEntries].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return Number(a.lessonNumber) - Number(b.lessonNumber);
+  });
+
+  const groupCounters = {};
+  const entriesWithCourseNum = sortedAll.map((entry) => {
+    const g = entry.group || 'unknown';
+    groupCounters[g] = (groupCounters[g] || 0) + 1;
+    const courseNum = entry.courseLessonNumber || groupCounters[g];
+    return { ...entry, calculatedCourseNum: courseNum };
+  });
+
   container.innerHTML = '';
-  state.journalEntries.slice(-10).reverse().forEach((entry) => {
+  entriesWithCourseNum.slice(-10).reverse().forEach((entry) => {
     const card = document.createElement('div');
     card.className = 'history-card';
+
+    const isTheory = entry.type === 'theory' || (entry.topic && entry.topic.toLowerCase().includes('лекци'));
+    const typeLabel = isTheory ? 'Лекция' : 'Практика';
+    const typeClass = isTheory ? 'badge-theory' : 'badge-practice';
 
     const attendKeys = Object.keys(entry.attendance || {});
     const absents = attendKeys.filter((k) => entry.attendance[k].status === 'absent').length;
@@ -154,8 +107,9 @@ export function renderJournalHistory() {
     card.innerHTML = `
       <div class="history-card-top">
         <div class="history-card-date">
-          <span class="history-badge-num">#${entry.lessonNumber} пара</span>
-          <span class="history-date-text">${entry.dateFormatted || entry.date}</span>
+          <span class="history-badge-num">Пара №${entry.calculatedCourseNum}</span>
+          <span class="history-type-badge ${typeClass}">${typeLabel}</span>
+          <span class="history-date-text">${entry.dateFormatted || entry.date} (${entry.lessonNumber} пара звонков)</span>
         </div>
         <span class="history-group-badge">Гр. ${entry.group}</span>
       </div>
@@ -164,7 +118,7 @@ export function renderJournalHistory() {
       <div class="history-card-footer">
         <span class="history-stat-all">👥 Всего: <b>${attendKeys.length}</b></span>
         <div class="flex items-center gap-2">
-          ${excused > 0 ? `<span class="history-stat-excused">☕ Уваж: <b>${excused}</b></span>` : ''}
+          ${excused > 0 ? `<span class="history-stat-excused">📋 Уваж: <b>${excused}</b></span>` : ''}
           <span class="history-stat-absent ${absents > 0 ? 'text-red' : 'text-green'}">
             ${absents > 0 ? `✕ Не было: <b>${absents}</b>` : `✓ Все были`}
           </span>
@@ -184,6 +138,7 @@ export function setupJournalListeners() {
   groupSel?.addEventListener('change', () => {
     updateJournalStudents();
     autoFillTopicForGroup(groupSel.value, lessonSel?.value);
+    renderJournalStats(groupSel.value);
   });
 
   lessonSel?.addEventListener('change', () => {
@@ -194,7 +149,6 @@ export function setupJournalListeners() {
     autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
   });
 
-  // Клик на поле темы открывает список подсказок КТП
   topicInput?.addEventListener('click', () => {
     if (suggestionsBox) {
       suggestionsBox.classList.toggle('hidden');
@@ -251,6 +205,10 @@ export function setupJournalListeners() {
     const topic = topicInput?.value || 'Практическое занятие';
     const notes = document.getElementById('journalNotesInput')?.value || '';
 
+    const rec = getRecommendedLesson(group, lessonNumber, date);
+    const courseLessonNumber = rec?.number || 1;
+    const entryType = rec?.type || (topic.toLowerCase().includes('лекци') ? 'theory' : 'practice');
+
     const attendance = {};
     document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
       const student = row.getAttribute('data-student');
@@ -267,6 +225,8 @@ export function setupJournalListeners() {
       group,
       subject: 'Информатика',
       lessonNumber,
+      courseLessonNumber,
+      type: entryType,
       topic,
       notes,
       attendance,
@@ -287,5 +247,7 @@ export function setupJournalListeners() {
 
     alert('✅ Занятие успешно сохранено в электронный журнал!');
     renderJournalHistory();
+    renderJournalStats(group);
+    autoFillTopicForGroup(group, lessonNumber);
   });
 }

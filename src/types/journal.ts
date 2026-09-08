@@ -20,6 +20,8 @@ export const JournalEntrySchema = z.object({
   classroom: z.string().default(''),
   topic: z.string(),
   topicIndex: z.number().int().optional(),
+  courseLessonNumber: z.number().int().min(1).optional(),
+  type: z.enum(['theory', 'practice', 'exam', 'other']).default('theory'),
   status: z.enum(['completed', 'rescheduled', 'canceled']).default('completed'),
   completedAt: z.string().default(() => new Date().toISOString()),
   notes: z.string().optional(),

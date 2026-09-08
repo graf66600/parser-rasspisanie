@@ -10,7 +10,7 @@ import { setupUploadListeners } from './js/uploadView.js';
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=7').then((reg) => {
+    navigator.serviceWorker.register('./sw.js?v=8').then((reg) => {
       reg.update();
       window.addEventListener('focus', () => reg.update());
     }).catch(() => {});
