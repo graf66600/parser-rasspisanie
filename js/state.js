@@ -79,48 +79,69 @@ export function populateGroupSelects(onGroupChange) {
   }
 }
 
-export async function loadSchedule(onScheduleLoaded) {
+export function initLocalState() {
   try {
     const cached = localStorage.getItem('pwa_custom_schedule');
     if (cached) {
       const parsed = JSON.parse(cached);
-      let target = parsed;
-      if (Array.isArray(parsed)) {
-        target = parsed.find((s) => s.userId === 1 && s.lessons?.length) || parsed[0];
-      }
-      if (target && target.lessons && target.lessons.length > 0) {
+      const target = Array.isArray(parsed)
+        ? (parsed.find((s) => s.userId === 1 && s.lessons?.length) || parsed[0])
+        : parsed;
+      if (target?.lessons?.length) {
         state.schedule = target;
         state.bells = target.bells || target.settings?.bellsSchedule || state.bells;
-        updateHeaderStatus();
-        if (typeof onScheduleLoaded === 'function') onScheduleLoaded();
       }
     }
+  } catch (e) {}
 
+  try {
+    const cached = localStorage.getItem('pwa_custom_students');
+    if (cached) state.studentsByGroup = JSON.parse(cached);
+  } catch (e) {}
+
+  try {
+    const cached = localStorage.getItem('pwa_custom_curriculum');
+    if (cached) state.curriculumPrograms = JSON.parse(cached);
+  } catch (e) {}
+}
+
+const isStaticHost = typeof window !== 'undefined' && (
+  window.location.hostname.includes('github.io') ||
+  window.location.protocol === 'file:'
+);
+
+async function safeFetchJson(url, timeoutMs = 1500) {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (res?.ok) return await res.json();
+  } catch (e) {}
+  return null;
+}
+
+export async function loadSchedule(onScheduleLoaded) {
+  try {
     let freshData = null;
-    const res = await fetch('./api/schedule').catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data.success && data.lessons) freshData = data;
+    if (!isStaticHost) {
+      const apiData = await safeFetchJson('./api/schedule', 1500);
+      if (apiData?.success && apiData.lessons) freshData = apiData;
     }
 
     if (!freshData) {
-      const staticRes = await fetch('./data/schedule.json').catch(() => null);
-      if (staticRes && staticRes.ok) {
-        freshData = await staticRes.json();
-      } else {
-        const multiRes = await fetch('./data/schedules.json').catch(() => null);
-        if (multiRes && multiRes.ok) {
-          const multi = await multiRes.json();
-          if (Array.isArray(multi)) {
-            freshData = multi.find((s) => s.userId === 1 && s.lessons?.length) || multi[0];
-          } else {
-            freshData = multi;
-          }
+      freshData = await safeFetchJson('./data/schedule.json', 3000);
+      if (!freshData) {
+        const multi = await safeFetchJson('./data/schedules.json', 3000);
+        if (multi) {
+          freshData = Array.isArray(multi)
+            ? (multi.find((s) => s.userId === 1 && s.lessons?.length) || multi[0])
+            : multi;
         }
       }
     }
 
-    if (freshData) {
+    if (freshData?.lessons?.length) {
       state.schedule = freshData;
       state.bells = freshData.bells || freshData.settings?.bellsSchedule || state.bells;
       localStorage.setItem('pwa_custom_schedule', JSON.stringify(freshData));
@@ -135,24 +156,21 @@ export async function loadSchedule(onScheduleLoaded) {
 
 export async function loadStudents(onStudentsLoaded) {
   try {
-    const cached = localStorage.getItem('pwa_custom_students');
-    if (cached) {
-      state.studentsByGroup = JSON.parse(cached);
-      if (typeof onStudentsLoaded === 'function') onStudentsLoaded();
+    let freshStudents = null;
+    if (!isStaticHost) {
+      const apiData = await safeFetchJson('./api/students', 1500);
+      if (apiData?.success && apiData.studentsByGroup) {
+        freshStudents = apiData.studentsByGroup;
+      }
     }
 
-    const res = await fetch('./api/students').catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data.success && data.studentsByGroup) {
-        state.studentsByGroup = data.studentsByGroup;
-        localStorage.setItem('pwa_custom_students', JSON.stringify(data.studentsByGroup));
-      }
-    } else if (Object.keys(state.studentsByGroup).length === 0) {
-      const staticRes = await fetch('./data/students.json');
-      const staticData = await staticRes.json();
-      state.studentsByGroup = staticData;
-      localStorage.setItem('pwa_custom_students', JSON.stringify(staticData));
+    if (!freshStudents && (!state.studentsByGroup || Object.keys(state.studentsByGroup).length === 0)) {
+      freshStudents = await safeFetchJson('./data/students.json', 3000);
+    }
+
+    if (freshStudents) {
+      state.studentsByGroup = freshStudents;
+      localStorage.setItem('pwa_custom_students', JSON.stringify(freshStudents));
     }
   } catch (err) {
     console.warn('Использованы локальные студенты:', err);
@@ -163,26 +181,21 @@ export async function loadStudents(onStudentsLoaded) {
 
 export async function loadCurriculum(onCurriculumLoaded) {
   try {
-    const cached = localStorage.getItem('pwa_custom_curriculum');
-    if (cached) {
-      state.curriculumPrograms = JSON.parse(cached);
-      if (typeof onCurriculumLoaded === 'function') onCurriculumLoaded();
+    let freshCurriculum = null;
+    if (!isStaticHost) {
+      const apiData = await safeFetchJson('./api/curriculum', 1500);
+      if (apiData?.success && apiData.programs) {
+        freshCurriculum = apiData.programs;
+      }
     }
 
-    const res = await fetch('./api/curriculum').catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data.success && data.programs) {
-        state.curriculumPrograms = data.programs;
-        localStorage.setItem('pwa_custom_curriculum', JSON.stringify(data.programs));
-      }
-    } else {
-      const staticRes = await fetch('./data/curriculum.json').catch(() => null);
-      if (staticRes && staticRes.ok) {
-        const staticData = await staticRes.json();
-        state.curriculumPrograms = staticData;
-        localStorage.setItem('pwa_custom_curriculum', JSON.stringify(staticData));
-      }
+    if (!freshCurriculum) {
+      freshCurriculum = await safeFetchJson('./data/curriculum.json', 3000);
+    }
+
+    if (freshCurriculum) {
+      state.curriculumPrograms = freshCurriculum;
+      localStorage.setItem('pwa_custom_curriculum', JSON.stringify(freshCurriculum));
     }
   } catch (err) {
     console.warn('Ошибка загрузки КТП:', err);

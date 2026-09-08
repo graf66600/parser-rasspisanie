@@ -1,7 +1,7 @@
 // ==========================================================================
 // MAIN APPLICATION ENTRY POINT
 // ==========================================================================
-import { state, loadSchedule, loadStudents, loadCurriculum, populateGroupSelects } from './js/state.js';
+import { state, initLocalState, loadSchedule, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus } from './js/state.js';
 import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js';
 import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
@@ -10,18 +10,7 @@ import { setupUploadListeners } from './js/uploadView.js';
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=8').then((reg) => {
-      reg.update();
-      window.addEventListener('focus', () => reg.update());
-    }).catch(() => {});
-  });
-
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
+    navigator.serviceWorker.register('./sw.js?v=9').catch(() => {});
   });
 }
 
@@ -115,6 +104,13 @@ async function initApp() {
   const dateInput = document.getElementById('journalDateInput');
   if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 
+  // 1. Мгновенная инициализация из localStorage (0мс, без блокировки интерфейса)
+  initLocalState();
+  updateHeaderStatus();
+  renderSchedule(onOpenLessonInJournal);
+  populateGroupSelects(updateJournalStudents);
+
+  // 2. Инициализация обработчиков UI
   setupDayFilterButtons(() => renderSchedule(onOpenLessonInJournal));
   setupJournalListeners();
   setupStudentsListeners(updateJournalStudents);
@@ -124,18 +120,21 @@ async function initApp() {
     setTimeout(() => switchTab('tabSchedule'), 1200);
   });
 
-  await loadSchedule(() => renderSchedule(onOpenLessonInJournal));
-  await loadStudents(() => populateGroupSelects(updateJournalStudents));
-  await loadCurriculum(() => {
-    const g = document.getElementById('journalGroupSelect')?.value;
-    const l = document.getElementById('journalLessonNumSelect')?.value;
-    const topicInput = document.getElementById('journalTopicInput');
-    if (topicInput && (!topicInput.value || topicInput.value.trim() === '')) {
-      autoFillTopicForGroup(g, l);
-    }
+  // 3. Фоновое параллельное обновление данных по сети
+  Promise.allSettled([
+    loadSchedule(() => renderSchedule(onOpenLessonInJournal)),
+    loadStudents(() => populateGroupSelects(updateJournalStudents)),
+    loadCurriculum(() => {
+      const g = document.getElementById('journalGroupSelect')?.value;
+      const l = document.getElementById('journalLessonNumSelect')?.value;
+      const topicInput = document.getElementById('journalTopicInput');
+      if (topicInput && (!topicInput.value || topicInput.value.trim() === '')) {
+        autoFillTopicForGroup(g, l);
+      }
+    }),
+  ]).then(() => {
+    populateGroupSelects(updateJournalStudents);
   });
-
-  populateGroupSelects(updateJournalStudents);
 }
 
 initApp();
