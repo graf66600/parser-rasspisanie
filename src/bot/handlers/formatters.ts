@@ -1,4 +1,4 @@
-﻿import { Lesson } from '../../types/schedule.js';
+import { Lesson } from '../../types/schedule.js';
 import { CurriculumService } from '../../services/curriculumService.js';
 import { JournalService } from '../../services/journalService.js';
 
@@ -26,20 +26,40 @@ export function formatDaySchedule(dayName: string, lessons: Lesson[]): string {
 
 export function formatGroupJournal(group: string): string {
   const entries = journal.getGroupHistory(group);
-  if (entries.length === 0) {
-    return `👥 *Группа ${group}*\n\nВ журнале пока нет записей о проведенных занятиях для этой группы.\n` +
-           `Когда вы отмечаете пары через напоминания бота, они автоматически появляются здесь!`;
+  const progStats = curriculum.getProgramStats(group);
+
+  let header = `📊 *Журнал занятий — Группа ${group}*\n`;
+  if (progStats) {
+    const theoryDone = entries.filter((e) => e.type === 'theory' || (e.topic && e.topic.toLowerCase().includes('лекци'))).length;
+    const practiceDone = entries.length - theoryDone;
+    const theoryLeft = Math.max(0, progStats.theoryTotal - theoryDone);
+    const practiceLeft = Math.max(0, progStats.practiceTotal - practiceDone);
+    const percent = Math.round((entries.length / progStats.totalLessons) * 100);
+
+    header += `📚 _${progStats.title}_\n` +
+              `📈 *Прогресс по программе:* ${entries.length} из ${progStats.totalLessons} пар (${percent}%)\n` +
+              `📖 *Лекции:* проведено *${theoryDone}* из ${progStats.theoryTotal} (осталось: *${theoryLeft}*)\n` +
+              `💻 *Практики:* проведено *${practiceDone}* из ${progStats.practiceTotal} (осталось: *${practiceLeft}*)\n\n`;
+  } else {
+    header += `Всего проведено занятий: *${entries.length}*\n\n`;
   }
 
-  let text = `📊 *Журнал занятий — Группа ${group}*\n` +
-             `Всего проведено занятий: *${entries.length}*\n\n`;
+  if (entries.length === 0) {
+    return header +
+           `В журнале пока нет записей о проведенных занятиях для этой группы.\n` +
+           `Когда вы отмечаете пары через напоминания бота или веб-приложение, они автоматически появляются здесь!`;
+  }
 
-  for (const e of entries) {
-    text += `🗓 *${e.dateFormatted}* (${e.date})\n` +
-            `   • *${e.lessonNumber} пара* (${e.startTime}–${e.endTime}) | 🚪 ауд. ${e.classroom || '—'}\n` +
+  let list = '';
+  entries.forEach((e, idx) => {
+    const courseNum = e.courseLessonNumber || (idx + 1);
+    const typeLabel = e.type === 'theory' ? 'Лекция' : 'Практика';
+    list += `🗓 *${e.dateFormatted}* (${e.date})\n` +
+            `   • 🏷 *Пара №${courseNum} по счёту* [${typeLabel}]\n` +
+            `   • ⏰ ${e.lessonNumber} пара звонков (${e.startTime}–${e.endTime}) | 🚪 ауд. ${e.classroom || '—'}\n` +
             `   • 📚 ${e.subject}\n` +
             `   • 📝 _${e.topic || 'Без темы'}_\n\n`;
-  }
+  });
 
-  return text;
+  return header + list;
 }

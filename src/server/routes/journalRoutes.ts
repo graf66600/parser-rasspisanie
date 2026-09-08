@@ -1,4 +1,4 @@
-﻿import http from 'http';
+import http from 'http';
 import { URL } from 'url';
 import { JournalService } from '../../services/journalService.js';
 import { CurriculumService } from '../../services/curriculumService.js';
@@ -34,7 +34,7 @@ export async function handleJournalRoutes(
     const bodyBuffer = await readBody(req);
     const payload = JSON.parse(bodyBuffer.toString('utf8') || '{}');
 
-    const { group, subject, lessonNumber, startTime, endTime, classroom, topic, topicIndex, date, attendance, notes } = payload;
+    const { group, subject, lessonNumber, startTime, endTime, classroom, topic, topicIndex, courseLessonNumber, type, date, attendance, notes } = payload;
 
     if (!group || !lessonNumber) {
       sendError(res, 'Не заполнены обязательные поля группы или номера пары');
@@ -51,6 +51,8 @@ export async function handleJournalRoutes(
       classroom,
       topic: topic || 'Практическое занятие',
       topicIndex: topicIndex ? Number(topicIndex) : undefined,
+      courseLessonNumber: courseLessonNumber ? Number(courseLessonNumber) : undefined,
+      type: type || undefined,
       notes,
       attendance: attendance || {},
     });

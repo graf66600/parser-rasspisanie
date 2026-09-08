@@ -1,4 +1,4 @@
-﻿import { Context, Markup } from 'telegraf';
+import { Context, Markup } from 'telegraf';
 import { StorageService } from '../../services/storageService.js';
 import { CurriculumService } from '../../services/curriculumService.js';
 import { JournalService } from '../../services/journalService.js';
@@ -123,7 +123,8 @@ export async function handleSettingsCallback(ctx: any) {
     await ctx.reply(
       `✅ *Пара отмечена как проведенная!*\n\n` +
       `🗓 *Дата:* ${entry.dateFormatted} (${entry.date})\n` +
-      `👥 *Группа:* ${group} | *${lessonNum} пара* (${entry.startTime}–${entry.endTime})\n` +
+      `👥 *Группа:* ${group} | *Пара №${entry.courseLessonNumber || 1} по счёту* [${entry.type === 'theory' ? 'Лекция' : 'Практика'}]\n` +
+      `⏰ *Время звонков:* ${lessonNum} пара (${entry.startTime}–${entry.endTime})\n` +
       `📚 *Предмет:* ${entry.subject}${entry.classroom ? ` [ауд. ${entry.classroom}]` : ''}\n` +
       `📝 *Тема:* _${entry.topic}_` +
       nextText +
@@ -141,8 +142,10 @@ export async function handleSettingsCallback(ctx: any) {
         let text = `📊 *Последние проведенные занятия (всего: ${all.length})*\n\n`;
         const recent = all.slice(-10);
         for (const e of recent) {
+          const typeLabel = e.type === 'theory' ? 'Лекция' : 'Практика';
           text += `🗓 *${e.dateFormatted}* (${e.date}) — Группа *${e.group}*\n` +
-                  `   • *${e.lessonNumber} пара* (${e.startTime}–${e.endTime}): ${e.subject}${e.classroom ? ` [${e.classroom}]` : ''}\n` +
+                  `   • 🏷 *Пара №${e.courseLessonNumber || '—'} по счёту* [${typeLabel}]\n` +
+                  `   • ⏰ ${e.lessonNumber} пара звонков (${e.startTime}–${e.endTime}): ${e.subject}${e.classroom ? ` [${e.classroom}]` : ''}\n` +
                   `   • 📝 _${e.topic || 'Без темы'}_\n\n`;
         }
         await ctx.reply(text, { parse_mode: 'Markdown' });

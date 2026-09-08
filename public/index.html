@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="./css/base.css">
   <link rel="stylesheet" href="./css/schedule.css">
   <link rel="stylesheet" href="./css/journal.css">
+  <link rel="stylesheet" href="./css/journalStats.css">
   <link rel="stylesheet" href="./css/attendance.css">
   <link rel="stylesheet" href="./css/history.css">
   <link rel="stylesheet" href="./css/modals.css">
@@ -90,6 +91,9 @@
           <span class="status-pill-badge">Информатика</span>
         </div>
 
+        <!-- Виджет-счётчик прогресса КТП (лекции, практики, остаток) -->
+        <div id="journalStatsWidget" class="journal-stats-container"></div>
+
         <!-- Выбор группы, даты и номера пары (адаптивная мобильная компоновка) -->
         <div class="journal-meta-box">
           <div class="journal-field-group">
@@ -101,7 +105,10 @@
           </div>
 
           <div class="journal-field-group">
-            <label class="field-label" for="journalLessonNumSelect">Номер пары и время:</label>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="field-label mb-0" for="journalLessonNumSelect">Время звонка:</label>
+              <span id="coursePairBadge" class="course-pair-pill">Пара №1 по счёту</span>
+            </div>
             <select id="journalLessonNumSelect" class="form-input custom-select">
               <option value="1">1 пара (08:00 – 09:20)</option>
               <option value="2">2 пара (09:30 – 10:50)</option>
@@ -132,10 +139,13 @@
           <div id="topicSuggestions" class="topic-suggestions-list hidden"></div>
         </div>
 
-        <!-- Заметки -->
-        <div>
-          <label class="field-label" for="journalNotesInput">Заметки к уроку (домашнее задание, комментарии):</label>
-          <input type="text" id="journalNotesInput" placeholder="Например: подготовить презентацию к следующей паре..." class="form-input">
+        <!-- Заметки и домашнее задание -->
+        <div class="notes-box">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="field-label mb-0" for="journalNotesInput">Заметки к уроку и домашнее задание:</label>
+            <span class="text-[10px] text-slate-400">Рекомендация по КТП</span>
+          </div>
+          <textarea id="journalNotesInput" rows="2" placeholder="Домашнее задание или комментарии к занятию..." class="form-input custom-textarea"></textarea>
         </div>
 
         <!-- Список студентов с быстрыми кнопками -->
