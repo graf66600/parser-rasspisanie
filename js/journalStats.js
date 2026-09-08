@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // JOURNAL STATS: PROGRESS, LECTURES & PRACTICES COUNTERS
 // ==========================================================================
 import { state } from './state.js';
@@ -19,7 +19,7 @@ export function calculateGroupStats(group) {
 
   if (prog?.lessons) {
     prog.lessons.forEach((l) => {
-      const isTheory = l.type === 'theory' || (l.text && l.text.toLowerCase().includes('лекци'));
+      const isTheory = l.type === 'theory' || (l.text && (l.text.toLowerCase().includes('лекци') || l.text.toLowerCase().includes('теори')));
       if (isTheory) theoryTotal++;
       else practiceTotal++;
     });
@@ -29,7 +29,31 @@ export function calculateGroupStats(group) {
   let practiceConducted = 0;
 
   entries.forEach((e) => {
-    const isTheory = e.type === 'theory' || (e.topic && e.topic.toLowerCase().includes('лекци'));
+    if (e.type === 'theory') {
+      theoryConducted++;
+      return;
+    }
+    if (e.type === 'practice') {
+      practiceConducted++;
+      return;
+    }
+
+    if (prog?.lessons) {
+      const matched = prog.lessons.find((l) => l.text === e.topic || l.topic === e.topic);
+      if (matched) {
+        if (matched.type === 'theory') theoryConducted++;
+        else practiceConducted++;
+        return;
+      }
+      if (e.courseLessonNumber && prog.lessons[e.courseLessonNumber - 1]) {
+        if (prog.lessons[e.courseLessonNumber - 1].type === 'theory') theoryConducted++;
+        else practiceConducted++;
+        return;
+      }
+    }
+
+    const lowerTopic = (e.topic || '').toLowerCase();
+    const isTheory = lowerTopic.includes('лекци') || lowerTopic.includes('теори');
     if (isTheory) theoryConducted++;
     else practiceConducted++;
   });

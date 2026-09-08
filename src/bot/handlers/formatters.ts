@@ -30,7 +30,7 @@ export function formatGroupJournal(group: string): string {
 
   let header = `📊 *Журнал занятий — Группа ${group}*\n`;
   if (progStats) {
-    const theoryDone = entries.filter((e) => e.type === 'theory' || (e.topic && e.topic.toLowerCase().includes('лекци'))).length;
+    const theoryDone = entries.filter((e) => e.type === 'theory' || (e.topic && (e.topic.toLowerCase().includes('лекци') || e.topic.toLowerCase().includes('теори')))).length;
     const practiceDone = entries.length - theoryDone;
     const theoryLeft = Math.max(0, progStats.theoryTotal - theoryDone);
     const practiceLeft = Math.max(0, progStats.practiceTotal - practiceDone);
@@ -53,7 +53,8 @@ export function formatGroupJournal(group: string): string {
   let list = '';
   entries.forEach((e, idx) => {
     const courseNum = e.courseLessonNumber || (idx + 1);
-    const typeLabel = e.type === 'theory' ? 'Лекция' : 'Практика';
+    const isTheory = e.type === 'theory' || (e.topic && (e.topic.toLowerCase().includes('лекци') || e.topic.toLowerCase().includes('теори')));
+    const typeLabel = isTheory ? 'Лекция' : 'Практика';
     list += `🗓 *${e.dateFormatted}* (${e.date})\n` +
             `   • 🏷 *Пара №${courseNum} по счёту* [${typeLabel}]\n` +
             `   • ⏰ ${e.lessonNumber} пара звонков (${e.startTime}–${e.endTime}) | 🚪 ауд. ${e.classroom || '—'}\n` +
