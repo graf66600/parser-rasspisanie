@@ -1,0 +1,322 @@
+﻿/* ==========================================================================
+   STUDENT ATTENDANCE & HISTORY STYLES
+   ========================================================================== */
+
+.students-section { display: flex; flex-direction: column; gap: 8px; }
+
+.students-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+
+.students-count-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #1e293b;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  border: 1px solid #334155;
+}
+
+.quick-action-btn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.quick-present {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.quick-present:hover { background: rgba(16, 185, 129, 0.3); }
+
+.quick-reset {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.quick-reset:hover { background: rgba(239, 68, 68, 0.25); }
+.quick-action-btn:active { transform: scale(0.95); }
+
+/* КАРТОЧКА СТУДЕНТА В ЖУРНАЛЕ */
+.student-row {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid #1f293d;
+  box-sizing: border-box;
+  width: 100%;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.student-row:hover {
+  border-color: #334155;
+  background: rgba(22, 32, 54, 0.85);
+}
+
+.student-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.student-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.student-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.student-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.student-badge.badge-present {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.student-badge.badge-absent {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.student-badge.badge-excused {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.student-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.attendance-toggle {
+  display: flex;
+  background: #090e1a;
+  border: 1px solid #1f293d;
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+  flex: 1;
+  max-width: 210px;
+}
+
+.status-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 4px;
+  min-height: 32px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #94a3b8;
+  transition: all 0.15s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+.status-icon { font-size: 10px; }
+.status-btn:active { transform: scale(0.96); }
+
+.status-btn.active.status-present, .status-btn.bg-emerald-600 {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.status-btn.active.status-absent, .status-btn.bg-rose-600 {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+}
+
+.status-btn.active.status-excused, .status-btn.bg-amber-600 {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.grade-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #090e1a;
+  border: 1px solid #1f293d;
+  border-radius: 9px;
+  padding: 2px 6px 2px 8px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.grade-label {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.grade-select {
+  width: auto;
+  min-width: 44px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 7px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fbbf24;
+  text-align: center;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ИСТОРИЯ ПРОВЕДЕННЫХ ЗАНЯТИЙ */
+.history-card {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid #1f293d;
+  font-size: 12px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.history-card:hover { border-color: #334155; }
+
+.history-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-card-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-badge-num {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #60a5fa;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.history-date-text { font-weight: 600; color: #f1f5f9; }
+
+.history-group-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #818cf8;
+  background: rgba(99, 102, 241, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.history-topic {
+  color: #cbd5e1;
+  margin-top: 6px;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  font-size: 12px;
+}
+
+.history-notes {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+  word-break: break-word;
+}
+
+.history-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(31, 41, 61, 0.6);
+  font-size: 11px;
+}
+
+.history-stat-all { color: #94a3b8; }
+.history-stat-excused { color: #fbbf24; }
+.history-stat-absent.text-red { color: #f87171; font-weight: 600; }
+.history-stat-absent.text-green { color: #34d399; font-weight: 600; }
+
+@media (max-width: 420px) {
+  .student-row { padding: 9px 10px; }
+  .attendance-toggle { max-width: 195px; }
+  .status-btn { padding: 5px 3px; font-size: 10.5px; }
+  .grade-wrapper { padding: 2px 4px 2px 6px; }
+  .grade-select { min-width: 38px; padding: 3px 4px; font-size: 12px; }
+}
