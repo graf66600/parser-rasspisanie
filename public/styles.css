@@ -1,6 +1,7 @@
-﻿@charset "UTF-8";
+@charset "UTF-8";
 @import url('./css/base.css');
 @import url('./css/schedule.css');
 @import url('./css/journal.css');
 @import url('./css/attendance.css');
+@import url('./css/history.css');
 @import url('./css/modals.css');
