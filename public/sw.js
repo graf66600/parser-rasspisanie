@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v8';
+const CACHE_NAME = 'schedule-pwa-v9';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -29,16 +29,8 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return Promise.allSettled(
-        STATIC_ASSETS.map((url) =>
-          fetch(url, { cache: 'reload' })
-            .then((res) => {
-              if (res.ok) return cache.put(url, res);
-            })
-            .catch((err) => console.warn('Cache error for', url, err))
-        )
-      );
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).catch((err) => {
+      console.warn('Частичная ошибка кэширования при установке:', err);
     })
   );
   self.skipWaiting();
@@ -61,20 +53,28 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Игнорируем API-запросы, отправляем напрямую на сервер без кэширования
+  if (event.request.url.includes('/api/')) return;
+
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Network-First for HTML navigation
+  // Для навигации HTML: Stale-While-Revalidate (мгновенная загрузка из кэша)
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request)
-        .then((networkRes) => {
-          if (networkRes && networkRes.status === 200) {
-            const clone = networkRes.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkRes;
-        })
-        .catch(() => caches.match('./index.html').then((cached) => cached || caches.match(event.request)))
+      caches.match('./index.html').then((cached) => {
+        const fetchPromise = fetch(event.request)
+          .then((networkRes) => {
+            if (networkRes && networkRes.status === 200) {
+              const clone = networkRes.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
+            }
+            return networkRes;
+          })
+          .catch(() => cached);
+
+        return cached || fetchPromise;
+      })
     );
     return;
   }

@@ -1,6 +1,17 @@
-﻿// ==========================================================================
+// ==========================================================================
 // EXCEL SCHEDULE UPLOAD VIEW
 // ==========================================================================
+
+export async function ensureXLSX() {
+  if (window.XLSX) return window.XLSX;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js';
+    script.onload = () => resolve(window.XLSX);
+    script.onerror = () => reject(new Error('Не удалось загрузить библиотеку обработки Excel'));
+    document.head.appendChild(script);
+  });
+}
 
 export async function handleFile(file, onUploadSuccess) {
   const sStatus = document.getElementById('uploadStatusBox');
@@ -28,6 +39,13 @@ export async function handleFile(file, onUploadSuccess) {
   } catch (e) {}
 
   // Клиентский парсинг через SheetJS (фоллбек для статики/GitHub Pages)
+  try {
+    await ensureXLSX();
+  } catch (err) {
+    sStatus.textContent = '❌ Не удалось загрузить компонент Excel';
+    return;
+  }
+
   if (window.XLSX) {
     const reader = new FileReader();
     reader.onload = function(evt) {

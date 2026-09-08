@@ -1,7 +1,8 @@
-﻿// ==========================================================================
+// ==========================================================================
 // STUDENTS MANAGEMENT VIEW
 // ==========================================================================
 import { state } from './state.js';
+import { ensureXLSX } from './uploadView.js';
 
 export function renderManageStudents(onStudentsChanged) {
   const groupSel = document.getElementById('manageGroupSelect');
@@ -85,6 +86,15 @@ export function setupStudentsListeners(onStudentsChanged) {
     const file = e.target.files?.[0];
     const group = document.getElementById('manageGroupSelect')?.value;
     if (!file || !group) return;
+
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      try {
+        await ensureXLSX();
+      } catch (e) {
+        alert('Не удалось загрузить библиотеку для чтения Excel');
+        return;
+      }
+    }
 
     const reader = new FileReader();
     reader.onload = function(evt) {
