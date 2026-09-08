@@ -2,6 +2,11 @@
 // JOURNAL VIEW & ATTENDANCE LOGIC
 // ==========================================================================
 import { state } from './state.js';
+import {
+  getRecommendedLesson,
+  updateTopicDatalist,
+  renderTopicSuggestions,
+} from './topicHelper.js';
 
 export function updateJournalStudents() {
   const groupSel = document.getElementById('journalGroupSelect');
@@ -97,33 +102,19 @@ export function autoFillTopicForGroup(group, lessonNum) {
   }
   if (!group) return;
 
-  const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
-  let found = null;
-  for (const prog of state.curriculumPrograms) {
-    for (const g of prog.groups || []) {
-      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
-      if (gClean === clean || clean.includes(gClean) || gClean.includes(clean)) {
-        found = prog;
-        break;
-      }
-    }
-    if (found) break;
+  const dateInput = document.getElementById('journalDateInput');
+  const date = dateInput?.value || new Date().toISOString().split('T')[0];
+  const topicInput = document.getElementById('journalTopicInput');
+
+  const rec = getRecommendedLesson(group, lessonNum, date);
+  if (topicInput && rec?.text) {
+    topicInput.value = rec.text;
   }
 
-  if (found && found.lessons && found.lessons.length > 0) {
-    const input = document.getElementById('journalTopicInput');
-    if (!input) return;
-
-    let targetTopic = found.lessons[0].text;
-    if (lessonNum !== undefined && lessonNum !== null) {
-      const num = Number(lessonNum);
-      const matchLesson = found.lessons.find((l) => l.number === num);
-      if (matchLesson) targetTopic = matchLesson.text;
-      else if (found.lessons[num - 1]) targetTopic = found.lessons[num - 1].text;
-    }
-
-    input.value = targetTopic;
-  }
+  updateTopicDatalist(group);
+  renderTopicSuggestions(group, (chosen) => {
+    if (topicInput) topicInput.value = chosen;
+  });
 }
 
 export function loadJournalHistory() {
@@ -188,6 +179,7 @@ export function setupJournalListeners() {
   const groupSel = document.getElementById('journalGroupSelect');
   const lessonSel = document.getElementById('journalLessonNumSelect');
   const topicInput = document.getElementById('journalTopicInput');
+  const suggestionsBox = document.getElementById('topicSuggestions');
 
   groupSel?.addEventListener('change', () => {
     updateJournalStudents();
@@ -198,22 +190,23 @@ export function setupJournalListeners() {
     autoFillTopicForGroup(groupSel?.value, lessonSel.value);
   });
 
-  // Автозаполнение темы при клике или фокусе, если поле пустое
-  topicInput?.addEventListener('focus', () => {
-    if (!topicInput.value || topicInput.value.trim() === '') {
-      autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
-    }
+  document.getElementById('journalDateInput')?.addEventListener('change', () => {
+    autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
   });
 
+  // Клик на поле темы открывает список подсказок КТП
   topicInput?.addEventListener('click', () => {
-    if (!topicInput.value || topicInput.value.trim() === '') {
-      autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
+    if (suggestionsBox) {
+      suggestionsBox.classList.toggle('hidden');
     }
   });
 
   document.getElementById('todayDateBtn')?.addEventListener('click', () => {
     const dateInput = document.getElementById('journalDateInput');
-    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    if (dateInput) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+      autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
+    }
   });
 
   document.getElementById('markAllPresentBtn')?.addEventListener('click', () => {
@@ -246,6 +239,9 @@ export function setupJournalListeners() {
 
   document.getElementById('autoFillTopicBtn')?.addEventListener('click', () => {
     autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
+    if (suggestionsBox) {
+      suggestionsBox.classList.remove('hidden');
+    }
   });
 
   document.getElementById('saveJournalBtn')?.addEventListener('click', async () => {
