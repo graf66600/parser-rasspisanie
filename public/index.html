@@ -13,7 +13,12 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./icon.svg">
   <link rel="stylesheet" href="./styles.css">
-  <!-- Tailwind CSS & Telegram WebApp SDK & SheetJS -->
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/schedule.css">
+  <link rel="stylesheet" href="./css/journal.css">
+  <link rel="stylesheet" href="./css/attendance.css">
+  <link rel="stylesheet" href="./css/history.css">
+  <link rel="stylesheet" href="./css/modals.css">
   <script defer src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -50,7 +55,6 @@
 
     <!-- ВКЛАДКА 1: РАСПИСАНИЕ -->
     <section id="tabSchedule" class="space-y-4">
-      <!-- Переключатель дней -->
       <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
         <button data-day="today" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white whitespace-nowrap shadow-sm transition">Сегодня</button>
         <button data-day="tomorrow" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Завтра</button>
@@ -60,27 +64,19 @@
         <button data-day="4" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Чт</button>
         <button data-day="5" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Пт</button>
         <button data-day="6" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Сб</button>
-        <button data-day="all" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Вся неделя</button>
       </div>
 
-      <!-- Информационный баннер дня -->
-      <div id="dayInfoBanner" class="bg-gradient-to-r from-slate-900 to-slate-800/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <h2 id="currentDayTitle" class="text-base font-bold text-white">Сегодня</h2>
-          <p id="currentDaySubtitle" class="text-xs text-slate-400 mt-0.5">Загрузка пар...</p>
-        </div>
-        <span id="dayBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Пары</span>
+      <div class="flex items-center justify-between px-1">
+        <h2 id="scheduleDayTitle" class="text-sm font-bold text-slate-200 uppercase tracking-wider">Сегодня</h2>
+        <span id="scheduleTotalLessons" class="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">0 пар</span>
       </div>
 
-      <!-- Список занятий -->
-      <div id="lessonsList" class="space-y-2.5">
-        <div class="bg-slate-900/50 border border-slate-800/60 rounded-2xl p-8 text-center text-slate-500 text-xs">
-          Загрузка пар...
-        </div>
+      <div id="scheduleLessonsList" class="space-y-3">
+        <!-- Карточки пар через JS -->
       </div>
     </section>
 
-    <!-- ВКЛАДКА 2: ЭЛЕКТРОННЫЙ ЖУРНАЛ -->
+    <!-- ВКЛАДКА 2: ЖУРНАЛ И ПОСЕЩАЕМОСТЬ -->
     <section id="tabJournal" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
         <div class="journal-card-header">
@@ -130,9 +126,7 @@
         <div class="topic-box">
           <div class="topic-header">
             <label class="field-label mb-0" for="journalTopicInput">Тема занятия (по программе КТП):</label>
-            <button type="button" id="autoFillTopicBtn" class="autofill-btn">
-              ⚡ Автоподстановка темы
-            </button>
+            <button type="button" id="autoFillTopicBtn" class="autofill-btn">⚡ Автоподстановка темы</button>
           </div>
           <textarea id="journalTopicInput" rows="2" placeholder="Введите или выберите тему занятия..." class="form-input custom-textarea"></textarea>
         </div>
@@ -151,12 +145,8 @@
               <span id="studentsCountLabel" class="students-count-badge">0</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <button type="button" id="markAllPresentBtn" class="quick-action-btn quick-present" title="Отметить всех присутствующими">
-                ✓ Все были
-              </button>
-              <button type="button" id="resetAttendanceBtn" class="quick-action-btn quick-reset" title="Сбросить посещаемость">
-                ✕ Сброс
-              </button>
+              <button type="button" id="markAllPresentBtn" class="quick-action-btn quick-present" title="Отметить всех присутствующими">✓ Все были</button>
+              <button type="button" id="resetAttendanceBtn" class="quick-action-btn quick-reset" title="Сбросить посещаемость">✕ Сброс</button>
             </div>
           </div>
 
@@ -165,9 +155,7 @@
           </div>
         </div>
 
-        <button id="saveJournalBtn" class="save-journal-btn">
-          💾 Сохранить занятие в журнал
-        </button>
+        <button id="saveJournalBtn" class="save-journal-btn">💾 Сохранить занятие в журнал</button>
       </div>
 
       <!-- История проведенных занятий -->
@@ -193,9 +181,7 @@
         <!-- Добавление студента вручную -->
         <div class="flex gap-2">
           <input type="text" id="newStudentNameInput" placeholder="ФИО студента (Иванов И.И.)..." class="form-input flex-1">
-          <button id="addStudentBtn" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition">
-            + Добавить
-          </button>
+          <button id="addStudentBtn" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition">+ Добавить</button>
         </div>
 
         <!-- Загрузка списком через текст -->
@@ -226,12 +212,9 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
         <div>
           <h2 class="text-base font-bold text-white">📥 Загрузка файла расписания</h2>
-          <p class="text-xs text-slate-400 mt-1">
-            Загрузите сюда свежий файл расписания (<code class="text-blue-400">.xlsx</code> или <code class="text-blue-400">.xls</code>) от учебной части. Бот автоматически найдет все пары преподавателя.
-          </p>
+          <p class="text-xs text-slate-400 mt-1">Загрузите сюда свежий файл расписания (<code class="text-blue-400">.xlsx</code> или <code class="text-blue-400">.xls</code>) от учебной части.</p>
         </div>
 
-        <!-- Drag & Drop зона -->
         <div id="scheduleDropZone" class="dropzone-box">
           <input type="file" id="scheduleFileInput" accept=".xlsx,.xls" class="hidden">
           <div class="w-12 h-12 mx-auto rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-2">
@@ -243,7 +226,6 @@
           <p class="text-xs text-slate-400 mt-0.5">или перетащите Excel-файл сюда</p>
         </div>
 
-        <!-- Статус после загрузки -->
         <div id="uploadStatusBox" class="hidden p-3.5 rounded-xl border text-xs">
           <!-- Через JS -->
         </div>
@@ -262,7 +244,6 @@
         </div>
       </div>
     </section>
-
   </main>
 
   <!-- НИЖНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ -->
@@ -272,22 +253,18 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         <span>Пары</span>
       </button>
-
       <button data-tab="tabJournal" class="tab-nav-btn text-slate-400">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         <span>Журнал</span>
       </button>
-
       <button data-tab="tabStudents" class="tab-nav-btn text-slate-400">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         <span>Студенты</span>
       </button>
-
       <button data-tab="tabUpload" class="tab-nav-btn text-slate-400">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
         <span>Excel</span>
       </button>
-
       <button data-tab="tabBells" class="tab-nav-btn text-slate-400">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
         <span>Звонки</span>
