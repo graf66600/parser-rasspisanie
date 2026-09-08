@@ -90,3 +90,26 @@
 .history-stat-excused { color: #fbbf24; }
 .history-stat-absent.text-red { color: #f87171; font-weight: 600; }
 .history-stat-absent.text-green { color: #34d399; font-weight: 600; }
+
+.history-del-btn {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 6px;
+  opacity: 0.6;
+  transition: opacity 0.15s, background-color 0.15s, transform 0.15s;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.history-del-btn:hover {
+  opacity: 1;
+  background-color: rgba(239, 68, 68, 0.15);
+  transform: scale(1.1);
+}
+.history-del-btn:active {
+  transform: scale(0.95);
+}

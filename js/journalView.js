@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // JOURNAL VIEW & HISTORY LOGIC
 // ==========================================================================
 import { state } from './state.js';
@@ -50,9 +50,32 @@ export function autoFillTopicForGroup(group, lessonNum) {
   renderJournalStats(group);
 }
 
+export function deleteJournalEntry(id) {
+  if (!confirm('Удалить эту запись занятия из журнала?')) return;
+
+  state.journalEntries = (state.journalEntries || []).filter((e) => e.id !== id);
+  localStorage.setItem('pwa_journal', JSON.stringify(state.journalEntries));
+
+  fetch(`./api/journal/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+
+  renderJournalHistory();
+  const g = document.getElementById('journalGroupSelect')?.value;
+  const l = document.getElementById('journalLessonNumSelect')?.value;
+  renderJournalStats(g);
+  autoFillTopicForGroup(g, l);
+}
+
 export function loadJournalHistory() {
   const local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
-  state.journalEntries = local;
+  const cleaned = local.filter((e) => {
+    if (e.notes === 'Тестовая отметка проведения занятия') return false;
+    if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
+    return true;
+  });
+  if (cleaned.length !== local.length) {
+    localStorage.setItem('pwa_journal', JSON.stringify(cleaned));
+  }
+  state.journalEntries = cleaned;
   renderJournalHistory();
   const g = document.getElementById('journalGroupSelect')?.value;
   renderJournalStats(g);
@@ -61,7 +84,11 @@ export function loadJournalHistory() {
     .then((r) => r.json())
     .then((d) => {
       if (d.success && d.entries) {
-        state.journalEntries = d.entries;
+        state.journalEntries = d.entries.filter((e) => {
+          if (e.notes === 'Тестовая отметка проведения занятия') return false;
+          if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
+          return true;
+        });
         renderJournalHistory();
         renderJournalStats(document.getElementById('journalGroupSelect')?.value);
       }
@@ -96,7 +123,7 @@ export function renderJournalHistory() {
     const card = document.createElement('div');
     card.className = 'history-card';
 
-    const isTheory = entry.type === 'theory' || (entry.topic && entry.topic.toLowerCase().includes('лекци'));
+    const isTheory = entry.type === 'theory' || (entry.topic && (entry.topic.toLowerCase().includes('лекци') || entry.topic.toLowerCase().includes('теори')));
     const typeLabel = isTheory ? 'Лекция' : 'Практика';
     const typeClass = isTheory ? 'badge-theory' : 'badge-practice';
 
@@ -111,7 +138,10 @@ export function renderJournalHistory() {
           <span class="history-type-badge ${typeClass}">${typeLabel}</span>
           <span class="history-date-text">${entry.dateFormatted || entry.date} (${entry.lessonNumber} пара звонков)</span>
         </div>
-        <span class="history-group-badge">Гр. ${entry.group}</span>
+        <div class="flex items-center gap-1.5">
+          <span class="history-group-badge">Гр. ${entry.group}</span>
+          <button type="button" class="history-del-btn" data-id="${entry.id}" title="Удалить запись">🗑️</button>
+        </div>
       </div>
       <div class="history-topic">${entry.topic || 'Без темы'}</div>
       ${entry.notes ? `<div class="history-notes">📝 ${entry.notes}</div>` : ''}
@@ -125,6 +155,12 @@ export function renderJournalHistory() {
         </div>
       </div>
     `;
+
+    card.querySelector('.history-del-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteJournalEntry(entry.id);
+    });
+
     container.appendChild(card);
   });
 }
@@ -207,7 +243,7 @@ export function setupJournalListeners() {
 
     const rec = getRecommendedLesson(group, lessonNumber, date);
     const courseLessonNumber = rec?.number || 1;
-    const entryType = rec?.type || (topic.toLowerCase().includes('лекци') ? 'theory' : 'practice');
+    const entryType = rec?.type || (topic.toLowerCase().includes('лекци') || topic.toLowerCase().includes('теори') ? 'theory' : 'practice');
 
     const attendance = {};
     document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {

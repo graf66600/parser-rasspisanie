@@ -234,6 +234,9 @@ if (!byDate.find((e) => e.id === newEntry.id)) {
   process.exit(1);
 }
 
+// Очистка тестовой записи, чтобы не загрязнять данные журнала
+journal.deleteEntry(newEntry.id);
+
 console.log('✅ ЭЛЕКТРОННЫЙ ЖУРНАЛ РАБОТАЕТ ИСПРАВНО!');
 
 console.log('\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!\n');

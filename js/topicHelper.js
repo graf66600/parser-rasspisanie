@@ -40,7 +40,17 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     (e) => e.group === group && e.date === targetDate && Number(e.lessonNumber) === bellNum
   );
   if (existing && existing.topic) {
-    return { text: existing.topic, number: bellNum };
+    let existingType = existing.type;
+    if (!existingType) {
+      const lower = existing.topic.toLowerCase();
+      existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
+    }
+    return {
+      text: existing.topic,
+      number: existing.courseLessonNumber || bellNum,
+      homework: existing.notes || '',
+      type: existingType,
+    };
   }
 
   // 2. Рассчитываем порядковый номер пары внутри текущего дня
@@ -61,9 +71,13 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   }
 
   // 3. Считаем, сколько занятий у этой группы уже было проведено ранее
-  const pastEntries = state.journalEntries.filter(
-    (e) => e.group === group && e.date < targetDate
-  );
+  const pastEntries = state.journalEntries.filter((e) => {
+    if (!e.group || !group) return false;
+    const cleanG = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+    const cleanEG = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+    const match = cleanEG === cleanG || cleanEG.includes(cleanG) || cleanG.includes(cleanEG);
+    return match && e.date < targetDate;
+  });
   const distinctPast = new Set(pastEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
 
   const targetIndex = distinctPast + orderInDay;
@@ -128,7 +142,7 @@ export function renderTopicSuggestions(group, onSelect) {
     chip.type = 'button';
     chip.className = 'topic-chip-btn';
     const num = lesson.number || idx + 1;
-    const isTheory = lesson.type === 'theory' || (lesson.text && lesson.text.includes('Лекция'));
+    const isTheory = lesson.type === 'theory' || (lesson.text && (lesson.text.toLowerCase().includes('лекци') || lesson.text.toLowerCase().includes('теори')));
     chip.innerHTML = `
       <span class="topic-chip-num ${isTheory ? 'chip-theory' : 'chip-practice'}">#${num}</span>
       <span class="topic-chip-text">${lesson.text || lesson.topic}</span>

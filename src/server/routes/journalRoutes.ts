@@ -61,7 +61,23 @@ export async function handleJournalRoutes(
     return true;
   }
 
-  // 3. КТП / Рабочие программы
+  // 3. Журнал: удаление записи
+  if (pathname.startsWith('/api/journal/') && req.method === 'DELETE') {
+    const id = decodeURIComponent(pathname.replace('/api/journal/', ''));
+    const success = journal.deleteEntry(id);
+    sendJson(res, { success, message: success ? 'Запись успешно удалена' : 'Запись не найдена' });
+    return true;
+  }
+  if (pathname === '/api/journal/delete' && req.method === 'POST') {
+    const bodyBuffer = await readBody(req);
+    const payload = JSON.parse(bodyBuffer.toString('utf8') || '{}');
+    const { id } = payload;
+    const success = id ? journal.deleteEntry(id) : false;
+    sendJson(res, { success, message: success ? 'Запись успешно удалена' : 'Запись не найдена' });
+    return true;
+  }
+
+  // 4. КТП / Рабочие программы
   if (pathname === '/api/curriculum' && req.method === 'GET') {
     const group = parsedUrl.searchParams.get('group');
     if (group) {
