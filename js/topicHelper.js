@@ -6,10 +6,20 @@ import { state } from './state.js';
 export function findProgramForGroup(group) {
   if (!group || !state.curriculumPrograms) return null;
   const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+
+  // 1. Точное совпадение (например, '21фм' должно найти именно '21фм', а не '21ф')
   for (const prog of state.curriculumPrograms) {
     for (const g of prog.groups || []) {
       const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
-      if (gClean === clean || clean.includes(gClean) || gClean.includes(clean)) {
+      if (gClean === clean) return prog;
+    }
+  }
+
+  // 2. Нестрогое совпадение (например, '11м/с' -> '11мс')
+  for (const prog of state.curriculumPrograms) {
+    for (const g of prog.groups || []) {
+      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+      if (clean.includes(gClean) || gClean.includes(clean)) {
         return prog;
       }
     }
