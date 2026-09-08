@@ -1,0 +1,210 @@
+﻿/* ==========================================================================
+   SCHEDULE TAB STYLES
+   ========================================================================== */
+
+/* ПЕРЕКЛЮЧАТЕЛЬ ДНЕЙ */
+.overflow-x-auto {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+.overflow-x-auto::-webkit-scrollbar { display: none; }
+
+.day-btn {
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #1f2937;
+  color: #d1d5db;
+  border: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.day-btn.bg-blue-600 {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+/* КАРТОЧКА БАННЕРА ДНЯ */
+#dayInfoBanner {
+  background: linear-gradient(135deg, #111827, #1e293b);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#dayInfoBanner h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+#dayInfoBanner p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+#dayBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* КАРТОЧКА ПАРЫ (РАСПИСАНИЕ) */
+.lesson-card {
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
+}
+
+.lesson-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.lesson-main-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lesson-num-badge {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.lesson-title-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.lesson-time-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lesson-day-prefix {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #1e293b;
+  color: #60a5fa;
+}
+
+.lesson-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.lesson-subject {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 3px;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.lesson-group-badge {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lesson-card-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #1f293d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lesson-classroom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  min-width: 0;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* КНОПКА ОТКРЫТЬ В ЖУРНАЛЕ */
+.open-journal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.open-journal-btn:hover {
+  background: rgba(37, 99, 235, 0.32);
+  color: #93c5fd;
+  border-color: rgba(37, 99, 235, 0.5);
+}
+
+.open-journal-btn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 420px) {
+  .lesson-subject {
+    font-size: 13px;
+  }
+}

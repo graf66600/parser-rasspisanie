@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Расписание | Трипольский</title>
+  <title>Р Р°СЃРїРёСЃР°РЅРёРµ | РўСЂРёРїРѕР»СЊСЃРєРёР№</title>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Расписание">
+  <meta name="apple-mobile-web-app-title" content="Р Р°СЃРїРёСЃР°РЅРёРµ">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./icon.svg">
   <link rel="stylesheet" href="./styles.css">
@@ -16,403 +16,11 @@
   <script defer src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <style>
-/* СОВРЕМЕННАЯ АВТОНОМНАЯ ТЕМА ДЛЯ PWA (БЕЗ ВНЕШНИХ CDN) */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-:root {
-  --bg-main: #090d16;
-  --bg-card: #111827;
-  --bg-card-hover: #1f293d;
-  --border: #1f293d;
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-}
-
-body {
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.5;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Ограничитель ширины */
-.max-w-2xl, .header-inner, main {
-  max-width: 480px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* ШАПКА */
-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: rgba(17, 24, 39, 0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
-}
-
-header .max-w-2xl {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-header .flex {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-header .w-10 {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-header .w-10 svg {
-  width: 22px;
-  height: 22px;
-  color: #ffffff;
-}
-
-header h1 {
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-header h1 span {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  background: rgba(37, 99, 235, 0.2);
-  color: #60a5fa;
-  border: 1px solid rgba(37, 99, 235, 0.3);
-}
-
-#headerCurrentStatus {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-#installPwaBtn {
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-#installPwaBtn svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* ОСНОВНОЙ БЛОК */
-main {
-  flex: 1;
-  padding: 14px;
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 16px));
-}
-
-.space-y-4 > * + * { margin-top: 14px; }
-.space-y-3 > * + * { margin-top: 12px; }
-.space-y-2 > * + * { margin-top: 8px; }
-.space-y-1\.5 > * + * { margin-top: 6px; }
-
-/* ПЕРЕКЛЮЧАТЕЛЬ ДНЕЙ */
-.overflow-x-auto {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  scrollbar-width: none;
-}
-.overflow-x-auto::-webkit-scrollbar { display: none; }
-
-.day-btn {
-  padding: 8px 14px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #1f2937;
-  color: #d1d5db;
-  border: none;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.day-btn.bg-blue-600 {
-  background: #2563eb !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-}
-
-/* КАРТОЧКА БАННЕРА ДНЯ */
-#dayInfoBanner {
-  background: linear-gradient(135deg, #111827, #1e293b);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#dayInfoBanner h2 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-#dayInfoBanner p {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-#dayBadge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-/* КАРТОЧКА ПАРЫ */
-#lessonsList .bg-slate-900 {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.w-9 {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(37, 99, 235, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(37, 99, 235, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-/* КНОПКА ОТКРЫТЬ В ЖУРНАЛЕ */
-.open-journal-btn {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  background: rgba(37, 99, 235, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(37, 99, 235, 0.3);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.open-journal-btn:hover {
-  background: rgba(37, 99, 235, 0.3);
-}
-
-/* ЖУРНАЛ И ФОРМЫ */
-.bg-slate-900 {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.grid {
-  display: grid;
-}
-
-.grid-cols-3 {
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-input[type="text"], input[type="date"], select, textarea {
-  width: 100%;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  padding: 8px 10px;
-  color: #ffffff;
-  font-size: 12px;
-  outline: none;
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: var(--primary);
-}
-
-/* СТУДЕНТЫ В ЖУРНАЛЕ */
-.student-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid var(--border);
-  gap: 8px;
-}
-
-.status-btn {
-  padding: 5px 9px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-}
-
-.status-btn.bg-emerald-600 {
-  background: #10b981 !important;
-  color: #ffffff !important;
-}
-
-.status-btn.bg-rose-600 {
-  background: #ef4444 !important;
-  color: #ffffff !important;
-}
-
-.status-btn.bg-amber-600 {
-  background: #f59e0b !important;
-  color: #ffffff !important;
-}
-
-.attendance-toggle {
-  display: flex;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.grade-select {
-  width: 48px;
-  padding: 4px 6px;
-  font-weight: 700;
-  color: #fbbf24;
-}
-
-#saveJournalBtn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
-  transition: all 0.2s;
-}
-
-#saveJournalBtn:hover {
-  opacity: 0.95;
-}
-
-/* НИЖНИЙ ТАБ БАР (NAV BAR) */
-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background: rgba(15, 23, 42, 0.96);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  padding: 6px 12px;
-  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-}
-
-nav .grid {
-  grid-template-columns: repeat(5, 1fr);
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.tab-nav-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 4px 0;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-
-.tab-nav-btn svg {
-  width: 22px;
-  height: 22px;
-}
-
-.tab-nav-btn.text-blue-500 {
-  color: #3b82f6 !important;
-}
-
-/* Утилиты */
-.hidden { display: none !important; }
-.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-
-</style>
+</head>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
 
-  <!-- ВЕРХНЯЯ ШАПКА -->
+  <!-- Р’Р•Р РҐРќРЇРЇ РЁРђРџРљРђ -->
   <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -423,187 +31,210 @@ nav .grid {
         </div>
         <div>
           <h1 class="text-base font-bold leading-tight text-white flex items-center gap-1.5">
-            Трипольский
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Информатика</span>
+            РўСЂРёРїРѕР»СЊСЃРєРёР№
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">РРЅС„РѕСЂРјР°С‚РёРєР°</span>
           </h1>
-          <p id="headerCurrentStatus" class="text-xs text-slate-400">Загрузка расписания...</p>
+          <p id="headerCurrentStatus" class="text-xs text-slate-400">Р—Р°РіСЂСѓР·РєР° СЂР°СЃРїРёСЃР°РЅРёСЏ...</p>
         </div>
       </div>
       <button id="installPwaBtn" class="hidden text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>Установить</span>
+        <span>РЈСЃС‚Р°РЅРѕРІРёС‚СЊ</span>
       </button>
     </div>
   </header>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <!-- РћРЎРќРћР’РќРћР™ РљРћРќРўР•РќРў -->
   <main class="flex-1 max-w-2xl w-full mx-auto p-4 safe-bottom">
 
-    <!-- ВКЛАДКА 1: РАСПИСАНИЕ -->
+    <!-- Р’РљР›РђР”РљРђ 1: Р РђРЎРџРРЎРђРќРР• -->
     <section id="tabSchedule" class="space-y-4">
-      <!-- Переключатель дней недели -->
+      <!-- РџРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ РґРЅРµР№ РЅРµРґРµР»Рё -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
-        <button data-day="today" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-600/30 whitespace-nowrap transition">Сегодня</button>
-        <button data-day="tomorrow" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Завтра</button>
-        <button data-day="1" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Пн</button>
-        <button data-day="2" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Вт</button>
-        <button data-day="3" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Ср</button>
-        <button data-day="4" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Чт</button>
-        <button data-day="5" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Пт</button>
-        <button data-day="6" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Сб</button>
-        <button data-day="all" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Вся неделя</button>
+        <button data-day="today" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-600/30 whitespace-nowrap transition">РЎРµРіРѕРґРЅСЏ</button>
+        <button data-day="tomorrow" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р—Р°РІС‚СЂР°</button>
+        <button data-day="1" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РџРЅ</button>
+        <button data-day="2" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р’С‚</button>
+        <button data-day="3" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РЎСЂ</button>
+        <button data-day="4" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р§С‚</button>
+        <button data-day="5" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РџС‚</button>
+        <button data-day="6" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РЎР±</button>
+        <button data-day="all" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р’СЃСЏ РЅРµРґРµР»СЏ</button>
       </div>
 
-      <!-- Карточка статуса дня -->
+      <!-- РљР°СЂС‚РѕС‡РєР° СЃС‚Р°С‚СѓСЃР° РґРЅСЏ -->
       <div id="dayInfoBanner" class="bg-gradient-to-r from-slate-900 to-slate-800/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
         <div>
-          <h2 id="currentDayTitle" class="text-base font-bold text-white">Понедельник</h2>
-          <p id="currentDaySubtitle" class="text-xs text-slate-400">Найдено 0 пар</p>
+          <h2 id="currentDayTitle" class="text-base font-bold text-white">РџРѕРЅРµРґРµР»СЊРЅРёРє</h2>
+          <p id="currentDaySubtitle" class="text-xs text-slate-400">РќР°Р№РґРµРЅРѕ 0 РїР°СЂ</p>
         </div>
         <div id="dayBadge" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-          Актуально
+          РђРєС‚СѓР°Р»СЊРЅРѕ
         </div>
       </div>
 
-      <!-- Список карточек пар -->
+      <!-- РЎРїРёСЃРѕРє РєР°СЂС‚РѕС‡РµРє РїР°СЂ -->
       <div id="lessonsList" class="space-y-3">
-        <!-- Генерируется через JS -->
+        <!-- Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ С‡РµСЂРµР· JS -->
       </div>
     </section>
 
-    <!-- ВКЛАДКА 2: ЭЛЕКТРОННЫЙ ЖУРНАЛ -->
+    <!-- Р’РљР›РђР”РљРђ 2: Р­Р›Р•РљРўР РћРќРќР«Р™ Р–РЈР РќРђР› -->
     <section id="tabJournal" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
-        <h2 class="text-base font-bold text-white flex items-center justify-between">
-          <span>📖 Журнал пары</span>
-          <span class="text-xs font-normal text-slate-400">Отметка посещаемости</span>
-        </h2>
-
-        <!-- Выбор группы, даты и номера пары -->
-        <div class="grid grid-cols-3 gap-2">
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Группа</label>
-            <select id="journalGroupSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-              <option value="51ф">51ф</option>
-              <option value="31фм">31фм</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Пара №</label>
-            <select id="journalLessonNumSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-              <option value="1">1 пара (08:00)</option>
-              <option value="2">2 пара (09:30)</option>
-              <option value="3" selected>3 пара (11:00)</option>
-              <option value="4">4 пара (13:00)</option>
-              <option value="5">5 пара (14:30)</option>
-              <option value="6">6 пара (16:00)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] text-slate-400 mb-1">Дата</label>
-            <input type="date" id="journalDateInput" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-          </div>
-        </div>
-
-        <!-- Тема занятия из КТП -->
-        <div>
-          <label class="block text-[11px] text-slate-400 mb-1 flex items-center justify-between">
-            <span>Тема занятия (по программе КТП):</span>
-            <button id="autoFillTopicBtn" class="text-blue-400 hover:text-blue-300 text-[11px] underline">Подставить следующую</button>
-          </label>
-          <input type="text" id="journalTopicInput" placeholder="Введите или выберите тему занятия..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-        </div>
-
-        <!-- Список студентов с быстрыми кнопками -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-300">Студенты (<span id="studentsCountLabel">0</span>):</span>
-            <div class="flex gap-1.5">
-              <button id="markAllPresentBtn" class="text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-lg hover:bg-emerald-500/30">Все были</button>
+        <div class="journal-card-header">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">рџ“–</span>
+            <div>
+              <h2 class="text-sm font-bold text-white leading-tight">Р–СѓСЂРЅР°Р» Р·Р°РЅСЏС‚РёСЏ</h2>
+              <p class="text-[11px] text-slate-400">РћС‚РјРµС‚РєР° РїРѕСЃРµС‰Р°РµРјРѕСЃС‚Рё Рё РѕС†РµРЅРєРё</p>
             </div>
           </div>
-          <div id="journalStudentsList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
-            <!-- Список студентов генерируется JS -->
+          <span class="status-pill-badge">РРЅС„РѕСЂРјР°С‚РёРєР°</span>
+        </div>
+
+        <!-- Р’С‹Р±РѕСЂ РіСЂСѓРїРїС‹, РґР°С‚С‹ Рё РЅРѕРјРµСЂР° РїР°СЂС‹ (Р°РґР°РїС‚РёРІРЅР°СЏ СЃРµС‚РєР°) -->
+        <div class="journal-meta-grid">
+          <div class="journal-field-col">
+            <label class="field-label" for="journalGroupSelect">Р“СЂСѓРїРїР°</label>
+            <select id="journalGroupSelect" class="form-input custom-select">
+              <option value="51С„">51С„</option>
+              <option value="31С„Рј">31С„Рј</option>
+            </select>
+          </div>
+          <div class="journal-field-col">
+            <label class="field-label" for="journalLessonNumSelect">РќРѕРјРµСЂ РїР°СЂС‹</label>
+            <select id="journalLessonNumSelect" class="form-input custom-select">
+              <option value="1">1 РїР°СЂР° (08:00 вЂ“ 09:20)</option>
+              <option value="2">2 РїР°СЂР° (09:30 вЂ“ 10:50)</option>
+              <option value="3" selected>3 РїР°СЂР° (11:00 вЂ“ 12:20)</option>
+              <option value="4">4 РїР°СЂР° (13:00 вЂ“ 14:20)</option>
+              <option value="5">5 РїР°СЂР° (14:30 вЂ“ 15:50)</option>
+              <option value="6">6 РїР°СЂР° (16:00 вЂ“ 17:20)</option>
+              <option value="7">7 РїР°СЂР° (17:30 вЂ“ 18:50)</option>
+            </select>
+          </div>
+          <div class="journal-field-col-date">
+            <div class="flex items-center justify-between mb-1">
+              <label class="field-label mb-0" for="journalDateInput">Р”Р°С‚Р° РїСЂРѕРІРµРґРµРЅРёСЏ</label>
+              <button type="button" id="todayDateBtn" class="today-badge-btn">рџ“… РЎРµРіРѕРґРЅСЏ</button>
+            </div>
+            <input type="date" id="journalDateInput" class="form-input custom-date-input">
           </div>
         </div>
 
-        <!-- Заметки к занятию -->
-        <div>
-          <label class="block text-[11px] text-slate-400 mb-1">Домашнее задание / Заметки</label>
-          <input type="text" id="journalNotesInput" placeholder="Д/З, замечания по паре..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+        <!-- РўРµРјР° Р·Р°РЅСЏС‚РёСЏ РёР· РљРўРџ -->
+        <div class="topic-box">
+          <div class="topic-header">
+            <label class="field-label mb-0" for="journalTopicInput">РўРµРјР° Р·Р°РЅСЏС‚РёСЏ (РїРѕ РїСЂРѕРіСЂР°РјРјРµ РљРўРџ):</label>
+            <button type="button" id="autoFillTopicBtn" class="autofill-btn">
+              <span>вљЎ РџРѕРґСЃС‚Р°РІРёС‚СЊ РёР· РљРўРџ</span>
+            </button>
+          </div>
+          <textarea id="journalTopicInput" rows="2" placeholder="Р’РІРµРґРёС‚Рµ РёР»Рё РІС‹Р±РµСЂРёС‚Рµ С‚РµРјСѓ Р·Р°РЅСЏС‚РёСЏ..." class="form-input custom-textarea"></textarea>
         </div>
 
-        <button id="saveJournalBtn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/25 transition">
-          💾 Сохранить пару в электронный журнал
+        <!-- РЎРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ СЃ Р±С‹СЃС‚СЂС‹РјРё РєРЅРѕРїРєР°РјРё -->
+        <div class="students-section">
+          <div class="students-section-header">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-200">РЎС‚СѓРґРµРЅС‚С‹</span>
+              <span id="studentsCountLabel" class="students-count-badge">0</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="markAllPresentBtn" class="quick-action-btn quick-present">
+                <span>вњ“ Р’СЃРµ Р±С‹Р»Рё</span>
+              </button>
+              <button type="button" id="resetAttendanceBtn" class="quick-action-btn quick-reset">
+                <span>вњ• РЎР±СЂРѕСЃ</span>
+              </button>
+            </div>
+          </div>
+          <div id="journalStudentsList" class="space-y-2.5 max-h-[440px] overflow-y-auto pr-1">
+            <!-- РЎРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ РіРµРЅРµСЂРёСЂСѓРµС‚СЃСЏ JS -->
+          </div>
+        </div>
+
+        <!-- Р—Р°РјРµС‚РєРё Рє Р·Р°РЅСЏС‚РёСЋ -->
+        <div>
+          <label class="field-label" for="journalNotesInput">Р”РѕРјР°С€РЅРµРµ Р·Р°РґР°РЅРёРµ / Р—Р°РјРµС‚РєРё</label>
+          <textarea id="journalNotesInput" rows="2" placeholder="Р”/Р—, Р·Р°РјРµС‡Р°РЅРёСЏ РїРѕ РїР°СЂРµ..." class="form-input custom-textarea"></textarea>
+        </div>
+
+        <button id="saveJournalBtn" class="save-journal-btn">
+          <span>рџ’ѕ РЎРѕС…СЂР°РЅРёС‚СЊ РїР°СЂСѓ РІ СЌР»РµРєС‚СЂРѕРЅРЅС‹Р№ Р¶СѓСЂРЅР°Р»</span>
         </button>
       </div>
 
-      <!-- История проведенных занятий -->
+      <!-- РСЃС‚РѕСЂРёСЏ РїСЂРѕРІРµРґРµРЅРЅС‹С… Р·Р°РЅСЏС‚РёР№ -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Проведенные занятия</h3>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">РџСЂРѕРІРµРґРµРЅРЅС‹Рµ Р·Р°РЅСЏС‚РёСЏ</h3>
+          <span class="text-[11px] text-slate-500">РџРѕСЃР»РµРґРЅРёРµ Р·Р°РїРёСЃРё</span>
+        </div>
         <div id="journalHistoryList" class="space-y-2.5">
-          <!-- Генерируется через JS -->
+          <!-- Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ С‡РµСЂРµР· JS -->
         </div>
       </div>
     </section>
 
-    <!-- ВКЛАДКА 3: СПИСКИ СТУДЕНТОВ -->
+    <!-- Р’РљР›РђР”РљРђ 3: РЎРџРРЎРљР РЎРўРЈР”Р•РќРўРћР’ -->
     <section id="tabStudents" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-base font-bold text-white">👥 Студенты группы</h2>
+          <h2 class="text-base font-bold text-white">рџ‘Ґ РЎС‚СѓРґРµРЅС‚С‹ РіСЂСѓРїРїС‹</h2>
           <select id="manageGroupSelect" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-            <option value="51ф">Группа 51ф</option>
-            <option value="31фм">Группа 31фм</option>
+            <option value="51С„">Р“СЂСѓРїРїР° 51С„</option>
+            <option value="31С„Рј">Р“СЂСѓРїРїР° 31С„Рј</option>
           </select>
         </div>
 
-        <!-- Добавление студента вручную -->
+        <!-- Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚СѓРґРµРЅС‚Р° РІСЂСѓС‡РЅСѓСЋ -->
         <div class="flex gap-2">
-          <input type="text" id="newStudentNameInput" placeholder="ФИО студента (Иванов Иван)..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+          <input type="text" id="newStudentNameInput" placeholder="Р¤РРћ СЃС‚СѓРґРµРЅС‚Р° (РРІР°РЅРѕРІ РРІР°РЅ)..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
           <button id="addStudentBtn" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition">
-            + Добавить
+            + Р”РѕР±Р°РІРёС‚СЊ
           </button>
         </div>
 
-        <!-- Загрузка списком через текст -->
+        <!-- Р—Р°РіСЂСѓР·РєР° СЃРїРёСЃРєРѕРј С‡РµСЂРµР· С‚РµРєСЃС‚ -->
         <details class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-xs">
-          <summary class="font-medium text-slate-300 cursor-pointer hover:text-white">📝 Вставить список студентов текстом</summary>
+          <summary class="font-medium text-slate-300 cursor-pointer hover:text-white">рџ“ќ Р’СЃС‚Р°РІРёС‚СЊ СЃРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ С‚РµРєСЃС‚РѕРј</summary>
           <div class="mt-2 space-y-2">
-            <textarea id="bulkStudentsText" rows="4" placeholder="Вставьте список студентов (по одному на строку)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
-            <button id="saveBulkStudentsBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium">Сохранить список</button>
+            <textarea id="bulkStudentsText" rows="4" placeholder="Р’СЃС‚Р°РІСЊС‚Рµ СЃРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ (РїРѕ РѕРґРЅРѕРјСѓ РЅР° СЃС‚СЂРѕРєСѓ)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
+            <button id="saveBulkStudentsBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium">РЎРѕС…СЂР°РЅРёС‚СЊ СЃРїРёСЃРѕРє</button>
           </div>
         </details>
 
-        <!-- Загрузка файла со студентами -->
+        <!-- Р—Р°РіСЂСѓР·РєР° С„Р°Р№Р»Р° СЃРѕ СЃС‚СѓРґРµРЅС‚Р°РјРё -->
         <div class="bg-slate-950/60 border border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-4 text-center transition cursor-pointer" id="studentsDropZone">
           <input type="file" id="studentsFileInput" accept=".xlsx,.xls,.txt,.csv" class="hidden">
           <svg class="w-8 h-8 text-slate-400 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-          <p class="text-xs font-medium text-slate-200">Загрузить студентов из файла (.xlsx, .txt, .csv)</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">Нажмите или перетащите файл со списком группы</p>
+          <p class="text-xs font-medium text-slate-200">Р—Р°РіСЂСѓР·РёС‚СЊ СЃС‚СѓРґРµРЅС‚РѕРІ РёР· С„Р°Р№Р»Р° (.xlsx, .txt, .csv)</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">РќР°Р¶РјРёС‚Рµ РёР»Рё РїРµСЂРµС‚Р°С‰РёС‚Рµ С„Р°Р№Р» СЃРѕ СЃРїРёСЃРєРѕРј РіСЂСѓРїРїС‹</p>
         </div>
 
-        <!-- Список студентов текущей группы -->
+        <!-- РЎРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ С‚РµРєСѓС‰РµР№ РіСЂСѓРїРїС‹ -->
         <div class="space-y-1.5">
-          <span class="text-xs font-semibold text-slate-300">Текущий состав группы:</span>
+          <span class="text-xs font-semibold text-slate-300">РўРµРєСѓС‰РёР№ СЃРѕСЃС‚Р°РІ РіСЂСѓРїРїС‹:</span>
           <div id="manageStudentsList" class="space-y-1 max-h-80 overflow-y-auto pr-1">
-            <!-- JS рендерит список студентов -->
+            <!-- JS СЂРµРЅРґРµСЂРёС‚ СЃРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ -->
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ВКЛАДКА 4: ЗАГРУЗКА РАСПИСАНИЯ EXCEL -->
+    <!-- Р’РљР›РђР”РљРђ 4: Р—РђР“Р РЈР—РљРђ Р РђРЎРџРРЎРђРќРРЇ EXCEL -->
     <section id="tabUpload" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
         <div>
-          <h2 class="text-base font-bold text-white">📥 Загрузка файла расписания</h2>
+          <h2 class="text-base font-bold text-white">рџ“Ґ Р—Р°РіСЂСѓР·РєР° С„Р°Р№Р»Р° СЂР°СЃРїРёСЃР°РЅРёСЏ</h2>
           <p class="text-xs text-slate-400 mt-1">
-            Перетащите сюда новый файл расписания (<code class="text-blue-400">.xlsx</code> или <code class="text-blue-400">.xls</code>) со стенда колледжа. Парсер автоматически извлечет все пары Трипольского.
+            РџРµСЂРµС‚Р°С‰РёС‚Рµ СЃСЋРґР° РЅРѕРІС‹Р№ С„Р°Р№Р» СЂР°СЃРїРёСЃР°РЅРёСЏ (<code class="text-blue-400">.xlsx</code> РёР»Рё <code class="text-blue-400">.xls</code>) СЃРѕ СЃС‚РµРЅРґР° РєРѕР»Р»РµРґР¶Р°. РџР°СЂСЃРµСЂ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РёР·РІР»РµС‡РµС‚ РІСЃРµ РїР°СЂС‹ РўСЂРёРїРѕР»СЊСЃРєРѕРіРѕ.
           </p>
         </div>
 
-        <!-- Drag & Drop зона -->
+        <!-- Drag & Drop Р·РѕРЅР° -->
         <div id="scheduleDropZone" class="border-2 border-dashed border-blue-600/50 hover:border-blue-500 bg-blue-950/10 hover:bg-blue-950/20 rounded-2xl p-8 text-center cursor-pointer transition">
           <input type="file" id="scheduleFileInput" accept=".xlsx,.xls" class="hidden">
           <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3">
@@ -611,54 +242,54 @@ nav .grid {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
-          <p class="text-sm font-semibold text-white">Нажмите для выбора файла</p>
-          <p class="text-xs text-slate-400 mt-1">или перетащите Excel-файл сюда</p>
+          <p class="text-sm font-semibold text-white">РќР°Р¶РјРёС‚Рµ РґР»СЏ РІС‹Р±РѕСЂР° С„Р°Р№Р»Р°</p>
+          <p class="text-xs text-slate-400 mt-1">РёР»Рё РїРµСЂРµС‚Р°С‰РёС‚Рµ Excel-С„Р°Р№Р» СЃСЋРґР°</p>
         </div>
 
-        <!-- Статус последней загрузки -->
+        <!-- РЎС‚Р°С‚СѓСЃ РїРѕСЃР»РµРґРЅРµР№ Р·Р°РіСЂСѓР·РєРё -->
         <div id="uploadStatusBox" class="hidden p-3.5 rounded-xl border text-xs">
-          <!-- Статус JS -->
+          <!-- РЎС‚Р°С‚СѓСЃ JS -->
         </div>
 
         <div class="text-[11px] text-slate-400 space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
-          <p class="font-medium text-slate-300">💡 Как это работает:</p>
-          <p>• Парсер находит все листы (стационар, заочное и др.)</p>
-          <p>• Фильтрует только пары преподавателя <b>Трипольский</b></p>
-          <p>• Моментально обновляет расписание в PWA и в Telegram-боте</p>
+          <p class="font-medium text-slate-300">рџ’Ў РљР°Рє СЌС‚Рѕ СЂР°Р±РѕС‚Р°РµС‚:</p>
+          <p>вЂў РџР°СЂСЃРµСЂ РЅР°С…РѕРґРёС‚ РІСЃРµ Р»РёСЃС‚С‹ (СЃС‚Р°С†РёРѕРЅР°СЂ, Р·Р°РѕС‡РЅРѕРµ Рё РґСЂ.)</p>
+          <p>вЂў Р¤РёР»СЊС‚СЂСѓРµС‚ С‚РѕР»СЊРєРѕ РїР°СЂС‹ РїСЂРµРїРѕРґР°РІР°С‚РµР»СЏ <b>РўСЂРёРїРѕР»СЊСЃРєРёР№</b></p>
+          <p>вЂў РњРѕРјРµРЅС‚Р°Р»СЊРЅРѕ РѕР±РЅРѕРІР»СЏРµС‚ СЂР°СЃРїРёСЃР°РЅРёРµ РІ PWA Рё РІ Telegram-Р±РѕС‚Рµ</p>
         </div>
       </div>
     </section>
 
-    <!-- ВКЛАДКА 5: ЗВОНКИ -->
+    <!-- Р’РљР›РђР”РљРђ 5: Р—Р’РћРќРљР -->
     <section id="tabBells" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
         <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <span>🔔 Расписание звонков</span>
+          <span>рџ”” Р Р°СЃРїРёСЃР°РЅРёРµ Р·РІРѕРЅРєРѕРІ</span>
         </h2>
         <div id="bellsList" class="space-y-2">
-          <!-- Генерируется через JS -->
+          <!-- Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ С‡РµСЂРµР· JS -->
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (TAB BAR) -->
+  <!-- РќРР–РќРЇРЇ РџРђРќР•Р›Р¬ РќРђР’РР“РђР¦РР (TAB BAR) -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 py-2 px-3">
     <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
       <button data-tab="tabSchedule" class="tab-nav-btn flex flex-col items-center gap-1 text-blue-500 transition py-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        <span class="text-[10px] font-semibold">Пары</span>
+        <span class="text-[10px] font-semibold">РџР°СЂС‹</span>
       </button>
 
       <button data-tab="tabJournal" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-        <span class="text-[10px] font-medium">Журнал</span>
+        <span class="text-[10px] font-medium">Р–СѓСЂРЅР°Р»</span>
       </button>
 
       <button data-tab="tabStudents" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-        <span class="text-[10px] font-medium">Студенты</span>
+        <span class="text-[10px] font-medium">РЎС‚СѓРґРµРЅС‚С‹</span>
       </button>
 
       <button data-tab="tabUpload" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
@@ -668,802 +299,10 @@ nav .grid {
 
       <button data-tab="tabBells" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <span class="text-[10px] font-medium">Звонки</span>
+        <span class="text-[10px] font-medium">Р—РІРѕРЅРєРё</span>
       </button>
     </div>
   </nav>
-
-  <script>
-// Инициализация PWA и Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
-
-// Telegram WebApp адаптация
-if (window.Telegram && window.Telegram.WebApp) {
-  try {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-  } catch (e) {}
-}
-
-// Установка PWA
-let deferredPrompt;
-const installBtn = document.getElementById('installPwaBtn');
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  if (installBtn) installBtn.classList.remove('hidden');
-});
-
-installBtn?.addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      installBtn.classList.add('hidden');
-    }
-    deferredPrompt = null;
-  }
-});
-
-// Глобальное состояние
-const state = {
-  schedule: null,
-  activeDay: 'today',
-  bells: [
-    { lessonNumber: 1, startTime: '08:00', endTime: '09:20' },
-    { lessonNumber: 2, startTime: '09:30', endTime: '10:50' },
-    { lessonNumber: 3, startTime: '11:00', endTime: '12:20' },
-    { lessonNumber: 4, startTime: '13:00', endTime: '14:20' },
-    { lessonNumber: 5, startTime: '14:30', endTime: '15:50' },
-    { lessonNumber: 6, startTime: '16:00', endTime: '17:20' },
-    { lessonNumber: 7, startTime: '17:30', endTime: '18:50' },
-  ],
-  studentsByGroup: {},
-  journalEntries: [],
-  curriculumPrograms: [],
-};
-
-const DAY_NAMES = {
-  1: 'Понедельник',
-  2: 'Вторник',
-  3: 'Среда',
-  4: 'Четверг',
-  5: 'Пятница',
-  6: 'Суббота',
-  7: 'Воскресенье',
-};
-
-// Переключение табов
-const tabs = {
-  tabSchedule: document.getElementById('tabSchedule'),
-  tabJournal: document.getElementById('tabJournal'),
-  tabStudents: document.getElementById('tabStudents'),
-  tabUpload: document.getElementById('tabUpload'),
-  tabBells: document.getElementById('tabBells'),
-};
-
-const navButtons = document.querySelectorAll('.tab-nav-btn');
-
-function switchTab(tabId) {
-  Object.keys(tabs).forEach((id) => {
-    if (tabs[id]) {
-      tabs[id].classList.toggle('hidden', id !== tabId);
-    }
-  });
-
-  navButtons.forEach((btn) => {
-    const isTarget = btn.getAttribute('data-tab') === tabId;
-    btn.classList.toggle('text-blue-500', isTarget);
-    btn.classList.toggle('text-slate-400', !isTarget);
-  });
-
-  if (tabId === 'tabJournal') {
-    loadJournalHistory();
-    updateJournalStudents();
-  } else if (tabId === 'tabStudents') {
-    renderManageStudents();
-  } else if (tabId === 'tabBells') {
-    renderBells();
-  }
-}
-
-navButtons.forEach((btn) => {
-  btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
-});
-
-// Загрузка расписания (сервер + локальный фоллбек для GitHub Pages)
-async function loadSchedule() {
-  try {
-    const cached = localStorage.getItem('pwa_custom_schedule');
-    if (cached) {
-      state.schedule = JSON.parse(cached);
-      updateHeaderStatus();
-      renderSchedule();
-      populateGroupSelects();
-    }
-
-    const res = await fetch('./api/schedule').catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data.success) {
-        state.schedule = data;
-        state.bells = data.bells || state.bells;
-        localStorage.setItem('pwa_custom_schedule', JSON.stringify(data));
-      }
-    } else if (!state.schedule) {
-      // Статический файл для GitHub Pages
-      const staticRes = await fetch('./data/schedule.json');
-      const staticData = await staticRes.json();
-      state.schedule = staticData;
-      state.bells = staticData.bells || state.bells;
-    }
-  } catch (err) {
-    console.warn('Использованы локальные данные расписания:', err);
-  }
-
-  updateHeaderStatus();
-  renderSchedule();
-  populateGroupSelects();
-}
-
-// Загрузка студентов (сервер + локальный фоллбек)
-async function loadStudents() {
-  try {
-    const cached = localStorage.getItem('pwa_custom_students');
-    if (cached) {
-      state.studentsByGroup = JSON.parse(cached);
-      populateGroupSelects();
-    }
-
-    const res = await fetch('./api/students').catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data.success && data.studentsByGroup) {
-        state.studentsByGroup = data.studentsByGroup;
-        localStorage.setItem('pwa_custom_students', JSON.stringify(data.studentsByGroup));
-      }
-    } else if (Object.keys(state.studentsByGroup).length === 0) {
-      // Статический файл для GitHub Pages
-      const staticRes = await fetch('./data/students.json');
-      const staticData = await staticRes.json();
-      state.studentsByGroup = staticData;
-    }
-  } catch (err) {
-    console.warn('Использованы локальные студенты:', err);
-  }
-
-  populateGroupSelects();
-}
-
-// Загрузка КТП
-async function loadCurriculum() {
-  try {
-    const res = await fetch('./api/curriculum').catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json();
-      if (data.success) state.curriculumPrograms = data.programs || [];
-    } else {
-      const staticRes = await fetch('./data/curriculum.json');
-      state.curriculumPrograms = await staticRes.json();
-    }
-  } catch (err) {}
-}
-
-function updateHeaderStatus() {
-  if (!state.schedule?.lessons) return;
-  const now = new Date();
-  const day = now.getDay() === 0 ? 7 : now.getDay();
-  const todayLessons = state.schedule.lessons.filter((l) => l.dayOfWeek === day);
-
-  const statusEl = document.getElementById('headerCurrentStatus');
-  if (statusEl) {
-    statusEl.textContent = todayLessons.length === 0
-      ? 'Пар сегодня нет (выходной)'
-      : `Сегодня ${todayLessons.length} пар(ы) • ${DAY_NAMES[day]}`;
-  }
-}
-
-// Отрисовка расписания
-function renderSchedule() {
-  if (!state.schedule?.lessons) return;
-
-  const now = new Date();
-  const jsDay = now.getDay();
-  const todayNum = jsDay === 0 ? 7 : jsDay;
-  const tomorrowNum = todayNum === 7 ? 1 : todayNum + 1;
-
-  let targetDay = todayNum;
-  if (state.activeDay === 'tomorrow') targetDay = tomorrowNum;
-  else if (state.activeDay === 'all') targetDay = 'all';
-  else if (state.activeDay !== 'today') targetDay = Number(state.activeDay);
-
-  const container = document.getElementById('lessonsList');
-  if (!container) return;
-  container.innerHTML = '';
-
-  let filtered = [];
-  if (targetDay === 'all') {
-    filtered = [...state.schedule.lessons].sort((a, b) => {
-      if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
-      return a.lessonNumber - b.lessonNumber;
-    });
-    document.getElementById('currentDayTitle').textContent = 'Вся неделя';
-    document.getElementById('currentDaySubtitle').textContent = `Всего найдено ${filtered.length} пар`;
-  } else {
-    filtered = state.schedule.lessons
-      .filter((l) => l.dayOfWeek === targetDay)
-      .sort((a, b) => a.lessonNumber - b.lessonNumber);
-
-    document.getElementById('currentDayTitle').textContent = DAY_NAMES[targetDay] || 'День';
-    document.getElementById('currentDaySubtitle').textContent = filtered.length > 0
-      ? `${filtered.length} пар(ы) на этот день`
-      : 'В этот день пар нет';
-  }
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-        <div style="font-size: 2rem; margin-bottom: 8px;">☕</div>
-        <p style="font-size: 14px; font-weight: 600; color: #f1f5f9;">Пар нет</p>
-        <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Отличный повод отдохнуть или подготовиться к занятиям</p>
-      </div>
-    `;
-    return;
-  }
-
-  filtered.forEach((lesson) => {
-    const card = document.createElement('div');
-    card.className = 'bg-slate-900';
-
-    const dayPrefix = targetDay === 'all'
-      ? `<span style="padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 700; background: #1e293b; color: #60a5fa; margin-right: 6px;">${DAY_NAMES[lesson.dayOfWeek]?.slice(0, 2) || ''}</span>`
-      : '';
-
-    card.innerHTML = `
-      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="w-9">#${lesson.lessonNumber}</div>
-          <div>
-            <div style="display: flex; align-items: center;">
-              ${dayPrefix}
-              <span style="font-size: 12px; font-weight: 600; color: #cbd5e1;">${lesson.startTime} – ${lesson.endTime}</span>
-            </div>
-            <h3 style="font-size: 14px; font-weight: 700; color: #ffffff; margin-top: 2px;">${lesson.subject}</h3>
-          </div>
-        </div>
-
-        <span style="padding: 4px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3);">
-          Гр. ${lesson.group}
-        </span>
-      </div>
-
-      <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #1f293d; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8;">
-          <span>📍 ${lesson.classroom || 'Кабинет не указан'}</span>
-        </div>
-        <button class="open-journal-btn"
-          data-group="${lesson.group}"
-          data-lesson="${lesson.lessonNumber}">
-          📝 Журнал
-        </button>
-      </div>
-    `;
-
-    container.appendChild(card);
-  });
-
-  document.querySelectorAll('.open-journal-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const group = btn.getAttribute('data-group');
-      const lessonNum = btn.getAttribute('data-lesson');
-
-      const gSel = document.getElementById('journalGroupSelect');
-      const lSel = document.getElementById('journalLessonNumSelect');
-      if (gSel) gSel.value = group;
-      if (lSel) lSel.value = lessonNum;
-
-      const dateInput = document.getElementById('journalDateInput');
-      if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-
-      autoFillTopicForGroup(group);
-      switchTab('tabJournal');
-    });
-  });
-}
-
-// Фильтр дней недели
-document.querySelectorAll('.day-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.day-btn').forEach((b) => b.classList.remove('bg-blue-600'));
-    btn.classList.add('bg-blue-600');
-    state.activeDay = btn.getAttribute('data-day');
-    renderSchedule();
-  });
-});
-
-// Заполнение выпадающих списков групп
-function populateGroupSelects() {
-  const groups = new Set();
-  if (state.schedule?.lessons) {
-    state.schedule.lessons.forEach((l) => {
-      if (l.group && l.group !== '—') groups.add(l.group);
-    });
-  }
-  Object.keys(state.studentsByGroup).forEach((g) => groups.add(g));
-
-  const selects = [
-    document.getElementById('journalGroupSelect'),
-    document.getElementById('manageGroupSelect'),
-  ];
-
-  selects.forEach((sel) => {
-    if (!sel) return;
-    const currentVal = sel.value;
-    sel.innerHTML = '';
-    Array.from(groups).sort().forEach((g) => {
-      const opt = document.createElement('option');
-      opt.value = g;
-      opt.textContent = `Группа ${g}`;
-      sel.appendChild(opt);
-    });
-    if (currentVal && groups.has(currentVal)) {
-      sel.value = currentVal;
-    }
-  });
-
-  updateJournalStudents();
-}
-
-// Журнал: отображение студентов
-function updateJournalStudents() {
-  const groupSel = document.getElementById('journalGroupSelect');
-  if (!groupSel) return;
-  const group = groupSel.value;
-  const listEl = document.getElementById('journalStudentsList');
-  const countEl = document.getElementById('studentsCountLabel');
-  if (!listEl) return;
-
-  const students = state.studentsByGroup[group] || [];
-  if (countEl) countEl.textContent = students.length;
-
-  if (students.length === 0) {
-    listEl.innerHTML = `<div style="text-align: center; color: #64748b; padding: 12px; font-size: 12px;">В группе ${group} пока нет студентов</div>`;
-    return;
-  }
-
-  listEl.innerHTML = '';
-  students.forEach((student, idx) => {
-    const row = document.createElement('div');
-    row.className = 'student-row';
-    row.setAttribute('data-student', student);
-
-    row.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
-        <span style="color: #64748b; font-size: 11px; width: 18px;">${idx + 1}.</span>
-        <span style="font-weight: 500; font-size: 12px; color: #f1f5f9; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${student}</span>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <div class="attendance-toggle">
-          <button type="button" data-val="present" class="status-btn bg-emerald-600">Был</button>
-          <button type="button" data-val="absent" class="status-btn" style="color: #94a3b8;">Н</button>
-          <button type="button" data-val="excused" class="status-btn" style="color: #94a3b8;">У</button>
-        </div>
-
-        <select class="grade-select">
-          <option value="">—</option>
-          <option value="5">5</option>
-          <option value="4">4</option>
-          <option value="3">3</option>
-          <option value="2">2</option>
-        </select>
-      </div>
-    `;
-
-    const btns = row.querySelectorAll('.status-btn');
-    btns.forEach((b) => {
-      b.addEventListener('click', () => {
-        btns.forEach((other) => {
-          other.className = 'status-btn';
-          other.style.color = '#94a3b8';
-          other.style.background = 'none';
-        });
-        const val = b.getAttribute('data-val');
-        if (val === 'present') b.className = 'status-btn bg-emerald-600';
-        else if (val === 'absent') b.className = 'status-btn bg-rose-600';
-        else if (val === 'excused') b.className = 'status-btn bg-amber-600';
-      });
-    });
-
-    listEl.appendChild(row);
-  });
-}
-
-document.getElementById('journalGroupSelect')?.addEventListener('change', () => {
-  updateJournalStudents();
-  autoFillTopicForGroup(document.getElementById('journalGroupSelect').value);
-});
-
-document.getElementById('markAllPresentBtn')?.addEventListener('click', () => {
-  document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
-    const btns = row.querySelectorAll('.status-btn');
-    btns.forEach((b) => {
-      if (b.getAttribute('data-val') === 'present') {
-        b.className = 'status-btn bg-emerald-600';
-      } else {
-        b.className = 'status-btn';
-        b.style.color = '#94a3b8';
-        b.style.background = 'none';
-      }
-    });
-  });
-});
-
-// Автоподстановка темы из КТП
-function autoFillTopicForGroup(group) {
-  const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
-  let found = null;
-  for (const prog of state.curriculumPrograms) {
-    for (const g of prog.groups || []) {
-      if (g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '') === clean) {
-        found = prog;
-        break;
-      }
-    }
-  }
-
-  if (found && found.lessons && found.lessons.length > 0) {
-    const input = document.getElementById('journalTopicInput');
-    if (input) input.value = found.lessons[0].text;
-  }
-}
-
-document.getElementById('autoFillTopicBtn')?.addEventListener('click', () => {
-  const group = document.getElementById('journalGroupSelect')?.value;
-  if (group) autoFillTopicForGroup(group);
-});
-
-// Сохранение в журнал (сервер + localStorage)
-document.getElementById('saveJournalBtn')?.addEventListener('click', async () => {
-  const group = document.getElementById('journalGroupSelect')?.value;
-  const lessonNumber = Number(document.getElementById('journalLessonNumSelect')?.value || 1);
-  const date = document.getElementById('journalDateInput')?.value || new Date().toISOString().split('T')[0];
-  const topic = document.getElementById('journalTopicInput')?.value || 'Практическое занятие';
-  const notes = document.getElementById('journalNotesInput')?.value || '';
-
-  const attendance = {};
-  document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
-    const student = row.getAttribute('data-student');
-    const activeBtn = row.querySelector('.status-btn.bg-emerald-600, .status-btn.bg-rose-600, .status-btn.bg-amber-600');
-    const status = activeBtn ? activeBtn.getAttribute('data-val') : 'present';
-    const grade = row.querySelector('.grade-select')?.value;
-    attendance[student] = { status, grade: grade || undefined };
-  });
-
-  const entry = {
-    id: `${group}_${date}_${lessonNumber}`,
-    date,
-    dateFormatted: date,
-    group,
-    subject: 'Информатика',
-    lessonNumber,
-    topic,
-    notes,
-    attendance,
-  };
-
-  // Сохраняем в localStorage
-  const saved = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
-  const idx = saved.findIndex((e) => e.id === entry.id);
-  if (idx !== -1) saved[idx] = entry;
-  else saved.push(entry);
-  localStorage.setItem('pwa_journal', JSON.stringify(saved));
-  state.journalEntries = saved;
-
-  // Пытаемся отправить на сервер
-  fetch('./api/journal/mark', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry),
-  }).catch(() => {});
-
-  alert('✅ Занятие успешно сохранено в электронный журнал!');
-  renderJournalHistory();
-});
-
-// История журнала
-function loadJournalHistory() {
-  const local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
-  state.journalEntries = local;
-  renderJournalHistory();
-
-  fetch('./api/journal')
-    .then((r) => r.json())
-    .then((d) => {
-      if (d.success && d.entries) {
-        state.journalEntries = d.entries;
-        renderJournalHistory();
-      }
-    })
-    .catch(() => {});
-}
-
-function renderJournalHistory() {
-  const container = document.getElementById('journalHistoryList');
-  if (!container) return;
-
-  if (state.journalEntries.length === 0) {
-    container.innerHTML = `<div style="font-size: 12px; color: #64748b; padding: 6px 0;">Записей пока нет</div>`;
-    return;
-  }
-
-  container.innerHTML = '';
-  state.journalEntries.slice(-10).reverse().forEach((entry) => {
-    const card = document.createElement('div');
-    card.style.cssText = 'padding: 10px; border-radius: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid #1f293d; font-size: 12px; margin-bottom: 8px;';
-
-    const attendKeys = Object.keys(entry.attendance || {});
-    const absents = attendKeys.filter((k) => entry.attendance[k].status === 'absent').length;
-
-    card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; font-weight: 600; color: #e2e8f0;">
-        <span>${entry.dateFormatted || entry.date} • #${entry.lessonNumber}</span>
-        <span style="color: #60a5fa;">Гр. ${entry.group}</span>
-      </div>
-      <div style="color: #cbd5e1; margin-top: 4px;">${entry.topic}</div>
-      <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #64748b;">
-        <span>Отмечено: ${attendKeys.length}</span>
-        <span style="color: ${absents > 0 ? '#f87171' : '#34d399'};">Отсутствовали: ${absents}</span>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-// Управление студентами
-function renderManageStudents() {
-  const groupSel = document.getElementById('manageGroupSelect');
-  if (!groupSel) return;
-  const group = groupSel.value;
-  const listEl = document.getElementById('manageStudentsList');
-  if (!listEl) return;
-
-  const students = state.studentsByGroup[group] || [];
-  if (students.length === 0) {
-    listEl.innerHTML = `<div style="text-align: center; color: #64748b; font-size: 12px; padding: 12px;">В этой группе пока нет студентов</div>`;
-    return;
-  }
-
-  listEl.innerHTML = '';
-  students.forEach((student, idx) => {
-    const item = document.createElement('div');
-    item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid #1f293d; font-size: 12px; margin-bottom: 6px;';
-    item.innerHTML = `
-      <span style="color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><b style="color: #64748b; margin-right: 6px;">${idx + 1}.</b> ${student}</span>
-      <button class="del-btn" style="color: #f87171; font-weight: bold; cursor: pointer; padding: 2px 6px;">✕</button>
-    `;
-
-    item.querySelector('.del-btn')?.addEventListener('click', () => {
-      if (confirm(`Удалить студента ${student}?`)) {
-        state.studentsByGroup[group] = state.studentsByGroup[group].filter((s) => s !== student);
-        localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
-        renderManageStudents();
-        updateJournalStudents();
-      }
-    });
-
-    listEl.appendChild(item);
-  });
-}
-
-document.getElementById('manageGroupSelect')?.addEventListener('change', renderManageStudents);
-
-// Добавить одного студента
-document.getElementById('addStudentBtn')?.addEventListener('click', () => {
-  const input = document.getElementById('newStudentNameInput');
-  const group = document.getElementById('manageGroupSelect')?.value;
-  const name = input?.value.trim();
-  if (!name || !group) return;
-
-  if (!state.studentsByGroup[group]) state.studentsByGroup[group] = [];
-  if (!state.studentsByGroup[group].includes(name)) {
-    state.studentsByGroup[group].push(name);
-    state.studentsByGroup[group].sort((a, b) => a.localeCompare(b, 'ru'));
-    localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
-  }
-
-  input.value = '';
-  renderManageStudents();
-  updateJournalStudents();
-});
-
-// Сохранить список текстом
-document.getElementById('saveBulkStudentsBtn')?.addEventListener('click', () => {
-  const textarea = document.getElementById('bulkStudentsText');
-  const group = document.getElementById('manageGroupSelect')?.value;
-  const text = textarea?.value.trim();
-  if (!text || !group) return;
-
-  const lines = text.split(/\r?\n/).map((l) => l.trim().replace(/^[\d\s\.\,\-\)\(\]]+/, '').trim()).filter((l) => l.length > 0);
-  state.studentsByGroup[group] = Array.from(new Set(lines));
-  localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
-
-  textarea.value = '';
-  alert(`✅ Список студентов группы ${group} сохранен!`);
-  renderManageStudents();
-  updateJournalStudents();
-});
-
-// Загрузка студентов из файла
-document.getElementById('studentsDropZone')?.addEventListener('click', () => {
-  document.getElementById('studentsFileInput')?.click();
-});
-
-document.getElementById('studentsFileInput')?.addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
-  const group = document.getElementById('manageGroupSelect')?.value;
-  if (!file || !group) return;
-
-  const reader = new FileReader();
-  reader.onload = function(evt) {
-    try {
-      const data = evt.target.result;
-      let names = [];
-      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-        if (window.XLSX) {
-          const wb = window.XLSX.read(data, { type: 'binary' });
-          const firstSheet = wb.Sheets[wb.SheetNames[0]];
-          const rows = window.XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-          for (const r of rows) {
-            for (const c of (r || [])) {
-              const val = String(c || '').trim();
-              if (val && !val.match(/^(№|п\/п|фио|студент|список)/i)) {
-                const cleaned = val.replace(/^[\d\s\.\,\-\)\(\]]+/, '').trim();
-                if (cleaned.length >= 3 && cleaned.includes(' ')) names.push(cleaned);
-              }
-            }
-          }
-        }
-      } else {
-        const text = new TextDecoder('utf-8').decode(data);
-        names = text.split(/\r?\n/).map((l) => l.trim().replace(/^[\d\s\.\,\-\)\(\]]+/, '').trim()).filter((l) => l.length > 2);
-      }
-
-      if (names.length > 0) {
-        state.studentsByGroup[group] = Array.from(new Set(names));
-        localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
-        alert(`✅ Загружено ${names.length} студентов для группы ${group}!`);
-        renderManageStudents();
-        updateJournalStudents();
-      } else {
-        alert('В файле не найдено ФИО студентов');
-      }
-    } catch (err) {
-      alert('Ошибка парсинга файла со студентами');
-    }
-  };
-
-  if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-    reader.readAsBinaryString(file);
-  } else {
-    reader.readAsArrayBuffer(file);
-  }
-});
-
-// Загрузка файла расписания Excel (гибридная: серверная + клиентская для GitHub Pages)
-const sDrop = document.getElementById('scheduleDropZone');
-const sInput = document.getElementById('scheduleFileInput');
-const sStatus = document.getElementById('uploadStatusBox');
-
-sDrop?.addEventListener('click', () => sInput?.click());
-
-sInput?.addEventListener('change', (e) => {
-  if (e.target.files?.[0]) handleFile(e.target.files[0]);
-});
-
-async function handleFile(file) {
-  if (!sStatus) return;
-  sStatus.classList.remove('hidden');
-  sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3); color: #60a5fa; font-size: 12px;';
-  sStatus.textContent = `⏳ Обработка и парсинг файла ${file.name}...`;
-
-  // Сначала пробуем отправить на бэкенд
-  try {
-    const res = await fetch('./api/upload-schedule', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/octet-stream' },
-      body: file,
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success) {
-        sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px;';
-        sStatus.textContent = `✅ Расписание успешно обновлено на сервере! Пар: ${data.totalLessons}`;
-        await loadSchedule();
-        setTimeout(() => switchTab('tabSchedule'), 1200);
-        return;
-      }
-    }
-  } catch (e) {}
-
-  // Фоллбек: клиентский парсинг через SheetJS на GitHub Pages
-  if (window.XLSX) {
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      try {
-        const wb = window.XLSX.read(evt.target.result, { type: 'binary' });
-        const lessons = [];
-        for (const sName of wb.SheetNames) {
-          const sheet = wb.Sheets[sName];
-          const rows = window.XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-          // Простой поиск по ячейкам слова "Трипольский"
-          for (let r = 0; r < rows.length; r++) {
-            const row = rows[r];
-            for (let c = 0; c < row.length; c++) {
-              const cell = String(row[c] || '').toLowerCase();
-              if (cell.includes('трипольск')) {
-                lessons.push({
-                  id: `client_${lessons.length}`,
-                  dayOfWeek: 2,
-                  dayName: 'Вторник',
-                  lessonNumber: lessons.length + 1,
-                  startTime: '11:00',
-                  endTime: '12:20',
-                  subject: 'Информатика',
-                  group: '51ф',
-                  classroom: 'ауд. 232',
-                  teacher: 'Трипольский',
-                });
-              }
-            }
-          }
-        }
-
-        sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px;';
-        sStatus.textContent = `✅ Файл обработан в браузере! Расписание обновлено.`;
-        setTimeout(() => switchTab('tabSchedule'), 1200);
-      } catch (err) {
-        sStatus.textContent = '❌ Ошибка чтения файла';
-      }
-    };
-    reader.readAsBinaryString(file);
-  }
-}
-
-// Звонки
-function renderBells() {
-  const container = document.getElementById('bellsList');
-  if (!container || !state.bells) return;
-  container.innerHTML = '';
-  state.bells.forEach((bell) => {
-    const item = document.createElement('div');
-    item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid #1f293d; font-size: 12px; margin-bottom: 8px;';
-    item.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span class="w-9" style="width: 28px; height: 28px; font-size: 12px;">${bell.lessonNumber}</span>
-        <span style="font-weight: 600; color: #f1f5f9;">${bell.lessonNumber} пара</span>
-      </div>
-      <span style="padding: 4px 10px; border-radius: 8px; background: #1e293b; font-family: monospace; color: #cbd5e1; font-weight: 500;">${bell.startTime} — ${bell.endTime}</span>
-    `;
-    container.appendChild(item);
-  });
-}
-
-// Старт
-(async () => {
-  const dateInput = document.getElementById('journalDateInput');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-  await loadSchedule();
-  await loadStudents();
-  await loadCurriculum();
-})();
-
-</script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
-
-

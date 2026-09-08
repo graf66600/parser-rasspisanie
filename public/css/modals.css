@@ -1,0 +1,121 @@
+﻿/* ==========================================================================
+   MODALS, STUDENTS & UPLOAD STYLES
+   ========================================================================== */
+
+/* ЗОНА ЗАГРУЗКИ ФАЙЛА (DROPZONE) */
+.dropzone-box {
+  border: 2px dashed rgba(59, 130, 246, 0.5);
+  background: rgba(30, 58, 138, 0.1);
+  border-radius: 16px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone-box:hover {
+  border-color: #3b82f6;
+  background: rgba(30, 58, 138, 0.2);
+}
+
+.dropzone-box:active {
+  transform: scale(0.99);
+}
+
+/* СПИСОК ЗВОНКОВ */
+.bell-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1f293d;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.bell-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bell-time-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #1e293b;
+  font-family: monospace;
+  color: #cbd5e1;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* УПРАВЛЕНИЕ СТУДЕНТАМИ */
+.student-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1f293d;
+  font-size: 12px;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.student-manage-name {
+  color: #e2e8f0;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.student-del-btn {
+  color: #f87171;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  transition: all 0.15s;
+}
+
+.student-del-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* СТАТУСНЫЕ СООБЩЕНИЯ */
+.status-msg-box {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.status-msg-info {
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  color: #60a5fa;
+}
+
+.status-msg-success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.status-msg-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
