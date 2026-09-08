@@ -1,10 +1,29 @@
-﻿// ==========================================================================
+// ==========================================================================
 // SCHEDULE VIEW & BELLS RENDERING
 // ==========================================================================
 import { DAY_NAMES, state } from './state.js';
 
+function formatLessonsCount(count) {
+  if (count === 0) return '0 пар';
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${count} пара`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return `${count} пары`;
+  return `${count} пар`;
+}
+
 export function renderSchedule(onOpenJournal) {
-  if (!state.schedule?.lessons) return;
+  const container = document.getElementById('scheduleLessonsList') || document.getElementById('lessonsList');
+  if (!container) return;
+
+  if (!state.schedule?.lessons) {
+    container.innerHTML = `
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
+        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+        <p style="font-size: 14px; font-weight: 600; color: #f1f5f9;">Загрузка расписания...</p>
+      </div>`;
+    return;
+  }
 
   const now = new Date();
   const jsDay = now.getDay();
@@ -16,9 +35,10 @@ export function renderSchedule(onOpenJournal) {
   else if (state.activeDay === 'all') targetDay = 'all';
   else if (state.activeDay !== 'today') targetDay = Number(state.activeDay);
 
-  const container = document.getElementById('lessonsList');
-  if (!container) return;
   container.innerHTML = '';
+
+  const titleEl = document.getElementById('scheduleDayTitle') || document.getElementById('currentDayTitle');
+  const countEl = document.getElementById('scheduleTotalLessons') || document.getElementById('currentDaySubtitle');
 
   let filtered = [];
   if (targetDay === 'all') {
@@ -26,23 +46,15 @@ export function renderSchedule(onOpenJournal) {
       if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
       return a.lessonNumber - b.lessonNumber;
     });
-    const titleEl = document.getElementById('currentDayTitle');
-    const subEl = document.getElementById('currentDaySubtitle');
     if (titleEl) titleEl.textContent = 'Вся неделя';
-    if (subEl) subEl.textContent = `Всего найдено ${filtered.length} пар`;
+    if (countEl) countEl.textContent = formatLessonsCount(filtered.length);
   } else {
     filtered = state.schedule.lessons
       .filter((l) => l.dayOfWeek === targetDay)
       .sort((a, b) => a.lessonNumber - b.lessonNumber);
 
-    const titleEl = document.getElementById('currentDayTitle');
-    const subEl = document.getElementById('currentDaySubtitle');
-    if (titleEl) titleEl.textContent = DAY_NAMES[targetDay] || 'День';
-    if (subEl) {
-      subEl.textContent = filtered.length > 0
-        ? `${filtered.length} пар(ы) на этот день`
-        : 'В этот день пар нет';
-    }
+    if (titleEl) titleEl.textContent = DAY_NAMES[targetDay] || 'Расписание';
+    if (countEl) countEl.textContent = formatLessonsCount(filtered.length);
   }
 
   if (filtered.length === 0) {
@@ -50,7 +62,7 @@ export function renderSchedule(onOpenJournal) {
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
         <div style="font-size: 2rem; margin-bottom: 8px;">☕</div>
         <p style="font-size: 14px; font-weight: 600; color: #f1f5f9;">Пар нет</p>
-        <p style="font-size: 12px; color: #64748b; margin-top: 4px;">Отличный повод отдохнуть или подготовиться к занятиям</p>
+        <p style="font-size: 12px; color: #64748b; margin-top: 4px;">В этот день занятий не запланировано</p>
       </div>
     `;
     return;
@@ -63,6 +75,8 @@ export function renderSchedule(onOpenJournal) {
     const dayPrefix = targetDay === 'all'
       ? `<span class="lesson-day-prefix">${DAY_NAMES[lesson.dayOfWeek]?.slice(0, 2) || ''}</span>`
       : '';
+
+    const groupText = lesson.group ? `Гр. ${lesson.group}` : '';
 
     card.innerHTML = `
       <div class="lesson-card-header">
@@ -77,9 +91,7 @@ export function renderSchedule(onOpenJournal) {
           </div>
         </div>
 
-        <span class="lesson-group-badge">
-          Гр. ${lesson.group}
-        </span>
+        ${groupText ? `<span class="lesson-group-badge">${groupText}</span>` : ''}
       </div>
 
       <div class="lesson-card-footer">
@@ -88,7 +100,7 @@ export function renderSchedule(onOpenJournal) {
           <span class="classroom-text">${lesson.classroom || 'Кабинет не указан'}</span>
         </div>
         <button class="open-journal-btn"
-          data-group="${lesson.group}"
+          data-group="${lesson.group || ''}"
           data-lesson="${lesson.lessonNumber}"
           title="Открыть эту пару в журнале">
           <span>📝 В журнал</span>

@@ -30,17 +30,19 @@ export const state = {
 };
 
 export function updateHeaderStatus() {
-  if (!state.schedule?.lessons) return;
+  const statusEl = document.getElementById('headerCurrentStatus');
+  if (!statusEl) return;
+  if (!state.schedule?.lessons) {
+    statusEl.textContent = 'Расписание загружается...';
+    return;
+  }
   const now = new Date();
   const day = now.getDay() === 0 ? 7 : now.getDay();
   const todayLessons = state.schedule.lessons.filter((l) => l.dayOfWeek === day);
 
-  const statusEl = document.getElementById('headerCurrentStatus');
-  if (statusEl) {
-    statusEl.textContent = todayLessons.length === 0
-      ? 'Пар сегодня нет (выходной)'
-      : `Сегодня ${todayLessons.length} пар(ы) • ${DAY_NAMES[day]}`;
-  }
+  statusEl.textContent = todayLessons.length === 0
+    ? `Пар сегодня нет • ${DAY_NAMES[day]}`
+    : `Сегодня ${todayLessons.length} пар(ы) • ${DAY_NAMES[day]}`;
 }
 
 export function populateGroupSelects(onGroupChange) {
@@ -81,24 +83,47 @@ export async function loadSchedule(onScheduleLoaded) {
   try {
     const cached = localStorage.getItem('pwa_custom_schedule');
     if (cached) {
-      state.schedule = JSON.parse(cached);
-      updateHeaderStatus();
-      if (typeof onScheduleLoaded === 'function') onScheduleLoaded();
+      const parsed = JSON.parse(cached);
+      let target = parsed;
+      if (Array.isArray(parsed)) {
+        target = parsed.find((s) => s.userId === 1 && s.lessons?.length) || parsed[0];
+      }
+      if (target && target.lessons && target.lessons.length > 0) {
+        state.schedule = target;
+        state.bells = target.bells || target.settings?.bellsSchedule || state.bells;
+        updateHeaderStatus();
+        if (typeof onScheduleLoaded === 'function') onScheduleLoaded();
+      }
     }
 
+    let freshData = null;
     const res = await fetch('./api/schedule').catch(() => null);
     if (res && res.ok) {
       const data = await res.json();
-      if (data.success) {
-        state.schedule = data;
-        state.bells = data.bells || state.bells;
-        localStorage.setItem('pwa_custom_schedule', JSON.stringify(data));
+      if (data.success && data.lessons) freshData = data;
+    }
+
+    if (!freshData) {
+      const staticRes = await fetch('./data/schedule.json').catch(() => null);
+      if (staticRes && staticRes.ok) {
+        freshData = await staticRes.json();
+      } else {
+        const multiRes = await fetch('./data/schedules.json').catch(() => null);
+        if (multiRes && multiRes.ok) {
+          const multi = await multiRes.json();
+          if (Array.isArray(multi)) {
+            freshData = multi.find((s) => s.userId === 1 && s.lessons?.length) || multi[0];
+          } else {
+            freshData = multi;
+          }
+        }
       }
-    } else if (!state.schedule) {
-      const staticRes = await fetch('./data/schedule.json');
-      const staticData = await staticRes.json();
-      state.schedule = staticData;
-      state.bells = staticData.bells || state.bells;
+    }
+
+    if (freshData) {
+      state.schedule = freshData;
+      state.bells = freshData.bells || freshData.settings?.bellsSchedule || state.bells;
+      localStorage.setItem('pwa_custom_schedule', JSON.stringify(freshData));
     }
   } catch (err) {
     console.warn('Использованы локальные данные расписания:', err);
@@ -127,6 +152,7 @@ export async function loadStudents(onStudentsLoaded) {
       const staticRes = await fetch('./data/students.json');
       const staticData = await staticRes.json();
       state.studentsByGroup = staticData;
+      localStorage.setItem('pwa_custom_students', JSON.stringify(staticData));
     }
   } catch (err) {
     console.warn('Использованы локальные студенты:', err);
@@ -150,11 +176,13 @@ export async function loadCurriculum(onCurriculumLoaded) {
         state.curriculumPrograms = data.programs;
         localStorage.setItem('pwa_custom_curriculum', JSON.stringify(data.programs));
       }
-    } else if (!state.curriculumPrograms || state.curriculumPrograms.length === 0) {
-      const staticRes = await fetch('./data/curriculum.json');
-      const staticData = await staticRes.json();
-      state.curriculumPrograms = staticData;
-      localStorage.setItem('pwa_custom_curriculum', JSON.stringify(staticData));
+    } else {
+      const staticRes = await fetch('./data/curriculum.json').catch(() => null);
+      if (staticRes && staticRes.ok) {
+        const staticData = await staticRes.json();
+        state.curriculumPrograms = staticData;
+        localStorage.setItem('pwa_custom_curriculum', JSON.stringify(staticData));
+      }
     }
   } catch (err) {
     console.warn('Ошибка загрузки КТП:', err);
