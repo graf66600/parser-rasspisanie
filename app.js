@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // MAIN APPLICATION ENTRY POINT
 // ==========================================================================
 import { state, loadSchedule, loadStudents, loadCurriculum, populateGroupSelects } from './js/state.js';
@@ -67,6 +67,12 @@ export function switchTab(tabId) {
   if (tabId === 'tabJournal') {
     loadJournalHistory();
     updateJournalStudents();
+    const g = document.getElementById('journalGroupSelect')?.value;
+    const l = document.getElementById('journalLessonNumSelect')?.value;
+    const topicInput = document.getElementById('journalTopicInput');
+    if (topicInput && (!topicInput.value || topicInput.value.trim() === '')) {
+      autoFillTopicForGroup(g, l);
+    }
   } else if (tabId === 'tabStudents') {
     renderManageStudents(updateJournalStudents);
   } else if (tabId === 'tabBells') {
@@ -82,14 +88,14 @@ navButtons.forEach((btn) => {
 function onOpenLessonInJournal(group, lessonNum) {
   const gSel = document.getElementById('journalGroupSelect');
   const lSel = document.getElementById('journalLessonNumSelect');
-  if (gSel) gSel.value = group;
-  if (lSel) lSel.value = lessonNum;
+  if (gSel && group) gSel.value = group;
+  if (lSel && lessonNum) lSel.value = String(lessonNum);
 
   const dateInput = document.getElementById('journalDateInput');
   if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 
   updateJournalStudents();
-  autoFillTopicForGroup(group);
+  autoFillTopicForGroup(group, lessonNum);
   switchTab('tabJournal');
 }
 
@@ -109,7 +115,15 @@ async function initApp() {
 
   await loadSchedule(() => renderSchedule(onOpenLessonInJournal));
   await loadStudents(() => populateGroupSelects(updateJournalStudents));
-  await loadCurriculum();
+  await loadCurriculum(() => {
+    const g = document.getElementById('journalGroupSelect')?.value;
+    const l = document.getElementById('journalLessonNumSelect')?.value;
+    const topicInput = document.getElementById('journalTopicInput');
+    if (topicInput && (!topicInput.value || topicInput.value.trim() === '')) {
+      autoFillTopicForGroup(g, l);
+    }
+  });
+
   populateGroupSelects(updateJournalStudents);
 }
 

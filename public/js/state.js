@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // STATE MANAGEMENT & DATA LOADERS
 // ==========================================================================
 
@@ -135,17 +135,30 @@ export async function loadStudents(onStudentsLoaded) {
   if (typeof onStudentsLoaded === 'function') onStudentsLoaded();
 }
 
-export async function loadCurriculum() {
+export async function loadCurriculum(onCurriculumLoaded) {
   try {
+    const cached = localStorage.getItem('pwa_custom_curriculum');
+    if (cached) {
+      state.curriculumPrograms = JSON.parse(cached);
+      if (typeof onCurriculumLoaded === 'function') onCurriculumLoaded();
+    }
+
     const res = await fetch('./api/curriculum').catch(() => null);
     if (res && res.ok) {
       const data = await res.json();
-      if (data.success) state.curriculumPrograms = data.programs || [];
-    } else {
+      if (data.success && data.programs) {
+        state.curriculumPrograms = data.programs;
+        localStorage.setItem('pwa_custom_curriculum', JSON.stringify(data.programs));
+      }
+    } else if (!state.curriculumPrograms || state.curriculumPrograms.length === 0) {
       const staticRes = await fetch('./data/curriculum.json');
-      state.curriculumPrograms = await staticRes.json();
+      const staticData = await staticRes.json();
+      state.curriculumPrograms = staticData;
+      localStorage.setItem('pwa_custom_curriculum', JSON.stringify(staticData));
     }
   } catch (err) {
     console.warn('Ошибка загрузки КТП:', err);
   }
+
+  if (typeof onCurriculumLoaded === 'function') onCurriculumLoaded();
 }

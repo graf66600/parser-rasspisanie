@@ -1,14 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Р Р°СЃРїРёСЃР°РЅРёРµ | РўСЂРёРїРѕР»СЊСЃРєРёР№</title>
+  <meta name="color-scheme" content="dark">
+  <title>Расписание | Трипольский</title>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#2563eb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Р Р°СЃРїРёСЃР°РЅРёРµ">
+  <meta name="apple-mobile-web-app-title" content="Расписание">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="apple-touch-icon" href="./icon.svg">
   <link rel="stylesheet" href="./styles.css">
@@ -17,10 +18,9 @@
   <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
-</head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
 
-  <!-- Р’Р•Р РҐРќРЇРЇ РЁРђРџРљРђ -->
+  <!-- ВЕРХНЯЯ ШАПКА -->
   <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
     <div class="max-w-2xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -31,278 +31,270 @@
         </div>
         <div>
           <h1 class="text-base font-bold leading-tight text-white flex items-center gap-1.5">
-            РўСЂРёРїРѕР»СЊСЃРєРёР№
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">РРЅС„РѕСЂРјР°С‚РёРєР°</span>
+            Трипольский
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Информатика</span>
           </h1>
-          <p id="headerCurrentStatus" class="text-xs text-slate-400">Р—Р°РіСЂСѓР·РєР° СЂР°СЃРїРёСЃР°РЅРёСЏ...</p>
+          <p id="headerCurrentStatus" class="text-xs text-slate-400">Загрузка расписания...</p>
         </div>
       </div>
-      <button id="installPwaBtn" class="hidden text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center gap-1.5">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>РЈСЃС‚Р°РЅРѕРІРёС‚СЊ</span>
+
+      <button id="installPwaBtn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>Установить</span>
       </button>
     </div>
   </header>
 
-  <!-- РћРЎРќРћР’РќРћР™ РљРћРќРўР•РќРў -->
-  <main class="flex-1 max-w-2xl w-full mx-auto p-4 safe-bottom">
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4 pb-24">
 
-    <!-- Р’РљР›РђР”РљРђ 1: Р РђРЎРџРРЎРђРќРР• -->
+    <!-- ВКЛАДКА 1: РАСПИСАНИЕ -->
     <section id="tabSchedule" class="space-y-4">
-      <!-- РџРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ РґРЅРµР№ РЅРµРґРµР»Рё -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 hide-scrollbar">
-        <button data-day="today" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white shadow-md shadow-blue-600/30 whitespace-nowrap transition">РЎРµРіРѕРґРЅСЏ</button>
-        <button data-day="tomorrow" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р—Р°РІС‚СЂР°</button>
-        <button data-day="1" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РџРЅ</button>
-        <button data-day="2" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р’С‚</button>
-        <button data-day="3" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РЎСЂ</button>
-        <button data-day="4" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р§С‚</button>
-        <button data-day="5" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РџС‚</button>
-        <button data-day="6" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">РЎР±</button>
-        <button data-day="all" class="day-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 whitespace-nowrap transition">Р’СЃСЏ РЅРµРґРµР»СЏ</button>
+      <!-- Переключатель дней -->
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
+        <button data-day="today" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white whitespace-nowrap shadow-sm transition">Сегодня</button>
+        <button data-day="tomorrow" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Завтра</button>
+        <button data-day="1" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Пн</button>
+        <button data-day="2" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Вт</button>
+        <button data-day="3" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Ср</button>
+        <button data-day="4" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Чт</button>
+        <button data-day="5" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Пт</button>
+        <button data-day="6" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Сб</button>
+        <button data-day="all" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Вся неделя</button>
       </div>
 
-      <!-- РљР°СЂС‚РѕС‡РєР° СЃС‚Р°С‚СѓСЃР° РґРЅСЏ -->
+      <!-- Информационный баннер дня -->
       <div id="dayInfoBanner" class="bg-gradient-to-r from-slate-900 to-slate-800/80 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
         <div>
-          <h2 id="currentDayTitle" class="text-base font-bold text-white">РџРѕРЅРµРґРµР»СЊРЅРёРє</h2>
-          <p id="currentDaySubtitle" class="text-xs text-slate-400">РќР°Р№РґРµРЅРѕ 0 РїР°СЂ</p>
+          <h2 id="currentDayTitle" class="text-base font-bold text-white">Сегодня</h2>
+          <p id="currentDaySubtitle" class="text-xs text-slate-400 mt-0.5">Загрузка пар...</p>
         </div>
-        <div id="dayBadge" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-          РђРєС‚СѓР°Р»СЊРЅРѕ
-        </div>
+        <span id="dayBadge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Пары</span>
       </div>
 
-      <!-- РЎРїРёСЃРѕРє РєР°СЂС‚РѕС‡РµРє РїР°СЂ -->
-      <div id="lessonsList" class="space-y-3">
-        <!-- Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ С‡РµСЂРµР· JS -->
+      <!-- Список занятий -->
+      <div id="lessonsList" class="space-y-2.5">
+        <div class="bg-slate-900/50 border border-slate-800/60 rounded-2xl p-8 text-center text-slate-500 text-xs">
+          Загрузка пар...
+        </div>
       </div>
     </section>
 
-    <!-- Р’РљР›РђР”РљРђ 2: Р­Р›Р•РљРўР РћРќРќР«Р™ Р–РЈР РќРђР› -->
+    <!-- ВКЛАДКА 2: ЭЛЕКТРОННЫЙ ЖУРНАЛ -->
     <section id="tabJournal" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
         <div class="journal-card-header">
           <div class="flex items-center gap-2">
-            <span class="text-xl">рџ“–</span>
+            <span class="text-xl">📖</span>
             <div>
-              <h2 class="text-sm font-bold text-white leading-tight">Р–СѓСЂРЅР°Р» Р·Р°РЅСЏС‚РёСЏ</h2>
-              <p class="text-[11px] text-slate-400">РћС‚РјРµС‚РєР° РїРѕСЃРµС‰Р°РµРјРѕСЃС‚Рё Рё РѕС†РµРЅРєРё</p>
+              <h2 class="text-sm font-bold text-white leading-tight">Журнал занятия</h2>
+              <p class="text-[11px] text-slate-400">Отметка посещаемости и оценки</p>
             </div>
           </div>
-          <span class="status-pill-badge">РРЅС„РѕСЂРјР°С‚РёРєР°</span>
+          <span class="status-pill-badge">Информатика</span>
         </div>
 
-        <!-- Р’С‹Р±РѕСЂ РіСЂСѓРїРїС‹, РґР°С‚С‹ Рё РЅРѕРјРµСЂР° РїР°СЂС‹ (Р°РґР°РїС‚РёРІРЅР°СЏ СЃРµС‚РєР°) -->
-        <div class="journal-meta-grid">
-          <div class="journal-field-col">
-            <label class="field-label" for="journalGroupSelect">Р“СЂСѓРїРїР°</label>
+        <!-- Выбор группы, даты и номера пары (адаптивная мобильная компоновка) -->
+        <div class="journal-meta-box">
+          <div class="journal-field-group">
+            <label class="field-label" for="journalGroupSelect">Группа:</label>
             <select id="journalGroupSelect" class="form-input custom-select">
-              <option value="51С„">51С„</option>
-              <option value="31С„Рј">31С„Рј</option>
+              <option value="51ф">Группа 51ф</option>
+              <option value="31фм">Группа 31фм</option>
             </select>
           </div>
-          <div class="journal-field-col">
-            <label class="field-label" for="journalLessonNumSelect">РќРѕРјРµСЂ РїР°СЂС‹</label>
+
+          <div class="journal-field-group">
+            <label class="field-label" for="journalLessonNumSelect">Номер пары и время:</label>
             <select id="journalLessonNumSelect" class="form-input custom-select">
-              <option value="1">1 РїР°СЂР° (08:00 вЂ“ 09:20)</option>
-              <option value="2">2 РїР°СЂР° (09:30 вЂ“ 10:50)</option>
-              <option value="3" selected>3 РїР°СЂР° (11:00 вЂ“ 12:20)</option>
-              <option value="4">4 РїР°СЂР° (13:00 вЂ“ 14:20)</option>
-              <option value="5">5 РїР°СЂР° (14:30 вЂ“ 15:50)</option>
-              <option value="6">6 РїР°СЂР° (16:00 вЂ“ 17:20)</option>
-              <option value="7">7 РїР°СЂР° (17:30 вЂ“ 18:50)</option>
+              <option value="1">1 пара (08:00 – 09:20)</option>
+              <option value="2">2 пара (09:30 – 10:50)</option>
+              <option value="3" selected>3 пара (11:00 – 12:20)</option>
+              <option value="4">4 пара (13:00 – 14:20)</option>
+              <option value="5">5 пара (14:30 – 15:50)</option>
+              <option value="6">6 пара (16:00 – 17:20)</option>
+              <option value="7">7 пара (17:30 – 18:50)</option>
             </select>
           </div>
-          <div class="journal-field-col-date">
-            <div class="flex items-center justify-between mb-1">
-              <label class="field-label mb-0" for="journalDateInput">Р”Р°С‚Р° РїСЂРѕРІРµРґРµРЅРёСЏ</label>
-              <button type="button" id="todayDateBtn" class="today-badge-btn">рџ“… РЎРµРіРѕРґРЅСЏ</button>
+
+          <div class="journal-field-group">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="field-label mb-0" for="journalDateInput">Дата проведения:</label>
+              <button type="button" id="todayDateBtn" class="today-badge-btn">📅 Сегодня</button>
             </div>
             <input type="date" id="journalDateInput" class="form-input custom-date-input">
           </div>
         </div>
 
-        <!-- РўРµРјР° Р·Р°РЅСЏС‚РёСЏ РёР· РљРўРџ -->
+        <!-- Тема занятия из КТП -->
         <div class="topic-box">
           <div class="topic-header">
-            <label class="field-label mb-0" for="journalTopicInput">РўРµРјР° Р·Р°РЅСЏС‚РёСЏ (РїРѕ РїСЂРѕРіСЂР°РјРјРµ РљРўРџ):</label>
+            <label class="field-label mb-0" for="journalTopicInput">Тема занятия (по программе КТП):</label>
             <button type="button" id="autoFillTopicBtn" class="autofill-btn">
-              <span>вљЎ РџРѕРґСЃС‚Р°РІРёС‚СЊ РёР· РљРўРџ</span>
+              ⚡ Автоподстановка темы
             </button>
           </div>
-          <textarea id="journalTopicInput" rows="2" placeholder="Р’РІРµРґРёС‚Рµ РёР»Рё РІС‹Р±РµСЂРёС‚Рµ С‚РµРјСѓ Р·Р°РЅСЏС‚РёСЏ..." class="form-input custom-textarea"></textarea>
+          <textarea id="journalTopicInput" rows="2" placeholder="Введите или выберите тему занятия..." class="form-input custom-textarea"></textarea>
         </div>
 
-        <!-- РЎРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ СЃ Р±С‹СЃС‚СЂС‹РјРё РєРЅРѕРїРєР°РјРё -->
+        <!-- Заметки -->
+        <div>
+          <label class="field-label" for="journalNotesInput">Заметки к уроку (домашнее задание, комментарии):</label>
+          <input type="text" id="journalNotesInput" placeholder="Например: подготовить презентацию к следующей паре..." class="form-input">
+        </div>
+
+        <!-- Список студентов с быстрыми кнопками -->
         <div class="students-section">
           <div class="students-section-header">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-slate-200">РЎС‚СѓРґРµРЅС‚С‹</span>
+              <span class="text-xs font-bold text-white">Список студентов</span>
               <span id="studentsCountLabel" class="students-count-badge">0</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <button type="button" id="markAllPresentBtn" class="quick-action-btn quick-present">
-                <span>вњ“ Р’СЃРµ Р±С‹Р»Рё</span>
+              <button type="button" id="markAllPresentBtn" class="quick-action-btn quick-present" title="Отметить всех присутствующими">
+                ✓ Все были
               </button>
-              <button type="button" id="resetAttendanceBtn" class="quick-action-btn quick-reset">
-                <span>вњ• РЎР±СЂРѕСЃ</span>
+              <button type="button" id="resetAttendanceBtn" class="quick-action-btn quick-reset" title="Сбросить посещаемость">
+                ✕ Сброс
               </button>
             </div>
           </div>
-          <div id="journalStudentsList" class="space-y-2.5 max-h-[440px] overflow-y-auto pr-1">
-            <!-- РЎРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ РіРµРЅРµСЂРёСЂСѓРµС‚СЃСЏ JS -->
-          </div>
-        </div>
 
-        <!-- Р—Р°РјРµС‚РєРё Рє Р·Р°РЅСЏС‚РёСЋ -->
-        <div>
-          <label class="field-label" for="journalNotesInput">Р”РѕРјР°С€РЅРµРµ Р·Р°РґР°РЅРёРµ / Р—Р°РјРµС‚РєРё</label>
-          <textarea id="journalNotesInput" rows="2" placeholder="Р”/Р—, Р·Р°РјРµС‡Р°РЅРёСЏ РїРѕ РїР°СЂРµ..." class="form-input custom-textarea"></textarea>
+          <div id="journalStudentsList" class="space-y-2">
+            <!-- Динамически заполняется через JS -->
+          </div>
         </div>
 
         <button id="saveJournalBtn" class="save-journal-btn">
-          <span>рџ’ѕ РЎРѕС…СЂР°РЅРёС‚СЊ РїР°СЂСѓ РІ СЌР»РµРєС‚СЂРѕРЅРЅС‹Р№ Р¶СѓСЂРЅР°Р»</span>
+          💾 Сохранить занятие в журнал
         </button>
       </div>
 
-      <!-- РСЃС‚РѕСЂРёСЏ РїСЂРѕРІРµРґРµРЅРЅС‹С… Р·Р°РЅСЏС‚РёР№ -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">РџСЂРѕРІРµРґРµРЅРЅС‹Рµ Р·Р°РЅСЏС‚РёСЏ</h3>
-          <span class="text-[11px] text-slate-500">РџРѕСЃР»РµРґРЅРёРµ Р·Р°РїРёСЃРё</span>
-        </div>
-        <div id="journalHistoryList" class="space-y-2.5">
-          <!-- Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ С‡РµСЂРµР· JS -->
+      <!-- История проведенных занятий -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <h3 class="text-xs font-bold text-slate-300">📋 Последние проведенные пары:</h3>
+        <div id="journalHistoryList" class="space-y-2">
+          <!-- История через JS -->
         </div>
       </div>
     </section>
 
-    <!-- Р’РљР›РђР”РљРђ 3: РЎРџРРЎРљР РЎРўРЈР”Р•РќРўРћР’ -->
+    <!-- ВКЛАДКА 3: УПРАВЛЕНИЕ СТУДЕНТАМИ -->
     <section id="tabStudents" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-base font-bold text-white">рџ‘Ґ РЎС‚СѓРґРµРЅС‚С‹ РіСЂСѓРїРїС‹</h2>
-          <select id="manageGroupSelect" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
-            <option value="51С„">Р“СЂСѓРїРїР° 51С„</option>
-            <option value="31С„Рј">Р“СЂСѓРїРїР° 31С„Рј</option>
+          <h2 class="text-base font-bold text-white">👥 Студенты группы</h2>
+          <select id="manageGroupSelect" class="form-input custom-select" style="width: auto; min-width: 130px;">
+            <option value="51ф">Группа 51ф</option>
+            <option value="31фм">Группа 31фм</option>
           </select>
         </div>
 
-        <!-- Р”РѕР±Р°РІР»РµРЅРёРµ СЃС‚СѓРґРµРЅС‚Р° РІСЂСѓС‡РЅСѓСЋ -->
+        <!-- Добавление студента вручную -->
         <div class="flex gap-2">
-          <input type="text" id="newStudentNameInput" placeholder="Р¤РРћ СЃС‚СѓРґРµРЅС‚Р° (РРІР°РЅРѕРІ РРІР°РЅ)..." class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
-          <button id="addStudentBtn" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition">
-            + Р”РѕР±Р°РІРёС‚СЊ
+          <input type="text" id="newStudentNameInput" placeholder="ФИО студента (Иванов И.И.)..." class="form-input flex-1">
+          <button id="addStudentBtn" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition">
+            + Добавить
           </button>
         </div>
 
-        <!-- Р—Р°РіСЂСѓР·РєР° СЃРїРёСЃРєРѕРј С‡РµСЂРµР· С‚РµРєСЃС‚ -->
+        <!-- Загрузка списком через текст -->
         <details class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-xs">
-          <summary class="font-medium text-slate-300 cursor-pointer hover:text-white">рџ“ќ Р’СЃС‚Р°РІРёС‚СЊ СЃРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ С‚РµРєСЃС‚РѕРј</summary>
+          <summary class="font-medium text-slate-300 cursor-pointer hover:text-white">📝 Вставить список студентов текстом</summary>
           <div class="mt-2 space-y-2">
-            <textarea id="bulkStudentsText" rows="4" placeholder="Р’СЃС‚Р°РІСЊС‚Рµ СЃРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ (РїРѕ РѕРґРЅРѕРјСѓ РЅР° СЃС‚СЂРѕРєСѓ)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500"></textarea>
-            <button id="saveBulkStudentsBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium">РЎРѕС…СЂР°РЅРёС‚СЊ СЃРїРёСЃРѕРє</button>
+            <textarea id="bulkStudentsText" rows="4" placeholder="Вставьте список студентов (каждый с новой строки)..." class="form-input custom-textarea"></textarea>
+            <button id="saveBulkStudentsBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium">Сохранить список</button>
           </div>
         </details>
 
-        <!-- Р—Р°РіСЂСѓР·РєР° С„Р°Р№Р»Р° СЃРѕ СЃС‚СѓРґРµРЅС‚Р°РјРё -->
-        <div class="bg-slate-950/60 border border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-4 text-center transition cursor-pointer" id="studentsDropZone">
-          <input type="file" id="studentsFileInput" accept=".xlsx,.xls,.txt,.csv" class="hidden">
-          <svg class="w-8 h-8 text-slate-400 mx-auto mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-          <p class="text-xs font-medium text-slate-200">Р—Р°РіСЂСѓР·РёС‚СЊ СЃС‚СѓРґРµРЅС‚РѕРІ РёР· С„Р°Р№Р»Р° (.xlsx, .txt, .csv)</p>
-          <p class="text-[11px] text-slate-400 mt-0.5">РќР°Р¶РјРёС‚Рµ РёР»Рё РїРµСЂРµС‚Р°С‰РёС‚Рµ С„Р°Р№Р» СЃРѕ СЃРїРёСЃРєРѕРј РіСЂСѓРїРїС‹</p>
+        <!-- Загрузка файла студентов -->
+        <div id="studentsDropZone" class="dropzone-box">
+          <input type="file" id="studentsFileInput" accept=".xlsx,.xls,.csv,.txt" class="hidden">
+          <p class="text-xs font-semibold text-white">Загрузить файл со студентами</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">.xlsx, .xls, .csv, .txt</p>
         </div>
 
-        <!-- РЎРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ С‚РµРєСѓС‰РµР№ РіСЂСѓРїРїС‹ -->
-        <div class="space-y-1.5">
-          <span class="text-xs font-semibold text-slate-300">РўРµРєСѓС‰РёР№ СЃРѕСЃС‚Р°РІ РіСЂСѓРїРїС‹:</span>
-          <div id="manageStudentsList" class="space-y-1 max-h-80 overflow-y-auto pr-1">
-            <!-- JS СЂРµРЅРґРµСЂРёС‚ СЃРїРёСЃРѕРє СЃС‚СѓРґРµРЅС‚РѕРІ -->
-          </div>
+        <!-- Список добавленных студентов -->
+        <div id="manageStudentsList" class="space-y-1.5">
+          <!-- Заполняется через JS -->
         </div>
       </div>
     </section>
 
-    <!-- Р’РљР›РђР”РљРђ 4: Р—РђР“Р РЈР—РљРђ Р РђРЎРџРРЎРђРќРРЇ EXCEL -->
+    <!-- ВКЛАДКА 4: ЗАГРУЗКА EXCEL -->
     <section id="tabUpload" class="space-y-4 hidden">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
         <div>
-          <h2 class="text-base font-bold text-white">рџ“Ґ Р—Р°РіСЂСѓР·РєР° С„Р°Р№Р»Р° СЂР°СЃРїРёСЃР°РЅРёСЏ</h2>
+          <h2 class="text-base font-bold text-white">📥 Загрузка файла расписания</h2>
           <p class="text-xs text-slate-400 mt-1">
-            РџРµСЂРµС‚Р°С‰РёС‚Рµ СЃСЋРґР° РЅРѕРІС‹Р№ С„Р°Р№Р» СЂР°СЃРїРёСЃР°РЅРёСЏ (<code class="text-blue-400">.xlsx</code> РёР»Рё <code class="text-blue-400">.xls</code>) СЃРѕ СЃС‚РµРЅРґР° РєРѕР»Р»РµРґР¶Р°. РџР°СЂСЃРµСЂ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РёР·РІР»РµС‡РµС‚ РІСЃРµ РїР°СЂС‹ РўСЂРёРїРѕР»СЊСЃРєРѕРіРѕ.
+            Загрузите сюда свежий файл расписания (<code class="text-blue-400">.xlsx</code> или <code class="text-blue-400">.xls</code>) от учебной части. Бот автоматически найдет все пары преподавателя.
           </p>
         </div>
 
-        <!-- Drag & Drop Р·РѕРЅР° -->
-        <div id="scheduleDropZone" class="border-2 border-dashed border-blue-600/50 hover:border-blue-500 bg-blue-950/10 hover:bg-blue-950/20 rounded-2xl p-8 text-center cursor-pointer transition">
+        <!-- Drag & Drop зона -->
+        <div id="scheduleDropZone" class="dropzone-box">
           <input type="file" id="scheduleFileInput" accept=".xlsx,.xls" class="hidden">
-          <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-12 h-12 mx-auto rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
-          <p class="text-sm font-semibold text-white">РќР°Р¶РјРёС‚Рµ РґР»СЏ РІС‹Р±РѕСЂР° С„Р°Р№Р»Р°</p>
-          <p class="text-xs text-slate-400 mt-1">РёР»Рё РїРµСЂРµС‚Р°С‰РёС‚Рµ Excel-С„Р°Р№Р» СЃСЋРґР°</p>
+          <p class="text-sm font-semibold text-white">Нажмите для выбора файла</p>
+          <p class="text-xs text-slate-400 mt-0.5">или перетащите Excel-файл сюда</p>
         </div>
 
-        <!-- РЎС‚Р°С‚СѓСЃ РїРѕСЃР»РµРґРЅРµР№ Р·Р°РіСЂСѓР·РєРё -->
+        <!-- Статус после загрузки -->
         <div id="uploadStatusBox" class="hidden p-3.5 rounded-xl border text-xs">
-          <!-- РЎС‚Р°С‚СѓСЃ JS -->
-        </div>
-
-        <div class="text-[11px] text-slate-400 space-y-1 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
-          <p class="font-medium text-slate-300">рџ’Ў РљР°Рє СЌС‚Рѕ СЂР°Р±РѕС‚Р°РµС‚:</p>
-          <p>вЂў РџР°СЂСЃРµСЂ РЅР°С…РѕРґРёС‚ РІСЃРµ Р»РёСЃС‚С‹ (СЃС‚Р°С†РёРѕРЅР°СЂ, Р·Р°РѕС‡РЅРѕРµ Рё РґСЂ.)</p>
-          <p>вЂў Р¤РёР»СЊС‚СЂСѓРµС‚ С‚РѕР»СЊРєРѕ РїР°СЂС‹ РїСЂРµРїРѕРґР°РІР°С‚РµР»СЏ <b>РўСЂРёРїРѕР»СЊСЃРєРёР№</b></p>
-          <p>вЂў РњРѕРјРµРЅС‚Р°Р»СЊРЅРѕ РѕР±РЅРѕРІР»СЏРµС‚ СЂР°СЃРїРёСЃР°РЅРёРµ РІ PWA Рё РІ Telegram-Р±РѕС‚Рµ</p>
+          <!-- Через JS -->
         </div>
       </div>
     </section>
 
-    <!-- Р’РљР›РђР”РљРђ 5: Р—Р’РћРќРљР -->
+    <!-- ВКЛАДКА 5: ЗВОНКИ -->
     <section id="tabBells" class="space-y-4 hidden">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-        <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <span>рџ”” Р Р°СЃРїРёСЃР°РЅРёРµ Р·РІРѕРЅРєРѕРІ</span>
-        </h2>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+        <div>
+          <h2 class="text-base font-bold text-white">⏰ Расписание звонков</h2>
+          <p class="text-xs text-slate-400 mt-1">Время начала и окончания учебных пар</p>
+        </div>
         <div id="bellsList" class="space-y-2">
-          <!-- Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ С‡РµСЂРµР· JS -->
+          <!-- Заполняется через JS -->
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- РќРР–РќРЇРЇ РџРђРќР•Р›Р¬ РќРђР’РР“РђР¦РР (TAB BAR) -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 py-2 px-3">
-    <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
-      <button data-tab="tabSchedule" class="tab-nav-btn flex flex-col items-center gap-1 text-blue-500 transition py-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        <span class="text-[10px] font-semibold">РџР°СЂС‹</span>
+  <!-- НИЖНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5">
+    <div class="max-w-2xl mx-auto grid grid-cols-5 gap-1">
+      <button data-tab="tabSchedule" class="tab-nav-btn text-blue-500">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span>Пары</span>
       </button>
 
-      <button data-tab="tabJournal" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-        <span class="text-[10px] font-medium">Р–СѓСЂРЅР°Р»</span>
+      <button data-tab="tabJournal" class="tab-nav-btn text-slate-400">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <span>Журнал</span>
       </button>
 
-      <button data-tab="tabStudents" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-        <span class="text-[10px] font-medium">РЎС‚СѓРґРµРЅС‚С‹</span>
+      <button data-tab="tabStudents" class="tab-nav-btn text-slate-400">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span>Студенты</span>
       </button>
 
-      <button data-tab="tabUpload" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-        <span class="text-[10px] font-medium">Excel</span>
+      <button data-tab="tabUpload" class="tab-nav-btn text-slate-400">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span>Excel</span>
       </button>
 
-      <button data-tab="tabBells" class="tab-nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition py-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-        <span class="text-[10px] font-medium">Р—РІРѕРЅРєРё</span>
+      <button data-tab="tabBells" class="tab-nav-btn text-slate-400">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span>Звонки</span>
       </button>
     </div>
   </nav>
+
   <script type="module" src="./app.js"></script>
 </body>
 </html>

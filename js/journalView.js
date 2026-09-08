@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // JOURNAL VIEW & ATTENDANCE LOGIC
 // ==========================================================================
 import { state } from './state.js';
@@ -90,22 +90,39 @@ export function updateJournalStudents() {
   });
 }
 
-export function autoFillTopicForGroup(group) {
+export function autoFillTopicForGroup(group, lessonNum) {
+  if (!group) {
+    const gSel = document.getElementById('journalGroupSelect');
+    if (gSel) group = gSel.value;
+  }
   if (!group) return;
+
   const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
   let found = null;
   for (const prog of state.curriculumPrograms) {
     for (const g of prog.groups || []) {
-      if (g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '') === clean) {
+      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+      if (gClean === clean || clean.includes(gClean) || gClean.includes(clean)) {
         found = prog;
         break;
       }
     }
+    if (found) break;
   }
 
   if (found && found.lessons && found.lessons.length > 0) {
     const input = document.getElementById('journalTopicInput');
-    if (input) input.value = found.lessons[0].text;
+    if (!input) return;
+
+    let targetTopic = found.lessons[0].text;
+    if (lessonNum !== undefined && lessonNum !== null) {
+      const num = Number(lessonNum);
+      const matchLesson = found.lessons.find((l) => l.number === num);
+      if (matchLesson) targetTopic = matchLesson.text;
+      else if (found.lessons[num - 1]) targetTopic = found.lessons[num - 1].text;
+    }
+
+    input.value = targetTopic;
   }
 }
 
@@ -168,9 +185,30 @@ export function renderJournalHistory() {
 }
 
 export function setupJournalListeners() {
-  document.getElementById('journalGroupSelect')?.addEventListener('change', () => {
+  const groupSel = document.getElementById('journalGroupSelect');
+  const lessonSel = document.getElementById('journalLessonNumSelect');
+  const topicInput = document.getElementById('journalTopicInput');
+
+  groupSel?.addEventListener('change', () => {
     updateJournalStudents();
-    autoFillTopicForGroup(document.getElementById('journalGroupSelect').value);
+    autoFillTopicForGroup(groupSel.value, lessonSel?.value);
+  });
+
+  lessonSel?.addEventListener('change', () => {
+    autoFillTopicForGroup(groupSel?.value, lessonSel.value);
+  });
+
+  // Автозаполнение темы при клике или фокусе, если поле пустое
+  topicInput?.addEventListener('focus', () => {
+    if (!topicInput.value || topicInput.value.trim() === '') {
+      autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
+    }
+  });
+
+  topicInput?.addEventListener('click', () => {
+    if (!topicInput.value || topicInput.value.trim() === '') {
+      autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
+    }
   });
 
   document.getElementById('todayDateBtn')?.addEventListener('click', () => {
@@ -207,15 +245,14 @@ export function setupJournalListeners() {
   });
 
   document.getElementById('autoFillTopicBtn')?.addEventListener('click', () => {
-    const group = document.getElementById('journalGroupSelect')?.value;
-    if (group) autoFillTopicForGroup(group);
+    autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
   });
 
   document.getElementById('saveJournalBtn')?.addEventListener('click', async () => {
-    const group = document.getElementById('journalGroupSelect')?.value;
-    const lessonNumber = Number(document.getElementById('journalLessonNumSelect')?.value || 1);
+    const group = groupSel?.value;
+    const lessonNumber = Number(lessonSel?.value || 1);
     const date = document.getElementById('journalDateInput')?.value || new Date().toISOString().split('T')[0];
-    const topic = document.getElementById('journalTopicInput')?.value || 'Практическое занятие';
+    const topic = topicInput?.value || 'Практическое занятие';
     const notes = document.getElementById('journalNotesInput')?.value || '';
 
     const attendance = {};
