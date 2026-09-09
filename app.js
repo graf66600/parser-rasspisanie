@@ -6,11 +6,12 @@ import { renderSchedule, setupDayFilterButtons, renderBells } from './js/schedul
 import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
 import { setupUploadListeners } from './js/uploadView.js';
+import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js';
 
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=9').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=11').catch(() => {});
   });
 }
 
@@ -113,6 +114,11 @@ async function initApp() {
   // 2. Инициализация обработчиков UI
   setupDayFilterButtons(() => renderSchedule(onOpenLessonInJournal));
   setupJournalListeners();
+  setupSummaryListeners();
+  document.getElementById('openSummaryModalBtn')?.addEventListener('click', () => {
+    const currentGroup = document.getElementById('journalGroupSelect')?.value || '51ф';
+    openJournalSummary(currentGroup);
+  });
   setupStudentsListeners(updateJournalStudents);
   setupUploadListeners(async () => {
     await loadSchedule(() => renderSchedule(onOpenLessonInJournal));

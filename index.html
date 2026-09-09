@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="./css/attendance.css">
   <link rel="stylesheet" href="./css/history.css">
   <link rel="stylesheet" href="./css/modals.css">
+  <link rel="stylesheet" href="./css/journalSummary.css">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <link rel="preconnect" href="https://telegram.org">
   <script defer src="https://cdn.tailwindcss.com"></script>
@@ -94,6 +95,12 @@
 
         <!-- Виджет-счётчик прогресса КТП (лекции, практики, остаток) -->
         <div id="journalStatsWidget" class="journal-stats-container"></div>
+
+        <!-- Кнопка выгрузки и сводной ведомости группы -->
+        <button type="button" id="openSummaryModalBtn" class="open-summary-btn">
+          <span>📊</span>
+          <span>Сводная ведомость и выгрузка (PDF / Excel)</span>
+        </button>
 
         <!-- Выбор группы, даты и номера пары (адаптивная мобильная компоновка) -->
         <div class="journal-meta-box">
@@ -283,6 +290,40 @@
       </button>
     </div>
   </nav>
+
+  <!-- МОДАЛЬНОЕ ОКНО СВОДНОЙ ВЕДОМОСТИ ГРУППЫ -->
+  <div id="journalSummaryModal" class="summary-modal-backdrop hidden">
+    <div class="summary-modal-window">
+      <div class="summary-modal-header">
+        <div>
+          <div class="summary-header-title">
+            <span>📊</span>
+            <span>Сводная ведомость посещаемости и успеваемости</span>
+          </div>
+          <div class="summary-header-sub">
+            Предмет: Информатика • Преподаватель: Трипольский
+          </div>
+        </div>
+        <div class="summary-modal-actions">
+          <select id="summaryGroupSelect" class="form-input custom-select text-xs py-1 px-2.5" style="width: auto;">
+            <!-- Опции групп через JS -->
+          </select>
+          <button type="button" id="printSummaryBtn" class="summary-btn summary-btn-print" title="Печать официальной ведомости или сохранение в PDF">
+            <span>📄 Печать / PDF</span>
+          </button>
+          <button type="button" id="exportCsvSummaryBtn" class="summary-btn summary-btn-csv" title="Скачать таблицу для открытия в Excel">
+            <span>📥 Excel (.csv)</span>
+          </button>
+          <button type="button" id="closeSummaryModalBtn" class="summary-btn summary-btn-close" title="Закрыть">
+            <span>✕</span>
+          </button>
+        </div>
+      </div>
+      <div id="summaryTableContainer" class="flex-1 flex flex-col min-h-0">
+        <!-- Таблица ведомости через JS -->
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./app.js"></script>
 </body>
