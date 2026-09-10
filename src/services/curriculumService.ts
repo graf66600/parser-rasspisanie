@@ -85,9 +85,20 @@ export class CurriculumService {
     if (!groupName) return null;
     const cleanGroup = this.normalizeGroup(groupName);
 
+    // 1. Точное совпадение (например, '21фм' должно найти именно '21фм', а не '21ф')
     for (const prog of this.programs) {
       for (const g of prog.groups) {
-        if (this.normalizeGroup(g) === cleanGroup || cleanGroup.includes(this.normalizeGroup(g))) {
+        if (this.normalizeGroup(g) === cleanGroup) {
+          return prog;
+        }
+      }
+    }
+
+    // 2. Нестрогое совпадение (например, 'Группа 31фм' -> '31фм')
+    for (const prog of this.programs) {
+      for (const g of prog.groups) {
+        const normG = this.normalizeGroup(g);
+        if (cleanGroup.includes(normG) || normG.includes(cleanGroup)) {
           return prog;
         }
       }
