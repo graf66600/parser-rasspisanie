@@ -78,7 +78,7 @@ export class SchedulerService {
           const reminderKey = `lesson_${userId}_${lesson.id}_${todayDateStr}_${lesson.startTime}`;
           if (!this.sentNotifications.has(reminderKey)) {
             this.sentNotifications.add(reminderKey);
-            await this.sendLessonReminder(chatId, lesson, settings.remindMinutesBefore);
+            await this.sendLessonReminder(chatId, lesson, settings.remindMinutesBefore, lessons);
           }
         }
       }
@@ -104,14 +104,17 @@ export class SchedulerService {
   private async sendLessonReminder(
     chatId: number,
     lesson: Lesson,
-    minutesBefore: number
+    minutesBefore: number,
+    allLessons: Lesson[] = []
   ): Promise<void> {
     const groupText = lesson.group ? `\n👥 *Группа:* ${lesson.group}` : '';
     const roomText = lesson.classroom ? `\n🚪 *Аудитория:* ${lesson.classroom}` : '';
 
-    // Получаем тему к этой паре из рабочей программы группы
-    const topicInfo = lesson.group ? this.curriculum.getCurrentTopic(lesson.group) : null;
-    const topicText = topicInfo ? `\n📝 *Тема занятия:* _${topicInfo.topic}_` : '';
+    // Получаем тему к этой паре из рабочей программы группы с учетом хронологии расписания
+    const topicInfo = lesson.group
+      ? this.curriculum.getTopicForScheduledLesson(lesson.group, lesson.lessonNumber, lesson.dayOfWeek, allLessons)
+      : null;
+    const topicText = topicInfo ? `\n📝 *Тема #${topicInfo.index}:* _${topicInfo.topic}_` : '';
 
     const text =
       `🔔 *Напоминание о предстоящей паре!*\n\n` +
@@ -158,8 +161,10 @@ export class SchedulerService {
     for (const l of todayLessons) {
       const groupText = l.group ? ` | Группа: ${l.group}` : '';
       const roomText = l.classroom ? ` | Каб: ${l.classroom}` : '';
-      const topicInfo = l.group ? this.curriculum.getCurrentTopic(l.group) : null;
-      const topicText = topicInfo ? `\n   📝 _Тема: ${topicInfo.topic}_` : '';
+      const topicInfo = l.group
+        ? this.curriculum.getTopicForScheduledLesson(l.group, l.lessonNumber, l.dayOfWeek, allLessons)
+        : null;
+      const topicText = topicInfo ? `\n   📝 _Тема #${topicInfo.index}: ${topicInfo.topic}_` : '';
 
       text += `🔹 *${l.lessonNumber} пара* (${l.startTime} – ${l.endTime})\n`;
       text += `   ${l.subject}${groupText}${roomText}${topicText}\n\n`;

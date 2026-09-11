@@ -2,6 +2,17 @@
 // SCHEDULE VIEW & BELLS RENDERING
 // ==========================================================================
 import { DAY_NAMES, state } from './state.js';
+import { getRecommendedLesson } from './topicHelper.js';
+
+function getDateForDayOfWeek(dayOfWeek) {
+  const now = new Date();
+  const currentJsDay = now.getDay();
+  const currentDay = currentJsDay === 0 ? 7 : currentJsDay;
+  const diff = dayOfWeek - currentDay;
+  const d = new Date(now);
+  d.setDate(now.getDate() + diff);
+  return d.toISOString().split('T')[0];
+}
 
 function formatLessonsCount(count) {
   if (count === 0) return '0 пар';
@@ -77,6 +88,20 @@ export function renderSchedule(onOpenJournal) {
       : '';
 
     const groupText = lesson.group ? `Гр. ${lesson.group}` : '';
+    const lessonDate = getDateForDayOfWeek(lesson.dayOfWeek);
+    const rec = lesson.group ? getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate) : null;
+    const isTheory = rec?.type === 'theory' || (rec?.text && (rec.text.toLowerCase().includes('лекци') || rec.text.toLowerCase().includes('теори')));
+
+    const topicPreview = rec?.text ? `
+      <div class="lesson-topic-preview">
+        <div class="lesson-topic-meta">
+          <span class="topic-pill ${isTheory ? 'pill-theory' : 'pill-practice'}">
+            #${rec.number} ${isTheory ? 'Лекция' : 'Практика'}
+          </span>
+        </div>
+        <p class="lesson-topic-text">${rec.text}</p>
+      </div>
+    ` : '';
 
     card.innerHTML = `
       <div class="lesson-card-header">
@@ -94,6 +119,8 @@ export function renderSchedule(onOpenJournal) {
         ${groupText ? `<span class="lesson-group-badge">${groupText}</span>` : ''}
       </div>
 
+      ${topicPreview}
+
       <div class="lesson-card-footer">
         <div class="lesson-classroom">
           <span class="classroom-icon">📍</span>
@@ -102,6 +129,7 @@ export function renderSchedule(onOpenJournal) {
         <button class="open-journal-btn"
           data-group="${lesson.group || ''}"
           data-lesson="${lesson.lessonNumber}"
+          data-date="${lessonDate}"
           title="Открыть эту пару в журнале">
           <span>📝 В журнал</span>
         </button>
@@ -115,8 +143,9 @@ export function renderSchedule(onOpenJournal) {
     btn.addEventListener('click', () => {
       const group = btn.getAttribute('data-group');
       const lessonNum = btn.getAttribute('data-lesson');
+      const date = btn.getAttribute('data-date');
       if (typeof onOpenJournal === 'function') {
-        onOpenJournal(group, lessonNum);
+        onOpenJournal(group, lessonNum, date);
       }
     });
   });
