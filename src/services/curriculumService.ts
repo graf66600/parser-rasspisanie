@@ -143,6 +143,48 @@ export class CurriculumService {
   }
 
   /**
+   * Получить тему конкретной пары из расписания с учетом хронологии
+   */
+  public getTopicForScheduledLesson(
+    groupName: string,
+    lessonNumber: number,
+    dayOfWeek: number,
+    allLessons: Array<{ group?: string; dayOfWeek: number; lessonNumber: number }> = []
+  ): { topic: string; index: number; total: number; lesson?: CurriculumLesson } | null {
+    const program = this.findProgramForGroup(groupName);
+    if (!program || program.lessons.length === 0) return null;
+
+    const cleanGroup = this.normalizeGroup(groupName);
+
+    const groupWeekly = allLessons
+      .filter((l) => l.group && this.normalizeGroup(l.group) === cleanGroup)
+      .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.lessonNumber - b.lessonNumber);
+
+    let scheduleIndex = 0;
+    const posInWeek = groupWeekly.findIndex(
+      (l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) === Number(lessonNumber)
+    );
+
+    if (posInWeek >= 0) {
+      scheduleIndex = posInWeek;
+    } else {
+      const priorDays = groupWeekly.filter((l) => l.dayOfWeek < dayOfWeek).length;
+      const priorToday = groupWeekly.filter((l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) < Number(lessonNumber)).length;
+      scheduleIndex = priorDays + priorToday;
+    }
+
+    const validIndex = scheduleIndex % program.lessons.length;
+    const lesson = program.lessons[validIndex] || program.lessons[0];
+
+    return {
+      topic: lesson ? lesson.text : '',
+      index: lesson?.number || validIndex + 1,
+      total: program.lessons.length,
+      lesson,
+    };
+  }
+
+  /**
    * Переключить группу на следующую тему (прогресс вперед)
    */
   public advanceTopic(groupName: string, step: number = 1): number {

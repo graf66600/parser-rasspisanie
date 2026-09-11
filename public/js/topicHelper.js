@@ -30,13 +30,14 @@ export function findProgramForGroup(group) {
 export function getRecommendedLesson(group, bellLessonNum, date) {
   const prog = findProgramForGroup(group);
   if (!prog || !prog.lessons || prog.lessons.length === 0) {
-    return { text: 'Практическое занятие', number: 1 };
+    return { text: 'Практическое занятие', number: 1, type: 'practice' };
   }
 
-  // 1. Если для этой пары уже сохранена запись в журнале — загружаем её тему
   const targetDate = date || new Date().toISOString().split('T')[0];
   const bellNum = Number(bellLessonNum || 1);
-  const existing = state.journalEntries.find(
+
+  // 1. Если для этой пары уже сохранена запись в журнале — загружаем её тему
+  const existing = state.journalEntries?.find(
     (e) => e.group === group && e.date === targetDate && Number(e.lessonNumber) === bellNum
   );
   if (existing && existing.topic) {
@@ -53,39 +54,53 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     };
   }
 
-  // 2. Рассчитываем порядковый номер пары внутри текущего дня
-  let orderInDay = 0;
-  if (state.schedule?.lessons) {
-    const dateObj = new Date(targetDate);
-    const jsDay = dateObj.getDay();
-    const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-
-    const groupLessonsToday = state.schedule.lessons
-      .filter((l) => l.group === group && l.dayOfWeek === dayOfWeek)
-      .sort((a, b) => a.lessonNumber - b.lessonNumber);
-
-    const pos = groupLessonsToday.findIndex((l) => Number(l.lessonNumber) === bellNum);
-    if (pos >= 0) {
-      orderInDay = pos;
-    }
-  }
-
-  // 3. Считаем, сколько занятий у этой группы уже было проведено ранее
-  const pastEntries = state.journalEntries.filter((e) => {
-    if (!e.group || !group) return false;
-    const cleanG = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+  // 2. Считаем, сколько занятий у этой группы уже сохранено в журнале до этой даты
+  const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+  const pastEntries = (state.journalEntries || []).filter((e) => {
+    if (!e.group || !cleanG) return false;
     const cleanEG = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
     const match = cleanEG === cleanG || cleanEG.includes(cleanG) || cleanG.includes(cleanEG);
     return match && e.date < targetDate;
   });
   const distinctPast = new Set(pastEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
 
-  const targetIndex = distinctPast + orderInDay;
-  const lesson = prog.lessons[targetIndex] || prog.lessons[prog.lessons.length - 1] || prog.lessons[0];
+  // 3. Определяем хронологический номер пары в расписании (недельном)
+  let scheduleIndex = 0;
+  if (state.schedule?.lessons?.length) {
+    const dateObj = new Date(targetDate);
+    const jsDay = dateObj.getDay();
+    const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+    // Все пары группы в расписании, отсортированные по дням недели и времени
+    const groupWeeklyLessons = state.schedule.lessons
+      .filter((l) => {
+        if (!l.group) return false;
+        const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+        return lg === cleanG || lg.includes(cleanG) || cleanG.includes(lg);
+      })
+      .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.lessonNumber - b.lessonNumber);
+
+    const posInWeek = groupWeeklyLessons.findIndex(
+      (l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) === bellNum
+    );
+
+    if (posInWeek >= 0) {
+      scheduleIndex = posInWeek;
+    } else {
+      const priorToday = groupWeeklyLessons.filter((l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) < bellNum).length;
+      const priorDays = groupWeeklyLessons.filter((l) => l.dayOfWeek < dayOfWeek).length;
+      scheduleIndex = priorDays + priorToday;
+    }
+  }
+
+  // Если есть сохраненные записи, отталкиваемся от них; иначе от хронологии расписания
+  const targetIndex = distinctPast > 0 ? distinctPast : scheduleIndex;
+  const validIndex = targetIndex % prog.lessons.length;
+  const lesson = prog.lessons[validIndex] || prog.lessons[0];
 
   return {
     text: lesson.text || lesson.topic,
-    number: lesson.number || targetIndex + 1,
+    number: lesson.number || validIndex + 1,
     lessonObj: lesson,
     homework: lesson.homework || '',
     type: lesson.type || 'theory',

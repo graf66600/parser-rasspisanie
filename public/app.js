@@ -7,11 +7,12 @@ import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setup
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
 import { setupUploadListeners } from './js/uploadView.js';
 import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js';
+import { setupNotifications } from './js/notifications.js';
 
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=11').catch(() => {});
+    navigator.serviceWorker.register('./sw.js?v=13').catch(() => {});
   });
 }
 
@@ -86,14 +87,14 @@ navButtons.forEach((btn) => {
 });
 
 // Переход в журнал из расписания
-function onOpenLessonInJournal(group, lessonNum) {
+function onOpenLessonInJournal(group, lessonNum, date) {
   const gSel = document.getElementById('journalGroupSelect');
   const lSel = document.getElementById('journalLessonNumSelect');
   if (gSel && group) gSel.value = group;
   if (lSel && lessonNum) lSel.value = String(lessonNum);
 
   const dateInput = document.getElementById('journalDateInput');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  if (dateInput) dateInput.value = date || new Date().toISOString().split('T')[0];
 
   updateJournalStudents();
   autoFillTopicForGroup(group, lessonNum);
@@ -113,6 +114,7 @@ async function initApp() {
 
   // 2. Инициализация обработчиков UI
   setupDayFilterButtons(() => renderSchedule(onOpenLessonInJournal));
+  setupNotifications();
   setupJournalListeners();
   setupSummaryListeners();
   document.getElementById('openSummaryModalBtn')?.addEventListener('click', () => {

@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./css/base.css">
   <link rel="stylesheet" href="./css/schedule.css">
+  <link rel="stylesheet" href="./css/notifications.css">
   <link rel="stylesheet" href="./css/journal.css">
   <link rel="stylesheet" href="./css/journalStats.css">
   <link rel="stylesheet" href="./css/attendance.css">
@@ -46,10 +47,17 @@
         </div>
       </div>
 
-      <button id="installPwaBtn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>Установить</span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="toggleNotificationsBtn" class="notification-toggle-btn btn-notif-inactive" title="Включить уведомления о парах">
+          <span>🔔</span>
+          <span class="hidden sm:inline">Уведомления</span>
+        </button>
+
+        <button id="installPwaBtn" class="hidden text-xs font-semibold px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Установить</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -67,6 +75,22 @@
         <button data-day="4" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Чт</button>
         <button data-day="5" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Пт</button>
         <button data-day="6" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Сб</button>
+      </div>
+
+      <!-- Панель уведомлений и напоминаний -->
+      <div id="scheduleNotifBanner" class="schedule-notif-bar">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="text-base flex-shrink-0">🔔</span>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white leading-tight">Уведомления о парах</div>
+            <p class="text-[11px] text-slate-400 truncate" id="notifStatusText">Напоминание за 10 мин до начала с темой пары</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <button type="button" id="testNotificationBtn" class="notif-action-btn" title="Проверить показ уведомления">
+            🧪 Тест
+          </button>
+        </div>
       </div>
 
       <div class="flex items-center justify-between px-1">

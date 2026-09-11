@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v12';
+const CACHE_NAME = 'schedule-pwa-v13';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   './styles.css',
   './css/base.css',
   './css/schedule.css',
+  './css/notifications.css',
   './css/journal.css',
   './css/journalStats.css',
   './css/attendance.css',
@@ -16,6 +17,7 @@ const STATIC_ASSETS = [
   './app.js',
   './js/state.js',
   './js/scheduleView.js',
+  './js/notifications.js',
   './js/journalView.js',
   './js/journalHistory.js',
   './js/journalSummaryView.js',
@@ -96,6 +98,18 @@ self.addEventListener('fetch', (event) => {
         .catch(() => cachedResponse);
 
       return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('./');
     })
   );
 });
