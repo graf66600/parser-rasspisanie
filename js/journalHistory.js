@@ -36,6 +36,20 @@ export async function loadJournalHistory() {
       e.type = 'theory';
       modified = true;
     }
+    const gClean = (e.group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
+    if (e.date === '2026-09-14' && gClean === '51ф') {
+      if (Number(e.lessonNumber) === 3 && (e.topic?.includes('Цифровизация') || e.type !== 'practice')) {
+        e.topic = 'Практическое занятие №1: АРМ фельдшера ФАП: первичный прием, идентификация пациента через ТФОМС, оформление прикрепления.';
+        e.courseLessonNumber = 6;
+        e.type = 'practice';
+        modified = true;
+      } else if (Number(e.lessonNumber) === 4 && (e.topic?.includes('Электронная') || e.type !== 'practice')) {
+        e.topic = 'Практическое занятие №2: Проведение диспансерного осмотра в МИС, формирование электронных направлений (форма № 057/у-04) в ЛИС и PACS.';
+        e.courseLessonNumber = 7;
+        e.type = 'practice';
+        modified = true;
+      }
+    }
   });
 
   if (modified || local.length !== JSON.parse(localStorage.getItem('pwa_journal') || '[]').length) {
@@ -59,7 +73,8 @@ export async function loadJournalHistory() {
 
     if (!freshEntries) {
       try {
-        const res = await fetch('./data/journal.json');
+        let res = await fetch('./data/journal.json?v=v15');
+        if (!res.ok) res = await fetch('./public/data/journal.json?v=v15');
         if (res.ok) {
           const list = await res.json();
           if (Array.isArray(list)) freshEntries = list;

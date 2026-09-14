@@ -1,7 +1,7 @@
 // ==========================================================================
 // MAIN APPLICATION ENTRY POINT
 // ==========================================================================
-import { state, initLocalState, loadSchedule, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus } from './js/state.js';
+import { state, initLocalState, loadSchedule, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION } from './js/state.js';
 import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js';
 import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
@@ -12,7 +12,7 @@ import { setupNotifications } from './js/notifications.js';
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=14').catch(() => {});
+    navigator.serviceWorker.register(`./sw.js?v=${PWA_VERSION}`).catch(() => {});
   });
 }
 
@@ -94,7 +94,7 @@ function onOpenLessonInJournal(group, lessonNum, date) {
   if (lSel && lessonNum) lSel.value = String(lessonNum);
 
   const dateInput = document.getElementById('journalDateInput');
-  if (dateInput) dateInput.value = date || new Date().toISOString().split('T')[0];
+  if (dateInput) dateInput.value = date || formatLocalDate();
 
   updateJournalStudents();
   autoFillTopicForGroup(group, lessonNum);
@@ -104,13 +104,16 @@ function onOpenLessonInJournal(group, lessonNum, date) {
 // Запуск приложения
 async function initApp() {
   const dateInput = document.getElementById('journalDateInput');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  if (dateInput) dateInput.value = formatLocalDate();
 
   // 1. Мгновенная инициализация из localStorage (0мс, без блокировки интерфейса)
   initLocalState();
   updateHeaderStatus();
   renderSchedule(onOpenLessonInJournal);
   populateGroupSelects(updateJournalStudents);
+
+  // Сразу загружаем и синхронизируем журнал, чтобы темы и типы были точными
+  loadJournalHistory();
 
   // 2. Инициализация обработчиков UI
   setupDayFilterButtons(() => renderSchedule(onOpenLessonInJournal));
@@ -133,6 +136,7 @@ async function initApp() {
     loadSchedule(() => renderSchedule(onOpenLessonInJournal)),
     loadStudents(() => populateGroupSelects(updateJournalStudents)),
     loadCurriculum(() => {
+      renderSchedule(onOpenLessonInJournal);
       const g = document.getElementById('journalGroupSelect')?.value;
       const l = document.getElementById('journalLessonNumSelect')?.value;
       const topicInput = document.getElementById('journalTopicInput');
@@ -142,6 +146,7 @@ async function initApp() {
     }),
   ]).then(() => {
     populateGroupSelects(updateJournalStudents);
+    renderSchedule(onOpenLessonInJournal);
   });
 }
 

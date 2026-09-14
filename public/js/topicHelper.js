@@ -1,16 +1,16 @@
 // ==========================================================================
 // TOPIC HELPER: AUTO-FILL & SUGGESTIONS FROM CURRICULUM
 // ==========================================================================
-import { state } from './state.js';
+import { state, formatLocalDate } from './state.js';
 
 export function findProgramForGroup(group) {
   if (!group || !state.curriculumPrograms) return null;
-  const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+  const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
 
   // 1. Точное совпадение (например, '21фм' должно найти именно '21фм', а не '21ф')
   for (const prog of state.curriculumPrograms) {
     for (const g of prog.groups || []) {
-      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
       if (gClean === clean) return prog;
     }
   }
@@ -18,7 +18,7 @@ export function findProgramForGroup(group) {
   // 2. Нестрогое совпадение (например, '11м/с' -> '11мс')
   for (const prog of state.curriculumPrograms) {
     for (const g of prog.groups || []) {
-      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
       if (clean.includes(gClean) || gClean.includes(clean)) {
         return prog;
       }
@@ -33,34 +33,43 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     return { text: 'Практическое занятие', number: 1, type: 'practice' };
   }
 
-  const targetDate = date || new Date().toISOString().split('T')[0];
+  const targetDate = date || formatLocalDate();
   const bellNum = Number(bellLessonNum || 1);
+  const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
 
   // 1. Если для этой пары уже сохранена запись в журнале — загружаем её тему
-  const existing = state.journalEntries?.find(
-    (e) => e.group === group && e.date === targetDate && Number(e.lessonNumber) === bellNum
-  );
+  const existing = state.journalEntries?.find((e) => {
+    if (!e.group || !e.date || Number(e.lessonNumber) !== bellNum) return false;
+    const eg = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
+    return eg === cleanG && e.date === targetDate;
+  });
+
   if (existing && existing.topic) {
-    let existingType = existing.type;
-    if (targetDate < '2026-09-14') {
-      existingType = 'theory';
-    } else if (!existingType) {
-      const lower = existing.topic.toLowerCase();
-      existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
+    // Если на 14.09 для 51ф была ошибочно записана старая лекция №1/№2 — игнорируем устаревшую тему
+    const isOldWrongLectureOn14 = targetDate === '2026-09-14' && cleanG === '51ф' &&
+      (existing.topic.includes('Цифровизация') || existing.topic.includes('Электронная'));
+
+    if (!isOldWrongLectureOn14) {
+      let existingType = existing.type;
+      if (targetDate < '2026-09-14') {
+        existingType = 'theory';
+      } else if (!existingType) {
+        const lower = existing.topic.toLowerCase();
+        existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
+      }
+      return {
+        text: existing.topic,
+        number: existing.courseLessonNumber || bellNum,
+        homework: existing.notes || '',
+        type: existingType,
+      };
     }
-    return {
-      text: existing.topic,
-      number: existing.courseLessonNumber || bellNum,
-      homework: existing.notes || '',
-      type: existingType,
-    };
   }
 
   // 2. Считаем, сколько занятий у этой группы уже сохранено в журнале до этой даты
-  const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
   const pastEntries = (state.journalEntries || []).filter((e) => {
     if (!e.group || !cleanG) return false;
-    const cleanEG = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+    const cleanEG = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
     const match = cleanEG === cleanG || cleanEG.includes(cleanG) || cleanG.includes(cleanEG);
     return match && e.date < targetDate;
   });
@@ -70,7 +79,8 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   let priorToday = 0;
   let scheduleIndex = 0;
   if (state.schedule?.lessons?.length) {
-    const dateObj = new Date(targetDate);
+    const [y, m, d] = targetDate.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
     const jsDay = dateObj.getDay();
     const dayOfWeek = jsDay === 0 ? 7 : jsDay;
 
@@ -78,7 +88,7 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     const groupWeeklyLessons = state.schedule.lessons
       .filter((l) => {
         if (!l.group) return false;
-        const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
+        const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
         return lg === cleanG || lg.includes(cleanG) || cleanG.includes(lg);
       })
       .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.lessonNumber - b.lessonNumber);

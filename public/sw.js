@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v14';
+const CACHE_NAME = 'schedule-pwa-v15';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -35,8 +35,14 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).catch((err) => {
-      console.warn('Частичная ошибка кэширования при установке:', err);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const asset of STATIC_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn('Не удалось закэшировать ресурс при установке:', asset);
+        }
+      }
     })
   );
   self.skipWaiting();
@@ -85,7 +91,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-While-Revalidate for other static assets
+  // Network-First для данных (JSON) и логики (JS), чтобы обновления отображались мгновенно
+  const isDynamicAsset = event.request.url.includes('/data/') || event.request.url.endsWith('.js') || event.request.url.includes('.js?');
+  if (isDynamicAsset) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for other static assets (CSS, SVG, icons)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
