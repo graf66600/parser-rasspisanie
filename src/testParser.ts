@@ -245,7 +245,7 @@ const journal = JournalService.getInstance();
 const testDate = new Date().toISOString().split('T')[0];
 
 const newEntry = journal.recordLesson({
-  group: '51ф',
+  group: 'тест99ф',
   subject: 'МДК.06.01 Информационное обеспечение профессиональной деятельности',
   lessonNumber: 1,
   startTime: '08:30',
@@ -258,16 +258,16 @@ const newEntry = journal.recordLesson({
 });
 
 console.log(`- Создана запись в журнале: ID=${newEntry.id}, Дата=${newEntry.dateFormatted}, Группа=${newEntry.group}`);
-if (!newEntry.id || newEntry.group !== '51ф' || !newEntry.dateFormatted) {
+if (!newEntry.id || newEntry.group !== 'тест99ф' || !newEntry.dateFormatted) {
   console.error('❌ ОШИБКА: Запись в журнал создана некорректно');
   process.exit(1);
 }
 
-const history51 = journal.getGroupHistory('51ф');
-console.log(`- Количество проведенных пар для группы 51ф: ${history51.length}`);
-const found = history51.find((e) => e.id === newEntry.id);
+const historyTest = journal.getGroupHistory('тест99ф');
+console.log(`- Количество проведенных пар для тестовой группы: ${historyTest.length}`);
+const found = historyTest.find((e) => e.id === newEntry.id);
 if (!found) {
-  console.error('❌ ОШИБКА: Запись не найдена в истории группы 51ф');
+  console.error('❌ ОШИБКА: Запись не найдена в истории тестовой группы');
   process.exit(1);
 }
 
