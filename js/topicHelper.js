@@ -44,7 +44,8 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   // Пара 5 (14:30-15:50): Практическое занятие №2 (1-я подгруппа)
   if (targetDate === '2026-09-14' && cleanG === '51ф') {
     if (bellNum === 3) {
-      const l = prog.lessons.find((x) => x.type === 'theory' && x.number === 11) || prog.lessons[10] || prog.lessons[0];
+      const theories = prog.lessons.filter((x) => x.type === 'theory');
+      const l = theories[5] || theories[0] || prog.lessons[0];
       return {
         text: l.text || l.topic,
         number: 6,
@@ -54,7 +55,8 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
       };
     }
     if (bellNum === 4) {
-      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №1')) || prog.lessons[5];
+      const practices = prog.lessons.filter((x) => x.type === 'practice');
+      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №1')) || practices[0] || prog.lessons[0];
       return {
         text: l.text || l.topic,
         number: 1,
@@ -64,7 +66,8 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
       };
     }
     if (bellNum === 5) {
-      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №2')) || prog.lessons[6];
+      const practices = prog.lessons.filter((x) => x.type === 'practice');
+      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №2')) || practices[1] || prog.lessons[0];
       return {
         text: l.text || l.topic,
         number: 2,

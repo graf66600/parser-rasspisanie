@@ -165,8 +165,18 @@ export class JournalService {
         return a.lessonNumber - b.lessonNumber;
       });
 
-    groupEntries.forEach((entry, idx) => {
-      entry.courseLessonNumber = idx + 1;
+    let theoryCount = 0;
+    let practiceCount = 0;
+    groupEntries.forEach((entry) => {
+      if (entry.type === 'practice') {
+        practiceCount++;
+        const match = (entry.topic || '').match(/№\s*(\d+)/i);
+        entry.courseLessonNumber = match ? parseInt(match[1], 10) : practiceCount;
+      } else {
+        theoryCount++;
+        const match = (entry.topic || '').match(/лекция\s*№\s*(\d+)/i);
+        entry.courseLessonNumber = match ? parseInt(match[1], 10) : theoryCount;
+      }
     });
   }
 
@@ -205,8 +215,12 @@ export class JournalService {
    */
   public deleteEntry(id: string): boolean {
     const initialLen = this.entries.length;
+    const target = this.entries.find((e) => e.id === id);
     this.entries = this.entries.filter((e) => e.id !== id);
     if (this.entries.length !== initialLen) {
+      if (target) {
+        this.refreshCourseLessonNumbers(target.group);
+      }
       this.saveJournal();
       return true;
     }
