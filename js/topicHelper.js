@@ -42,7 +42,9 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   );
   if (existing && existing.topic) {
     let existingType = existing.type;
-    if (!existingType) {
+    if (targetDate < '2026-09-14') {
+      existingType = 'theory';
+    } else if (!existingType) {
       const lower = existing.topic.toLowerCase();
       existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
     }
@@ -65,6 +67,7 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   const distinctPast = new Set(pastEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
 
   // 3. Определяем хронологический номер пары в расписании (недельном)
+  let priorToday = 0;
   let scheduleIndex = 0;
   if (state.schedule?.lessons?.length) {
     const dateObj = new Date(targetDate);
@@ -80,6 +83,10 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
       })
       .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.lessonNumber - b.lessonNumber);
 
+    priorToday = groupWeeklyLessons.filter(
+      (l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) < bellNum
+    ).length;
+
     const posInWeek = groupWeeklyLessons.findIndex(
       (l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) === bellNum
     );
@@ -87,23 +94,27 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     if (posInWeek >= 0) {
       scheduleIndex = posInWeek;
     } else {
-      const priorToday = groupWeeklyLessons.filter((l) => l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) < bellNum).length;
       const priorDays = groupWeeklyLessons.filter((l) => l.dayOfWeek < dayOfWeek).length;
       scheduleIndex = priorDays + priorToday;
     }
   }
 
-  // Если есть сохраненные записи, отталкиваемся от них; иначе от хронологии расписания
-  const targetIndex = distinctPast > 0 ? distinctPast : scheduleIndex;
+  // До 14.09.2026 практических занятий не было (проводились только лекции)
+  const isBeforePractices = targetDate < '2026-09-14';
+  const baseCompletedBeforeWeek3 = (cleanG === '51ф') ? 5 : (cleanG.includes('31фм') ? 3 : 0);
+  const effectivePast = isBeforePractices ? distinctPast : Math.max(distinctPast, baseCompletedBeforeWeek3);
+
+  const targetIndex = effectivePast > 0 ? (effectivePast + priorToday) : scheduleIndex;
   const validIndex = targetIndex % prog.lessons.length;
   const lesson = prog.lessons[validIndex] || prog.lessons[0];
+  const lessonType = isBeforePractices ? 'theory' : (lesson.type || 'theory');
 
   return {
     text: lesson.text || lesson.topic,
     number: lesson.number || validIndex + 1,
     lessonObj: lesson,
     homework: lesson.homework || '',
-    type: lesson.type || 'theory',
+    type: lessonType,
   };
 }
 

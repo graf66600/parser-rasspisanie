@@ -1,4 +1,4 @@
-﻿import { Lesson, LessonTime } from '../../types/schedule.js';
+import { Lesson, LessonTime } from '../../types/schedule.js';
 import { DAYS_OF_WEEK } from '../../config/config.js';
 import {
   extractDayFromText,
@@ -9,8 +9,9 @@ import {
 
 interface GroupColumns {
   name: string;
+  startCol?: number;
   lessonNumCol?: number;
-  subjectCol?: number;
+  subjectCols: number[];
   teacherCol?: number;
   buildingCol?: number;
   roomCol?: number;
@@ -65,15 +66,13 @@ export function parseAsMultiGroupSchedule(
     const gName = groupRow[c] !== undefined && groupRow[c] !== null ? String(groupRow[c]).trim() : '';
     if (gName) {
       if (currentGroup) groups.push(currentGroup);
-      currentGroup = { name: gName };
+      currentGroup = { name: gName, startCol: c, subjectCols: [] };
     }
     if (!currentGroup) continue;
 
     const sub = String(subHeaderRow[c] || '').toLowerCase().trim();
     if (sub.includes('№пары') || sub.includes('пара') || sub.includes('урок')) {
       currentGroup.lessonNumCol = c;
-    } else if (sub.includes('предмет') || sub.includes('дисциплин')) {
-      if (currentGroup.subjectCol === undefined) currentGroup.subjectCol = c;
     } else if (sub.includes('преподавател') || sub.includes('учител') || sub.includes('фио')) {
       currentGroup.teacherCol = c;
     } else if (sub.includes('корпус')) {
@@ -85,6 +84,18 @@ export function parseAsMultiGroupSchedule(
   if (currentGroup) groups.push(currentGroup);
 
   if (groups.length === 0) return [];
+
+  // Определяем все предметные колонки между номером пары и преподавателем для каждой группы
+  groups.forEach((g, idx) => {
+    const nextGroupStart = idx + 1 < groups.length ? (groups[idx + 1].startCol ?? matrix[0].length) : matrix[0].length;
+    const tCol = g.teacherCol !== undefined ? g.teacherCol : nextGroupStart;
+    const sCol = g.lessonNumCol !== undefined ? g.lessonNumCol + 1 : (g.startCol ?? startGroupCol);
+    for (let c = sCol; c < tCol; c++) {
+      if (c !== g.lessonNumCol && c !== g.teacherCol && c !== g.buildingCol && c !== g.roomCol) {
+        g.subjectCols.push(c);
+      }
+    }
+  });
 
   let dayCol = -1;
   let commonLessonNumCol = -1;
@@ -138,7 +149,17 @@ export function parseAsMultiGroupSchedule(
 
     for (const g of groups) {
       const teacherVal = g.teacherCol !== undefined ? String(row[g.teacherCol] || '').trim() : '';
-      const subjectVal = g.subjectCol !== undefined ? String(row[g.subjectCol] || '').trim() : '';
+      let subjectVal = '';
+      for (const sCol of g.subjectCols) {
+        const val = String(row[sCol] || '').trim();
+        if (val) {
+          if (subjectFilter && val.toLowerCase().includes(subjectFilter)) {
+            subjectVal = val;
+            break;
+          }
+          if (!subjectVal) subjectVal = val;
+        }
+      }
 
       if (!teacherVal && !subjectVal) continue;
 
