@@ -20,35 +20,77 @@ export function deleteJournalEntry(id) {
   autoFillTopicForGroup(g, l);
 }
 
-export function loadJournalHistory() {
-  const local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
-  const cleaned = local.filter((e) => {
+export async function loadJournalHistory() {
+  let local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
+
+  // Корректируем записи до 14.09.2026: все прошедшие занятия были лекциями
+  let modified = false;
+  local = local.filter((e) => {
     if (e.notes === 'Тестовая отметка проведения занятия') return false;
     if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
     return true;
   });
-  if (cleaned.length !== local.length) {
-    localStorage.setItem('pwa_journal', JSON.stringify(cleaned));
+
+  local.forEach((e) => {
+    if (e.date && e.date < '2026-09-14' && e.type !== 'theory') {
+      e.type = 'theory';
+      modified = true;
+    }
+  });
+
+  if (modified || local.length !== JSON.parse(localStorage.getItem('pwa_journal') || '[]').length) {
+    localStorage.setItem('pwa_journal', JSON.stringify(local));
   }
-  state.journalEntries = cleaned;
+  state.journalEntries = local;
   renderJournalHistory();
   const g = document.getElementById('journalGroupSelect')?.value;
   renderJournalStats(g);
 
-  fetch('./api/journal')
-    .then((r) => r.json())
-    .then((d) => {
-      if (d.success && d.entries) {
-        state.journalEntries = d.entries.filter((e) => {
-          if (e.notes === 'Тестовая отметка проведения занятия') return false;
-          if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
-          return true;
-        });
-        renderJournalHistory();
-        renderJournalStats(document.getElementById('journalGroupSelect')?.value);
+  // Фоновая синхронизация с сервером / статическим файлом
+  try {
+    let freshEntries = null;
+    try {
+      const res = await fetch('./api/journal');
+      if (res.ok) {
+        const d = await res.json();
+        if (d.success && d.entries) freshEntries = d.entries;
       }
-    })
-    .catch(() => {});
+    } catch (e) {}
+
+    if (!freshEntries) {
+      try {
+        const res = await fetch('./data/journal.json');
+        if (res.ok) {
+          const list = await res.json();
+          if (Array.isArray(list)) freshEntries = list;
+        }
+      } catch (e) {}
+    }
+
+    if (freshEntries) {
+      const cleaned = freshEntries.filter((e) => {
+        if (e.notes === 'Тестовая отметка проведения занятия') return false;
+        if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
+        return true;
+      });
+      cleaned.forEach((e) => {
+        if (e.date && e.date < '2026-09-14') e.type = 'theory';
+      });
+
+      // Объединяем с локальными записями пользователя, сохраняя выставленные им оценки
+      const map = new Map();
+      cleaned.forEach((e) => map.set(e.id, e));
+      local.forEach((e) => map.set(e.id, e));
+
+      const merged = Array.from(map.values());
+      state.journalEntries = merged;
+      localStorage.setItem('pwa_journal', JSON.stringify(merged));
+      renderJournalHistory();
+      renderJournalStats(document.getElementById('journalGroupSelect')?.value);
+    }
+  } catch (err) {
+    console.warn('Ошибка загрузки журнала:', err);
+  }
 }
 
 // Форматирование ФИО: "Иванов Иван Иванович" -> "Иванов И."

@@ -147,6 +147,23 @@ if (fs.existsSync(realFilePath)) {
   console.warn(`\n⚠️ Файл ${realFileName} не найден по пути ${realFilePath}`);
 }
 
+const newFileName = 'на стенд 14_09__19_09 с изменениями.xlsx';
+const newFilePath = path.resolve(newFileName);
+
+if (fs.existsSync(newFilePath)) {
+  const newBuffer = fs.readFileSync(newFilePath);
+  const newResult = ExcelParser.parseBuffer(newBuffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
+
+  console.log(`\n🔍 Результаты парсинга нового файла "${newFileName}":`);
+  console.log(`- Всего найдено пар Трипольского: ${newResult.totalFound}`);
+  if (newResult.totalFound === 9) {
+    console.log('✅ ТЕСТ НОВОГО ФАЙЛА УСПЕШЕН: Все 9 пар группы 51ф (ауд. 6 и 232) найдены!');
+  } else {
+    console.error(`❌ ОШИБКА: Ожидалось 9 пар в новом файле, найдено ${newResult.totalFound}`);
+    process.exit(1);
+  }
+}
+
 console.log('\n======================================================');
 console.log('📚 Тестирование CurriculumService (интеграция с порталом рабочих программ)...');
 import { CurriculumService } from './services/curriculumService.js';

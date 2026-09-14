@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v13';
+const CACHE_NAME = 'schedule-pwa-v14';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -29,7 +29,8 @@ const STATIC_ASSETS = [
   './data/schedule.json',
   './data/schedules.json',
   './data/students.json',
-  './data/curriculum.json'
+  './data/curriculum.json',
+  './data/journal.json'
 ];
 
 self.addEventListener('install', (event) => {
