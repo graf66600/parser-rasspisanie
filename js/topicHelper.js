@@ -38,15 +38,16 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
 
   // Специальная обработка для понедельника 14.09.2026 для группы 51ф:
-  // Пара 3 (11:00-12:20): Лекция №1 (вся группа 51ф)
+  // На прошлой неделе прошло 5 лекций (08.09 - 11.09).
+  // Пара 3 (11:00-12:20): Лекция №6 (вся группа 51ф, тема 6-й лекции по программе)
   // Пара 4 (13:00-14:20): Практическое занятие №1 (1-я подгруппа)
   // Пара 5 (14:30-15:50): Практическое занятие №2 (1-я подгруппа)
   if (targetDate === '2026-09-14' && cleanG === '51ф') {
     if (bellNum === 3) {
-      const l = prog.lessons[0];
+      const l = prog.lessons.find((x) => x.type === 'theory' && x.number === 11) || prog.lessons[10] || prog.lessons[0];
       return {
         text: l.text || l.topic,
-        number: 1,
+        number: 6,
         lessonObj: l,
         homework: l.homework || '',
         type: 'theory',
