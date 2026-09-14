@@ -79,7 +79,26 @@ export function populateGroupSelects(onGroupChange) {
   }
 }
 
+export const PWA_VERSION = 'v15';
+
+export function formatLocalDate(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function initLocalState() {
+  try {
+    const ver = localStorage.getItem('pwa_version');
+    if (ver !== PWA_VERSION) {
+      localStorage.removeItem('pwa_custom_curriculum');
+      localStorage.removeItem('pwa_custom_schedule');
+      localStorage.setItem('pwa_version', PWA_VERSION);
+    }
+  } catch (e) {}
+
   try {
     const cached = localStorage.getItem('pwa_custom_schedule');
     if (cached) {
@@ -102,6 +121,14 @@ export function initLocalState() {
   try {
     const cached = localStorage.getItem('pwa_custom_curriculum');
     if (cached) state.curriculumPrograms = JSON.parse(cached);
+  } catch (e) {}
+
+  try {
+    const cachedJournal = localStorage.getItem('pwa_journal');
+    if (cachedJournal) {
+      const list = JSON.parse(cachedJournal);
+      if (Array.isArray(list)) state.journalEntries = list;
+    }
   } catch (e) {}
 }
 
@@ -130,9 +157,9 @@ export async function loadSchedule(onScheduleLoaded) {
     }
 
     if (!freshData) {
-      freshData = await safeFetchJson('./data/schedule.json', 3000);
+      freshData = await safeFetchJson(`./data/schedule.json?v=${PWA_VERSION}`, 3000);
       if (!freshData) {
-        const multi = await safeFetchJson('./data/schedules.json', 3000);
+        const multi = await safeFetchJson(`./data/schedules.json?v=${PWA_VERSION}`, 3000);
         if (multi) {
           freshData = Array.isArray(multi)
             ? (multi.find((s) => s.userId === 1 && s.lessons?.length) || multi[0])
@@ -165,7 +192,7 @@ export async function loadStudents(onStudentsLoaded) {
     }
 
     if (!freshStudents && (!state.studentsByGroup || Object.keys(state.studentsByGroup).length === 0)) {
-      freshStudents = await safeFetchJson('./data/students.json', 3000);
+      freshStudents = await safeFetchJson(`./data/students.json?v=${PWA_VERSION}`, 3000);
     }
 
     if (freshStudents) {
@@ -190,7 +217,7 @@ export async function loadCurriculum(onCurriculumLoaded) {
     }
 
     if (!freshCurriculum) {
-      freshCurriculum = await safeFetchJson('./data/curriculum.json', 3000);
+      freshCurriculum = await safeFetchJson(`./data/curriculum.json?v=${PWA_VERSION}`, 3000);
     }
 
     if (freshCurriculum) {

@@ -1,7 +1,7 @@
 // ==========================================================================
 // SCHEDULE VIEW & BELLS RENDERING
 // ==========================================================================
-import { DAY_NAMES, state } from './state.js';
+import { DAY_NAMES, state, formatLocalDate } from './state.js';
 import { getRecommendedLesson } from './topicHelper.js';
 
 function getDateForDayOfWeek(dayOfWeek) {
@@ -9,9 +9,8 @@ function getDateForDayOfWeek(dayOfWeek) {
   const currentJsDay = now.getDay();
   const currentDay = currentJsDay === 0 ? 7 : currentJsDay;
   const diff = dayOfWeek - currentDay;
-  const d = new Date(now);
-  d.setDate(now.getDate() + diff);
-  return d.toISOString().split('T')[0];
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  return formatLocalDate(d);
 }
 
 function formatLessonsCount(count) {
