@@ -1,7 +1,7 @@
 // ==========================================================================
 // JOURNAL HISTORY: DETAILED LESSON CARDS & RECORD EDITING
 // ==========================================================================
-import { state } from './state.js';
+import { state, PWA_VERSION } from './state.js';
 import { renderJournalStats } from './journalStats.js';
 import { autoFillTopicForGroup, loadEntryToForm } from './journalView.js';
 
@@ -38,14 +38,19 @@ export async function loadJournalHistory() {
     }
     const gClean = (e.group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
     if (e.date === '2026-09-14' && gClean === '51ф') {
-      if (Number(e.lessonNumber) === 3 && (e.topic?.includes('Цифровизация') || e.type !== 'practice')) {
+      if (Number(e.lessonNumber) === 3) {
+        e.topic = 'Цифровизация здравоохранения (ПП РФ № 140): архитектура ЕГИСЗ, регистры ФРМР, ФРМО, РЭМД, НСИ Минздрава.';
+        e.courseLessonNumber = 1;
+        e.type = 'theory';
+        modified = true;
+      } else if (Number(e.lessonNumber) === 4) {
         e.topic = 'Практическое занятие №1: АРМ фельдшера ФАП: первичный прием, идентификация пациента через ТФОМС, оформление прикрепления.';
-        e.courseLessonNumber = 6;
+        e.courseLessonNumber = 1;
         e.type = 'practice';
         modified = true;
-      } else if (Number(e.lessonNumber) === 4 && (e.topic?.includes('Электронная') || e.type !== 'practice')) {
+      } else if (Number(e.lessonNumber) === 5) {
         e.topic = 'Практическое занятие №2: Проведение диспансерного осмотра в МИС, формирование электронных направлений (форма № 057/у-04) в ЛИС и PACS.';
-        e.courseLessonNumber = 7;
+        e.courseLessonNumber = 2;
         e.type = 'practice';
         modified = true;
       }
@@ -73,8 +78,8 @@ export async function loadJournalHistory() {
 
     if (!freshEntries) {
       try {
-        let res = await fetch('./data/journal.json?v=v15');
-        if (!res.ok) res = await fetch('./public/data/journal.json?v=v15');
+        let res = await fetch(`./data/journal.json?v=${PWA_VERSION}`);
+        if (!res.ok) res = await fetch(`./public/data/journal.json?v=${PWA_VERSION}`);
         if (res.ok) {
           const list = await res.json();
           if (Array.isArray(list)) freshEntries = list;
@@ -137,7 +142,12 @@ export function renderJournalHistory() {
   const entriesWithCourseNum = sortedAll.map((entry) => {
     const g = entry.group || 'unknown';
     groupCounters[g] = (groupCounters[g] || 0) + 1;
-    const courseNum = entry.courseLessonNumber || groupCounters[g];
+    let courseNum = entry.courseLessonNumber;
+    if (!courseNum && entry.topic) {
+      const match = entry.topic.match(/№\s*(\d+)/i);
+      if (match) courseNum = parseInt(match[1], 10);
+    }
+    if (!courseNum) courseNum = groupCounters[g];
     return { ...entry, calculatedCourseNum: courseNum };
   });
 

@@ -37,6 +37,43 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   const bellNum = Number(bellLessonNum || 1);
   const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
 
+  // Специальная обработка для понедельника 14.09.2026 для группы 51ф:
+  // Пара 3 (11:00-12:20): Лекция №1 (вся группа 51ф)
+  // Пара 4 (13:00-14:20): Практическое занятие №1 (1-я подгруппа)
+  // Пара 5 (14:30-15:50): Практическое занятие №2 (1-я подгруппа)
+  if (targetDate === '2026-09-14' && cleanG === '51ф') {
+    if (bellNum === 3) {
+      const l = prog.lessons[0];
+      return {
+        text: l.text || l.topic,
+        number: 1,
+        lessonObj: l,
+        homework: l.homework || '',
+        type: 'theory',
+      };
+    }
+    if (bellNum === 4) {
+      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №1')) || prog.lessons[5];
+      return {
+        text: l.text || l.topic,
+        number: 1,
+        lessonObj: l,
+        homework: l.homework || '',
+        type: 'practice',
+      };
+    }
+    if (bellNum === 5) {
+      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №2')) || prog.lessons[6];
+      return {
+        text: l.text || l.topic,
+        number: 2,
+        lessonObj: l,
+        homework: l.homework || '',
+        type: 'practice',
+      };
+    }
+  }
+
   // 1. Если для этой пары уже сохранена запись в журнале — загружаем её тему
   const existing = state.journalEntries?.find((e) => {
     if (!e.group || !e.date || Number(e.lessonNumber) !== bellNum) return false;
@@ -45,25 +82,26 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   });
 
   if (existing && existing.topic) {
-    // Если на 14.09 для 51ф была ошибочно записана старая лекция №1/№2 — игнорируем устаревшую тему
-    const isOldWrongLectureOn14 = targetDate === '2026-09-14' && cleanG === '51ф' &&
-      (existing.topic.includes('Цифровизация') || existing.topic.includes('Электронная'));
-
-    if (!isOldWrongLectureOn14) {
-      let existingType = existing.type;
-      if (targetDate < '2026-09-14') {
-        existingType = 'theory';
-      } else if (!existingType) {
-        const lower = existing.topic.toLowerCase();
-        existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
-      }
-      return {
-        text: existing.topic,
-        number: existing.courseLessonNumber || bellNum,
-        homework: existing.notes || '',
-        type: existingType,
-      };
+    let existingType = existing.type;
+    if (targetDate < '2026-09-14') {
+      existingType = 'theory';
+    } else if (!existingType) {
+      const lower = existing.topic.toLowerCase();
+      existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
     }
+
+    let num = existing.courseLessonNumber;
+    if (!num) {
+      const pMatch = existing.topic.match(/№\s*(\d+)/i);
+      num = pMatch ? parseInt(pMatch[1], 10) : bellNum;
+    }
+
+    return {
+      text: existing.topic,
+      number: num,
+      homework: existing.notes || '',
+      type: existingType,
+    };
   }
 
   // 2. Считаем, сколько занятий у этой группы уже сохранено в журнале до этой даты
@@ -119,9 +157,25 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   const lesson = prog.lessons[validIndex] || prog.lessons[0];
   const lessonType = isBeforePractices ? 'theory' : (lesson.type || 'theory');
 
+  // Извлекаем номер практики из текста занятия, если это практика
+  let lessonNumber = lesson.number || validIndex + 1;
+  if (lessonType === 'practice' && lesson.text) {
+    const pMatch = lesson.text.match(/№\s*(\d+)/i);
+    if (pMatch) {
+      lessonNumber = parseInt(pMatch[1], 10);
+    }
+  } else if (lessonType === 'theory') {
+    const tMatch = (lesson.text || '').match(/лекция\s*№\s*(\d+)/i);
+    if (tMatch) {
+      lessonNumber = parseInt(tMatch[1], 10);
+    } else {
+      lessonNumber = prog.lessons.slice(0, validIndex + 1).filter((l) => l.type === 'theory').length || 1;
+    }
+  }
+
   return {
     text: lesson.text || lesson.topic,
-    number: lesson.number || validIndex + 1,
+    number: lessonNumber,
     lessonObj: lesson,
     homework: lesson.homework || '',
     type: lessonType,

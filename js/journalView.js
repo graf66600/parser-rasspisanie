@@ -39,7 +39,7 @@ export function autoFillTopicForGroup(group, lessonNum) {
   }
   if (courseBadge && rec?.number) {
     const typeLabel = rec.type === 'theory' ? 'Лекция' : 'Практика';
-    courseBadge.textContent = `Пара №${rec.number} по счёту [${typeLabel}]`;
+    courseBadge.textContent = `${typeLabel} №${rec.number} (по программе)`;
   }
 
   updateTopicDatalist(group);
@@ -48,7 +48,7 @@ export function autoFillTopicForGroup(group, lessonNum) {
     if (notesInput && chosenHw) notesInput.value = chosenHw;
     if (courseBadge && chosenNum) {
       const typeLbl = chosenType === 'theory' ? 'Лекция' : 'Практика';
-      courseBadge.textContent = `Пара №${chosenNum} по счёту [${typeLbl}]`;
+      courseBadge.textContent = `${typeLbl} №${chosenNum} (по программе)`;
     }
   });
 
@@ -74,7 +74,7 @@ export function loadEntryToForm(entry) {
 
   if (courseBadge && entry.courseLessonNumber) {
     const typeLbl = entry.type === 'theory' ? 'Лекция' : 'Практика';
-    courseBadge.textContent = `Пара №${entry.courseLessonNumber} по счёту [${typeLbl}]`;
+    courseBadge.textContent = `${typeLbl} №${entry.courseLessonNumber} (по программе)`;
   }
 
   // Обновляем список студентов для этой группы

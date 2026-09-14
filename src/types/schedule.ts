@@ -19,6 +19,7 @@ export const LessonSchema = z.object({
   group: z.string().default(''),
   classroom: z.string().default(''),
   teacher: z.string().default('Трипольский'),
+  subgroup: z.string().optional(),
   weekType: z.enum(['all', 'numerator', 'denominator']).default('all'),
 });
 

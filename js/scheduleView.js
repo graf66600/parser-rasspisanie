@@ -86,7 +86,8 @@ export function renderSchedule(onOpenJournal) {
       ? `<span class="lesson-day-prefix">${DAY_NAMES[lesson.dayOfWeek]?.slice(0, 2) || ''}</span>`
       : '';
 
-    const groupText = lesson.group ? `Гр. ${lesson.group}` : '';
+    const subgroupText = lesson.subgroup ? ` (${lesson.subgroup} п/г)` : '';
+    const groupText = lesson.group ? `Гр. ${lesson.group}${subgroupText}` : '';
     const lessonDate = getDateForDayOfWeek(lesson.dayOfWeek);
     const rec = lesson.group ? getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate) : null;
     const isTheory = rec?.type === 'theory' || (rec?.text && (rec.text.toLowerCase().includes('лекци') || rec.text.toLowerCase().includes('теори')));

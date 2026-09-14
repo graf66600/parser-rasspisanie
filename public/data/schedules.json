@@ -2,7 +2,7 @@
   {
     "userId": 1,
     "chatId": 1,
-    "updatedAt": "2026-09-14T12:10:34.508Z",
+    "updatedAt": "2026-09-14T13:26:45.757Z",
     "settings": {
       "remindMinutesBefore": 15,
       "morningDigestEnabled": true,
@@ -70,6 +70,21 @@
         "endTime": "14:20",
         "subject": "Информатика",
         "group": "51ф",
+        "subgroup": "1",
+        "classroom": "гл, ауд. 6",
+        "teacher": "Трипольский",
+        "weekType": "all"
+      },
+      {
+        "id": "1_5_51ф_Информатика",
+        "dayOfWeek": 1,
+        "dayName": "Понедельник",
+        "lessonNumber": 5,
+        "startTime": "14:30",
+        "endTime": "15:50",
+        "subject": "Информатика",
+        "group": "51ф",
+        "subgroup": "1",
         "classroom": "гл, ауд. 6",
         "teacher": "Трипольский",
         "weekType": "all"
@@ -163,148 +178,6 @@
         "group": "51ф",
         "classroom": "гл, ауд. 6",
         "teacher": "Трипольский",
-        "weekType": "all"
-      }
-    ]
-  },
-  {
-    "userId": 999999999,
-    "chatId": 999999999,
-    "updatedAt": "2026-09-14T12:30:06.528Z",
-    "settings": {
-      "remindMinutesBefore": 15,
-      "morningDigestEnabled": true,
-      "morningDigestTime": "08:00",
-      "bellsSchedule": [
-        {
-          "lessonNumber": 1,
-          "startTime": "08:00",
-          "endTime": "09:20"
-        },
-        {
-          "lessonNumber": 2,
-          "startTime": "09:30",
-          "endTime": "10:50"
-        },
-        {
-          "lessonNumber": 3,
-          "startTime": "11:00",
-          "endTime": "12:20"
-        },
-        {
-          "lessonNumber": 4,
-          "startTime": "13:00",
-          "endTime": "14:20"
-        },
-        {
-          "lessonNumber": 5,
-          "startTime": "14:30",
-          "endTime": "15:50"
-        },
-        {
-          "lessonNumber": 6,
-          "startTime": "16:00",
-          "endTime": "17:20"
-        },
-        {
-          "lessonNumber": 7,
-          "startTime": "17:30",
-          "endTime": "18:50"
-        }
-      ],
-      "teacherFilter": "Трипольский",
-      "subjectFilter": "Информатика"
-    },
-    "lessons": [
-      {
-        "id": "1_3__Информатика",
-        "dayOfWeek": 1,
-        "dayName": "Понедельник",
-        "lessonNumber": 3,
-        "startTime": "11:00",
-        "endTime": "12:20",
-        "subject": "Информатика",
-        "group": "",
-        "classroom": "305",
-        "teacher": "Трипольский",
-        "weekType": "all"
-      },
-      {
-        "id": "2_3__Информатика",
-        "dayOfWeek": 2,
-        "dayName": "Вторник",
-        "lessonNumber": 3,
-        "startTime": "11:00",
-        "endTime": "12:20",
-        "subject": "Информатика",
-        "group": "",
-        "classroom": "305",
-        "teacher": "Трипольский",
-        "weekType": "all"
-      },
-      {
-        "id": "3_3__Информатика",
-        "dayOfWeek": 3,
-        "dayName": "Среда",
-        "lessonNumber": 3,
-        "startTime": "11:00",
-        "endTime": "12:20",
-        "subject": "Информатика",
-        "group": "",
-        "classroom": "305",
-        "teacher": "Трипольский",
-        "weekType": "all"
-      },
-      {
-        "id": "4_1__Информатика",
-        "dayOfWeek": 4,
-        "dayName": "Четверг",
-        "lessonNumber": 1,
-        "startTime": "08:00",
-        "endTime": "09:20",
-        "subject": "Информатика",
-        "group": "",
-        "classroom": "305",
-        "teacher": "Трипольский",
-        "weekType": "all"
-      },
-      {
-        "id": "5_2__Информатика",
-        "dayOfWeek": 5,
-        "dayName": "Пятница",
-        "lessonNumber": 2,
-        "startTime": "09:30",
-        "endTime": "10:50",
-        "subject": "Информатика",
-        "group": "",
-        "classroom": "305",
-        "teacher": "Трипольский",
-        "weekType": "all"
-      },
-      {
-        "id": "6_1_2зПИм_Информатика и программирование",
-        "dayOfWeek": 6,
-        "dayName": "Суббота",
-        "lessonNumber": 1,
-        "startTime": "08:00",
-        "endTime": "09:20",
-        "subject": "Информатика и программирование",
-        "group": "2зПИм",
-        "classroom": "каб. 305",
-        "teacher": "Трипольский Б.А.",
-        "weekType": "all"
-      },
-      {
-        "id": "6_2_2зПИм_Базы данных",
-        "dayOfWeek": 6,
-        "dayName": "Суббота",
-        "lessonNumber": 2,
-        "startTime": "09:30",
-        "endTime": "10:50",
-        "subject": "Базы данных",
-        "group": "2зПИм",
-        "classroom": "каб. 305",
-        "teacher": "Трипольский Б.А.",
         "weekType": "all"
       }
     ]

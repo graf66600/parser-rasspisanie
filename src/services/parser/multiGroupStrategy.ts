@@ -166,7 +166,23 @@ export function parseAsMultiGroupSchedule(
       const teacherLower = teacherVal.toLowerCase();
       const subjectLower = subjectVal.toLowerCase();
 
-      const matchesTeacher = teacherFilter ? teacherLower.includes(teacherFilter) : true;
+      let lessonNum = commonLessonNum;
+      if (g.lessonNumCol !== undefined && row[g.lessonNumCol]) {
+        const num = extractLessonNumber(String(row[g.lessonNumCol]));
+        if (num) lessonNum = num;
+      }
+
+      let matchesTeacher = teacherFilter ? teacherLower.includes(teacherFilter) : true;
+      const cleanG = (g.name || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
+      const is51fSubgroup = cleanG === '51ф' &&
+        subjectLower.includes('информат') &&
+        currentDayNumber === 1 &&
+        (lessonNum === 4 || lessonNum === 5);
+
+      if (is51fSubgroup) {
+        matchesTeacher = true;
+      }
+
       const matchesSubjectOnly = !matchesTeacher && subjectFilter && subjectLower.includes(subjectFilter);
 
       if (matchesSubjectOnly && teacherVal) {
@@ -177,12 +193,6 @@ export function parseAsMultiGroupSchedule(
 
       if (!matchesTeacher && !matchesSubjectOnly) {
         continue;
-      }
-
-      let lessonNum = commonLessonNum;
-      if (g.lessonNumCol !== undefined && row[g.lessonNumCol]) {
-        const num = extractLessonNumber(String(row[g.lessonNumCol]));
-        if (num) lessonNum = num;
       }
 
       let times: { startTime: string; endTime: string };
@@ -205,8 +215,13 @@ export function parseAsMultiGroupSchedule(
         classroom = `корп. ${building}`;
       }
 
+      if (is51fSubgroup) {
+        classroom = 'гл, ауд. 6';
+      }
+
       const subjectName = subjectVal || 'Информатика';
-      const teacherName = teacherVal || teacherFilter || 'Трипольский';
+      const teacherName = is51fSubgroup ? 'Трипольский' : (teacherVal || teacherFilter || 'Трипольский');
+      const subgroup = is51fSubgroup ? '1' : undefined;
 
       lessons.push({
         id: `${currentDayNumber}_${lessonNum}_${g.name}_${subjectName}`,
@@ -217,6 +232,7 @@ export function parseAsMultiGroupSchedule(
         endTime: times.endTime,
         subject: subjectName,
         group: g.name,
+        subgroup,
         classroom,
         teacher: teacherName,
         weekType: 'all',
