@@ -39,8 +39,8 @@ export async function loadJournalHistory() {
     const gClean = (e.group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
     if (e.date === '2026-09-14' && gClean === '51ф') {
       if (Number(e.lessonNumber) === 3) {
-        e.topic = 'Цифровизация здравоохранения (ПП РФ № 140): архитектура ЕГИСЗ, регистры ФРМР, ФРМО, РЭМД, НСИ Минздрава.';
-        e.courseLessonNumber = 1;
+        e.topic = 'Математический аппарат Calc: относительная/абсолютная адресация (), функции в клинической практике.';
+        e.courseLessonNumber = 6;
         e.type = 'theory';
         modified = true;
       } else if (Number(e.lessonNumber) === 4) {
