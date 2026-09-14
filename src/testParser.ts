@@ -156,10 +156,37 @@ if (fs.existsSync(newFilePath)) {
 
   console.log(`\n🔍 Результаты парсинга нового файла "${newFileName}":`);
   console.log(`- Всего найдено пар Трипольского: ${newResult.totalFound}`);
-  if (newResult.totalFound === 9) {
-    console.log('✅ ТЕСТ НОВОГО ФАЙЛА УСПЕШЕН: Все 9 пар группы 51ф (ауд. 6 и 232) найдены!');
+  if (newResult.totalFound === 10) {
+    console.log('✅ ТЕСТ НОВОГО ФАЙЛА УСПЕШЕН: Все 10 пар группы 51ф (включая 3 пары в понедельник: лекция + 2 практики) найдены!');
+    const scheduleData = {
+      success: true,
+      teacher: 'Трипольский',
+      subject: 'Информатика',
+      lessons: newResult.lessons,
+      bells: DEFAULT_BELLS,
+      updatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync('data/schedule.json', JSON.stringify(scheduleData, null, 2), 'utf8');
+    fs.writeFileSync('public/data/schedule.json', JSON.stringify(scheduleData, null, 2), 'utf8');
+
+    const multiSchedule = [{
+      userId: 1,
+      chatId: 1,
+      updatedAt: new Date().toISOString(),
+      settings: {
+        remindMinutesBefore: 15,
+        morningDigestEnabled: true,
+        morningDigestTime: '08:00',
+        bellsSchedule: DEFAULT_BELLS,
+        teacherFilter: 'Трипольский',
+        subjectFilter: 'Информатика'
+      },
+      lessons: newResult.lessons
+    }];
+    fs.writeFileSync('data/schedules.json', JSON.stringify(multiSchedule, null, 2), 'utf8');
+    fs.writeFileSync('public/data/schedules.json', JSON.stringify(multiSchedule, null, 2), 'utf8');
   } else {
-    console.error(`❌ ОШИБКА: Ожидалось 9 пар в новом файле, найдено ${newResult.totalFound}`);
+    console.error(`❌ ОШИБКА: Ожидалось 10 пар в новом файле, найдено ${newResult.totalFound}`);
     process.exit(1);
   }
 }
