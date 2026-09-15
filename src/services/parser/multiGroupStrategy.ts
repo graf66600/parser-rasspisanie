@@ -175,25 +175,33 @@ export function parseAsMultiGroupSchedule(
       let matchesTeacher = teacherFilter ? teacherLower.includes(teacherFilter) : true;
       const cleanG = (g.name || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
       
-      // Обработка подгрупп и спаренных пар для группы 51ф
-      let is51fClass = false;
+      // Обработка подгрупп и спаренных пар для любых групп
+      let isSpecialSubgroupClass = false;
       let detectedSubgroup: string | undefined = undefined;
-      if (cleanG === '51ф' && g.subjectCols.length >= 2) {
+      if (g.subjectCols.length >= 2) {
         const sub1Val = g.subjectCols[0] !== undefined ? String(row[g.subjectCols[0]] || '').trim().toLowerCase() : '';
         const sub2Val = g.subjectCols[1] !== undefined ? String(row[g.subjectCols[1]] || '').trim().toLowerCase() : '';
-        const sub1Info = sub1Val.includes('информат');
-        const sub2Info = sub2Val.includes('информат');
+        const sub1Info = subjectFilter ? sub1Val.includes(subjectFilter) : false;
+        const sub2Info = subjectFilter ? sub2Val.includes(subjectFilter) : false;
 
         if (sub1Info || sub2Info) {
-          is51fClass = true;
-          matchesTeacher = true;
-          subjectVal = 'Информатика';
           if (sub2Info) {
+            isSpecialSubgroupClass = true;
+            matchesTeacher = true;
+            subjectVal = 'Информатика';
             detectedSubgroup = '2';
-          } else if (sub1Info) {
+          } else if (sub1Info && sub2Val && !sub2Info) {
+            isSpecialSubgroupClass = true;
+            matchesTeacher = true;
+            subjectVal = 'Информатика';
+            detectedSubgroup = '1';
+          } else if (cleanG === '51ф' && sub1Info) {
             const isLecture = (currentDayNumber === 1 && lessonNum === 3) ||
                               (currentDayNumber === 2 && (lessonNum === 2 || lessonNum === 4)) ||
                               (currentDayNumber === 3 && (lessonNum === 1 || lessonNum === 2));
+            isSpecialSubgroupClass = true;
+            matchesTeacher = true;
+            subjectVal = 'Информатика';
             detectedSubgroup = isLecture ? undefined : '1';
           }
         }
@@ -231,7 +239,7 @@ export function parseAsMultiGroupSchedule(
         classroom = `корп. ${building}`;
       }
 
-      if (is51fClass) {
+      if (isSpecialSubgroupClass) {
         if (detectedSubgroup) {
           classroom = 'гл, ауд. 6';
         } else if (currentDayNumber === 1) {
@@ -242,8 +250,8 @@ export function parseAsMultiGroupSchedule(
       }
 
       const subjectName = subjectVal || 'Информатика';
-      const teacherName = is51fClass ? 'Трипольский' : (teacherVal || teacherFilter || 'Трипольский');
-      const subgroup = is51fClass ? detectedSubgroup : undefined;
+      const teacherName = isSpecialSubgroupClass ? 'Трипольский' : (teacherVal || teacherFilter || 'Трипольский');
+      const subgroup = isSpecialSubgroupClass ? detectedSubgroup : undefined;
 
       lessons.push({
         id: `${currentDayNumber}_${lessonNum}_${g.name}_${subjectName}${subgroup ? '_' + subgroup : ''}`,
