@@ -37,43 +37,38 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   const bellNum = Number(bellLessonNum || 1);
   const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
 
-  // Специальная обработка для понедельника 14.09.2026 для группы 51ф:
-  // На прошлой неделе прошло 5 лекций (08.09 - 11.09).
-  // Пара 3 (11:00-12:20): Лекция №6 (вся группа 51ф, тема 6-й лекции по программе)
-  // Пара 4 (13:00-14:20): Практическое занятие №1 (1-я подгруппа)
-  // Пара 5 (14:30-15:50): Практическое занятие №2 (1-я подгруппа)
-  if (targetDate === '2026-09-14' && cleanG === '51ф') {
-    if (bellNum === 3) {
-      const theories = prog.lessons.filter((x) => x.type === 'theory');
-      const l = theories[5] || theories[0] || prog.lessons[0];
+  // Точный календарный план занятий для группы 51ф на неделю 14.09 - 19.09.2026:
+  // До 14.09 прошло 5 лекций (08.09 - 11.09).
+  // Лекции (вся группа): Пн пара 3 (№6), Вт пары 2 и 4 (№7, №8), Ср пары 1 и 2 (№9, №10).
+  // Практики (1 подгр): Пн пары 4 и 5 (№1, №2), Пт пары 5 и 6 (№3, №4).
+  // Практики (2 подгр): Вт пары 5 и 6 (№1, №2), Чт пары 5 и 6 (№3, №4).
+  if (cleanG === '51ф') {
+    const planMap = {
+      '2026-09-14_3': { type: 'theory', num: 6 },
+      '2026-09-14_4': { type: 'practice', num: 1 },
+      '2026-09-14_5': { type: 'practice', num: 2 },
+      '2026-09-15_2': { type: 'theory', num: 7 },
+      '2026-09-15_4': { type: 'theory', num: 8 },
+      '2026-09-15_5': { type: 'practice', num: 1 },
+      '2026-09-15_6': { type: 'practice', num: 2 },
+      '2026-09-16_1': { type: 'theory', num: 9 },
+      '2026-09-16_2': { type: 'theory', num: 10 },
+      '2026-09-17_5': { type: 'practice', num: 3 },
+      '2026-09-17_6': { type: 'practice', num: 4 },
+      '2026-09-18_5': { type: 'practice', num: 3 },
+      '2026-09-18_6': { type: 'practice', num: 4 },
+    };
+    const key = `${targetDate}_${bellNum}`;
+    const plan = planMap[key];
+    if (plan) {
+      const collection = prog.lessons.filter((x) => x.type === plan.type);
+      const l = collection[plan.num - 1] || prog.lessons[0];
       return {
         text: l.text || l.topic,
-        number: 6,
+        number: plan.num,
         lessonObj: l,
         homework: l.homework || '',
-        type: 'theory',
-      };
-    }
-    if (bellNum === 4) {
-      const practices = prog.lessons.filter((x) => x.type === 'practice');
-      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №1')) || practices[0] || prog.lessons[0];
-      return {
-        text: l.text || l.topic,
-        number: 1,
-        lessonObj: l,
-        homework: l.homework || '',
-        type: 'practice',
-      };
-    }
-    if (bellNum === 5) {
-      const practices = prog.lessons.filter((x) => x.type === 'practice');
-      const l = prog.lessons.find((x) => x.text && x.text.includes('Практическое занятие №2')) || practices[1] || prog.lessons[0];
-      return {
-        text: l.text || l.topic,
-        number: 2,
-        lessonObj: l,
-        homework: l.homework || '',
-        type: 'practice',
+        type: plan.type,
       };
     }
   }
