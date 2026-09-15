@@ -174,13 +174,29 @@ export function parseAsMultiGroupSchedule(
 
       let matchesTeacher = teacherFilter ? teacherLower.includes(teacherFilter) : true;
       const cleanG = (g.name || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      const is51fSubgroup = cleanG === '51ф' &&
-        subjectLower.includes('информат') &&
-        currentDayNumber === 1 &&
-        (lessonNum === 4 || lessonNum === 5);
+      
+      // Обработка подгрупп и спаренных пар для группы 51ф
+      let is51fClass = false;
+      let detectedSubgroup: string | undefined = undefined;
+      if (cleanG === '51ф' && g.subjectCols.length >= 2) {
+        const sub1Val = g.subjectCols[0] !== undefined ? String(row[g.subjectCols[0]] || '').trim().toLowerCase() : '';
+        const sub2Val = g.subjectCols[1] !== undefined ? String(row[g.subjectCols[1]] || '').trim().toLowerCase() : '';
+        const sub1Info = sub1Val.includes('информат');
+        const sub2Info = sub2Val.includes('информат');
 
-      if (is51fSubgroup) {
-        matchesTeacher = true;
+        if (sub1Info || sub2Info) {
+          is51fClass = true;
+          matchesTeacher = true;
+          subjectVal = 'Информатика';
+          if (sub2Info) {
+            detectedSubgroup = '2';
+          } else if (sub1Info) {
+            const isLecture = (currentDayNumber === 1 && lessonNum === 3) ||
+                              (currentDayNumber === 2 && (lessonNum === 2 || lessonNum === 4)) ||
+                              (currentDayNumber === 3 && (lessonNum === 1 || lessonNum === 2));
+            detectedSubgroup = isLecture ? undefined : '1';
+          }
+        }
       }
 
       const matchesSubjectOnly = !matchesTeacher && subjectFilter && subjectLower.includes(subjectFilter);
@@ -215,16 +231,22 @@ export function parseAsMultiGroupSchedule(
         classroom = `корп. ${building}`;
       }
 
-      if (is51fSubgroup) {
-        classroom = 'гл, ауд. 6';
+      if (is51fClass) {
+        if (detectedSubgroup) {
+          classroom = 'гл, ауд. 6';
+        } else if (currentDayNumber === 1) {
+          classroom = 'гл, ауд. 6';
+        } else {
+          classroom = 'О, ауд. 232';
+        }
       }
 
       const subjectName = subjectVal || 'Информатика';
-      const teacherName = is51fSubgroup ? 'Трипольский' : (teacherVal || teacherFilter || 'Трипольский');
-      const subgroup = is51fSubgroup ? '1' : undefined;
+      const teacherName = is51fClass ? 'Трипольский' : (teacherVal || teacherFilter || 'Трипольский');
+      const subgroup = is51fClass ? detectedSubgroup : undefined;
 
       lessons.push({
-        id: `${currentDayNumber}_${lessonNum}_${g.name}_${subjectName}`,
+        id: `${currentDayNumber}_${lessonNum}_${g.name}_${subjectName}${subgroup ? '_' + subgroup : ''}`,
         dayOfWeek: currentDayNumber,
         dayName: currentDayName,
         lessonNumber: lessonNum,

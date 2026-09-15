@@ -156,8 +156,8 @@ if (fs.existsSync(newFilePath)) {
 
   console.log(`\n🔍 Результаты парсинга нового файла "${newFileName}":`);
   console.log(`- Всего найдено пар Трипольского: ${newResult.totalFound}`);
-  if (newResult.totalFound === 10) {
-    console.log('✅ ТЕСТ НОВОГО ФАЙЛА УСПЕШЕН: Все 10 пар группы 51ф (включая 3 пары в понедельник: лекция + 2 практики) найдены!');
+  if (newResult.totalFound === 13) {
+    console.log('✅ ТЕСТ НОВОГО ФАЙЛА УСПЕШЕН: Все 13 пар группы 51ф на всю неделю найдены!');
     const scheduleData = {
       success: true,
       teacher: 'Трипольский',
@@ -186,7 +186,7 @@ if (fs.existsSync(newFilePath)) {
     fs.writeFileSync('data/schedules.json', JSON.stringify(multiSchedule, null, 2), 'utf8');
     fs.writeFileSync('public/data/schedules.json', JSON.stringify(multiSchedule, null, 2), 'utf8');
   } else {
-    console.error(`❌ ОШИБКА: Ожидалось 10 пар в новом файле, найдено ${newResult.totalFound}`);
+    console.error(`❌ ОШИБКА: Ожидалось 13 пар в новом файле, найдено ${newResult.totalFound}`);
     process.exit(1);
   }
 }

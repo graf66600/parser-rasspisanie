@@ -17,7 +17,7 @@
       "weekType": "all"
     },
     {
-      "id": "1_4_51ф_Информатика",
+      "id": "1_4_51ф_Информатика_1",
       "dayOfWeek": 1,
       "dayName": "Понедельник",
       "lessonNumber": 4,
@@ -31,7 +31,7 @@
       "weekType": "all"
     },
     {
-      "id": "1_5_51ф_Информатика",
+      "id": "1_5_51ф_Информатика_1",
       "dayOfWeek": 1,
       "dayName": "Понедельник",
       "lessonNumber": 5,
@@ -71,7 +71,21 @@
       "weekType": "all"
     },
     {
-      "id": "2_6_51ф_Информатика",
+      "id": "2_5_51ф_Информатика_2",
+      "dayOfWeek": 2,
+      "dayName": "Вторник",
+      "lessonNumber": 5,
+      "startTime": "14:30",
+      "endTime": "15:50",
+      "subject": "Информатика",
+      "group": "51ф",
+      "subgroup": "2",
+      "classroom": "гл, ауд. 6",
+      "teacher": "Трипольский",
+      "weekType": "all"
+    },
+    {
+      "id": "2_6_51ф_Информатика_2",
       "dayOfWeek": 2,
       "dayName": "Вторник",
       "lessonNumber": 6,
@@ -79,6 +93,7 @@
       "endTime": "17:20",
       "subject": "Информатика",
       "group": "51ф",
+      "subgroup": "2",
       "classroom": "гл, ауд. 6",
       "teacher": "Трипольский",
       "weekType": "all"
@@ -110,7 +125,21 @@
       "weekType": "all"
     },
     {
-      "id": "4_6_51ф_Информатика",
+      "id": "4_5_51ф_Информатика_2",
+      "dayOfWeek": 4,
+      "dayName": "Четверг",
+      "lessonNumber": 5,
+      "startTime": "14:30",
+      "endTime": "15:50",
+      "subject": "Информатика",
+      "group": "51ф",
+      "subgroup": "2",
+      "classroom": "гл, ауд. 6",
+      "teacher": "Трипольский",
+      "weekType": "all"
+    },
+    {
+      "id": "4_6_51ф_Информатика_2",
       "dayOfWeek": 4,
       "dayName": "Четверг",
       "lessonNumber": 6,
@@ -118,12 +147,13 @@
       "endTime": "17:20",
       "subject": "Информатика",
       "group": "51ф",
+      "subgroup": "2",
       "classroom": "гл, ауд. 6",
       "teacher": "Трипольский",
       "weekType": "all"
     },
     {
-      "id": "5_5_51ф_Информатика",
+      "id": "5_5_51ф_Информатика_1",
       "dayOfWeek": 5,
       "dayName": "Пятница",
       "lessonNumber": 5,
@@ -131,6 +161,21 @@
       "endTime": "15:50",
       "subject": "Информатика",
       "group": "51ф",
+      "subgroup": "1",
+      "classroom": "гл, ауд. 6",
+      "teacher": "Трипольский",
+      "weekType": "all"
+    },
+    {
+      "id": "5_6_51ф_Информатика_1",
+      "dayOfWeek": 5,
+      "dayName": "Пятница",
+      "lessonNumber": 6,
+      "startTime": "16:00",
+      "endTime": "17:20",
+      "subject": "Информатика",
+      "group": "51ф",
+      "subgroup": "1",
       "classroom": "гл, ауд. 6",
       "teacher": "Трипольский",
       "weekType": "all"
@@ -173,5 +218,5 @@
       "endTime": "18:50"
     }
   ],
-  "updatedAt": "2026-09-14T13:42:27.960Z"
+  "updatedAt": "2026-09-15T05:19:48.030Z"
 }
