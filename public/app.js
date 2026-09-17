@@ -122,10 +122,17 @@ async function initApp() {
   setupSummaryListeners();
 
   // Слушатель переключения преподавателя (мульти-парсер)
-  document.getElementById('teacherSelect')?.addEventListener('change', (e) => {
+  document.getElementById('teacherSelect')?.addEventListener('change', async (e) => {
     const selected = e.target.value;
-    loadSchedule(() => renderSchedule(onOpenLessonInJournal), selected);
+    await loadSchedule(() => renderSchedule(onOpenLessonInJournal), selected);
+    populateGroupSelects(updateJournalStudents);
+    updateJournalStudents();
+    loadJournalHistory();
+    const g = document.getElementById('journalGroupSelect')?.value;
+    const l = document.getElementById('journalLessonNumSelect')?.value;
+    autoFillTopicForGroup(g, l);
   });
+
 
   document.getElementById('openSummaryModalBtn')?.addEventListener('click', () => {
     const currentGroup = document.getElementById('journalGroupSelect')?.value || '51ф';

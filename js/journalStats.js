@@ -5,9 +5,14 @@ import { state } from './state.js';
 import { findProgramForGroup } from './topicHelper.js';
 
 export function calculateGroupStats(group) {
-  const prog = findProgramForGroup(group);
+  const currentTeacher = state.currentTeacher || 'Трипольский';
+  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const prog = isTripolsky ? findProgramForGroup(group) : null;
+
   const entries = (state.journalEntries || []).filter((e) => {
     if (!e.group || !group) return false;
+    const matchTeacher = !e.teacher ? isTripolsky : (e.teacher === currentTeacher);
+    if (!matchTeacher) return false;
     const cleanG = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
     const cleanEG = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
     return cleanEG === cleanG || cleanEG.includes(cleanG) || cleanG.includes(cleanEG);
@@ -89,7 +94,46 @@ export function renderJournalStats(group) {
     group = gSel?.value || '51ф';
   }
 
+  const currentTeacher = state.currentTeacher || 'Трипольский';
   const stats = calculateGroupStats(group);
+
+  if (!stats.totalLessons) {
+    const foundLesson = state.schedule?.lessons?.find((l) => l.group === group);
+    const subjName = foundLesson?.subject || 'Учебная дисциплина';
+    container.innerHTML = `
+      <div class="stats-card">
+        <div class="stats-header">
+          <div class="stats-title-box">
+            <span class="stats-icon-badge">📊</span>
+            <div class="stats-title-text-wrap">
+              <h3 class="stats-main-title">Журнал: Гр. ${stats.group}</h3>
+              <p class="stats-sub-title">${subjName} • ${currentTeacher}</p>
+            </div>
+          </div>
+          <span class="stats-total-pill">Проведено: ${stats.totalConducted} пар</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-chip stat-chip-theory">
+            <div class="stat-chip-label">
+              <span>📖</span> <b>Лекции</b>
+            </div>
+            <div class="stat-chip-values">
+              <span class="stat-chip-done">${stats.theoryConducted}</span>
+            </div>
+          </div>
+          <div class="stat-chip stat-chip-practice">
+            <div class="stat-chip-label">
+              <span>💻</span> <b>Практики</b>
+            </div>
+            <div class="stat-chip-values">
+              <span class="stat-chip-done">${stats.practiceConducted}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
 
   container.innerHTML = `
     <div class="stats-card">

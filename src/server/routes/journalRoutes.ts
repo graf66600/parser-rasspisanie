@@ -17,12 +17,20 @@ export async function handleJournalRoutes(
   if (pathname === '/api/journal' && req.method === 'GET') {
     const group = parsedUrl.searchParams.get('group');
     const date = parsedUrl.searchParams.get('date');
+    const teacher = parsedUrl.searchParams.get('teacher')?.trim();
 
     let entries = journal.getAllEntries();
     if (group) {
-      entries = journal.getGroupHistory(group);
+      entries = journal.getGroupHistory(group, teacher || undefined);
     } else if (date) {
       entries = journal.getEntriesByDate(date);
+      if (teacher) {
+        const isTargetTripolsky = teacher.toLowerCase().includes('трипольский');
+        entries = entries.filter((e) => isTargetTripolsky ? (!e.teacher || e.teacher.toLowerCase().includes('трипольский')) : (e.teacher === teacher));
+      }
+    } else if (teacher) {
+      const isTargetTripolsky = teacher.toLowerCase().includes('трипольский');
+      entries = entries.filter((e) => isTargetTripolsky ? (!e.teacher || e.teacher.toLowerCase().includes('трипольский')) : (e.teacher === teacher));
     }
 
     sendJson(res, { success: true, entries });
@@ -34,7 +42,7 @@ export async function handleJournalRoutes(
     const bodyBuffer = await readBody(req);
     const payload = JSON.parse(bodyBuffer.toString('utf8') || '{}');
 
-    const { group, subject, lessonNumber, startTime, endTime, classroom, topic, topicIndex, courseLessonNumber, type, date, attendance, notes } = payload;
+    const { group, subject, teacher, lessonNumber, startTime, endTime, classroom, topic, topicIndex, courseLessonNumber, type, date, attendance, notes } = payload;
 
     if (!group || !lessonNumber) {
       sendError(res, 'Не заполнены обязательные поля группы или номера пары');
@@ -44,6 +52,7 @@ export async function handleJournalRoutes(
     const entry = journal.recordLesson({
       date,
       group,
+      teacher: teacher || CONFIG.DEFAULT_TEACHER,
       subject: subject || CONFIG.DEFAULT_SUBJECT,
       lessonNumber: Number(lessonNumber),
       startTime: startTime || '08:00',
