@@ -102,7 +102,15 @@ export class JournalService {
   }): JournalEntry {
     const cleanGroup = params.group.trim();
     const effectiveDate = params.date || new Date().toISOString().split('T')[0];
-    const id = `${cleanGroup}_${effectiveDate}_${params.lessonNumber}`;
+    const teacherName = params.teacher?.trim() || 'Трипольский';
+    const isTripolsky = teacherName.toLowerCase().includes('трипольский');
+    let id = `${cleanGroup}_${effectiveDate}_${params.lessonNumber}_${encodeURIComponent(teacherName)}`;
+    if (isTripolsky) {
+      const legacyId = `${cleanGroup}_${effectiveDate}_${params.lessonNumber}`;
+      if (this.entries.some((e) => e.id === legacyId)) {
+        id = legacyId;
+      }
+    }
     const dateFormatted = this.formatDateReadable(effectiveDate);
 
     // Определяем тип занятия (теория/практика/зачет), если не передан
@@ -123,7 +131,7 @@ export class JournalService {
       date: effectiveDate,
       dateFormatted,
       group: cleanGroup,
-      teacher: params.teacher || 'Трипольский',
+      teacher: teacherName,
       subject: params.subject,
       lessonNumber: params.lessonNumber,
       startTime: params.startTime,
@@ -156,8 +164,8 @@ export class JournalService {
       }).catch(() => {});
     } catch (_) {}
 
-    // Пересчитываем сквозные номера пар по курсу для этой группы
-    this.refreshCourseLessonNumbers(cleanGroup);
+    // Пересчитываем сквозные номера пар по курсу для этой группы и преподавателя
+    this.refreshCourseLessonNumbers(cleanGroup, teacherName);
 
     this.saveJournal();
     return newEntry;
@@ -165,12 +173,20 @@ export class JournalService {
 
   /**
    * Обновляет сквозные порядковые номера пар (courseLessonNumber = 1, 2, 3...)
-   * для указанной группы в хронологическом порядке
+   * для указанной группы и преподавателя в хронологическом порядке
    */
-  public refreshCourseLessonNumbers(groupName: string): void {
+  public refreshCourseLessonNumbers(groupName: string, teacherName?: string): void {
     const clean = this.normalizeGroup(groupName);
     const groupEntries = this.entries
-      .filter((e) => this.normalizeGroup(e.group) === clean || clean.includes(this.normalizeGroup(e.group)))
+      .filter((e) => {
+        const matchesGroup = this.normalizeGroup(e.group) === clean || clean.includes(this.normalizeGroup(e.group));
+        if (!matchesGroup) return false;
+        if (!teacherName) return true;
+        const isTargetTripolsky = teacherName.toLowerCase().includes('трипольский');
+        return isTargetTripolsky
+          ? (!e.teacher || e.teacher.toLowerCase().includes('трипольский'))
+          : (e.teacher === teacherName);
+      })
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
         return a.lessonNumber - b.lessonNumber;
@@ -194,11 +210,19 @@ export class JournalService {
   /**
    * Получить историю проведенных занятий для конкретной группы со сквозной нумерацией
    */
-  public getGroupHistory(groupName: string): JournalEntry[] {
-    this.refreshCourseLessonNumbers(groupName);
+  public getGroupHistory(groupName: string, teacherName?: string): JournalEntry[] {
+    this.refreshCourseLessonNumbers(groupName, teacherName);
     const clean = this.normalizeGroup(groupName);
     return this.entries
-      .filter((e) => this.normalizeGroup(e.group) === clean || clean.includes(this.normalizeGroup(e.group)))
+      .filter((e) => {
+        const matchesGroup = this.normalizeGroup(e.group) === clean || clean.includes(this.normalizeGroup(e.group));
+        if (!matchesGroup) return false;
+        if (!teacherName) return true;
+        const isTargetTripolsky = teacherName.toLowerCase().includes('трипольский');
+        return isTargetTripolsky
+          ? (!e.teacher || e.teacher.toLowerCase().includes('трипольский'))
+          : (e.teacher === teacherName);
+      })
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
         return a.lessonNumber - b.lessonNumber;

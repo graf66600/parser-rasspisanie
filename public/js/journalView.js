@@ -24,134 +24,49 @@ export function autoFillTopicForGroup(group, lessonNum) {
   }
   if (!group) return;
 
+  const currentTeacher = state.currentTeacher || 'Трипольский';
+  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
   const dateInput = document.getElementById('journalDateInput');
   const date = dateInput?.value || new Date().toISOString().split('T')[0];
   const topicInput = document.getElementById('journalTopicInput');
   const notesInput = document.getElementById('journalNotesInput');
   const courseBadge = document.getElementById('coursePairBadge');
 
-  const rec = getRecommendedLesson(group, lessonNum, date);
-  if (topicInput && rec?.text) {
-    topicInput.value = rec.text;
-  }
-  if (notesInput && rec?.homework) {
-    notesInput.value = rec.homework;
-  }
-  if (courseBadge && rec?.number) {
-    const typeLabel = rec.type === 'theory' ? 'Лекция' : 'Практика';
-    courseBadge.textContent = `${typeLabel} №${rec.number} (по программе)`;
-  }
-
-  updateTopicDatalist(group);
-  renderTopicSuggestions(group, (chosenTopic, chosenHw, chosenNum, chosenType) => {
-    if (topicInput) topicInput.value = chosenTopic;
-    if (notesInput && chosenHw) notesInput.value = chosenHw;
-    if (courseBadge && chosenNum) {
-      const typeLbl = chosenType === 'theory' ? 'Лекция' : 'Практика';
-      courseBadge.textContent = `${typeLbl} №${chosenNum} (по программе)`;
+  if (isTripolsky) {
+    const rec = getRecommendedLesson(group, lessonNum, date);
+    if (topicInput && rec?.text) topicInput.value = rec.text;
+    if (notesInput && rec?.homework) notesInput.value = rec.homework;
+    if (courseBadge && rec?.number) {
+      const typeLabel = rec.type === 'theory' ? 'Лекция' : 'Практика';
+      courseBadge.textContent = `${typeLabel} №${rec.number} (по программе)`;
     }
-  });
+
+    updateTopicDatalist(group);
+    renderTopicSuggestions(group, (chosenTopic, chosenHw, chosenNum, chosenType) => {
+      if (topicInput) topicInput.value = chosenTopic;
+      if (notesInput && chosenHw) notesInput.value = chosenHw;
+      if (courseBadge && chosenNum) {
+        const typeLbl = chosenType === 'theory' ? 'Лекция' : 'Практика';
+        courseBadge.textContent = `${typeLbl} №${chosenNum} (по программе)`;
+      }
+    });
+  } else {
+    const foundLesson = state.schedule?.lessons?.find(
+      (l) => l.group === group && Number(l.lessonNumber) === Number(lessonNum)
+    );
+    if (topicInput && (!topicInput.value || topicInput.value === 'Практическое занятие')) {
+      topicInput.value = foundLesson?.subject ? `Тема: ${foundLesson.subject}` : 'Тема занятия';
+    }
+    if (courseBadge) courseBadge.textContent = `Пара №${lessonNum || 1}`;
+    const suggestionsBox = document.getElementById('topicSuggestions');
+    if (suggestionsBox) suggestionsBox.classList.add('hidden');
+  }
 
   renderJournalStats(group);
 }
 
-// Загрузка сохраненной записи обратно в форму для просмотра или редактирования
-export function loadEntryToForm(entry) {
-  if (!entry) return;
+export { loadEntryToForm } from './journalEdit.js';
 
-  const groupSel = document.getElementById('journalGroupSelect');
-  const lessonSel = document.getElementById('journalLessonNumSelect');
-  const dateInput = document.getElementById('journalDateInput');
-  const topicInput = document.getElementById('journalTopicInput');
-  const notesInput = document.getElementById('journalNotesInput');
-  const courseBadge = document.getElementById('coursePairBadge');
-
-  if (groupSel) groupSel.value = entry.group;
-  if (lessonSel) lessonSel.value = String(entry.lessonNumber);
-  if (dateInput) dateInput.value = entry.date;
-  if (topicInput) topicInput.value = entry.topic || '';
-  if (notesInput) notesInput.value = entry.notes || '';
-
-  if (courseBadge && entry.courseLessonNumber) {
-    const typeLbl = entry.type === 'theory' ? 'Лекция' : 'Практика';
-    courseBadge.textContent = `${typeLbl} №${entry.courseLessonNumber} (по программе)`;
-  }
-
-  // Обновляем список студентов для этой группы
-  updateJournalStudents();
-
-  // Проставляем сохраненные статусы и оценки
-  const att = entry.attendance || {};
-  document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
-    const student = row.getAttribute('data-student');
-    const studentAtt = att[student];
-    if (studentAtt) {
-      const btns = row.querySelectorAll('.status-btn');
-      btns.forEach((b) => {
-        if (b.getAttribute('data-val') === studentAtt.status) {
-          b.classList.add('active');
-        } else {
-          b.classList.remove('active');
-        }
-      });
-
-      const badge = row.querySelector('[data-badge]');
-      if (badge) {
-        if (studentAtt.status === 'present') {
-          badge.className = 'student-badge badge-present';
-          badge.textContent = 'Был';
-        } else if (studentAtt.status === 'absent') {
-          badge.className = 'student-badge badge-absent';
-          badge.textContent = '✕ Не был';
-        } else if (studentAtt.status === 'excused') {
-          badge.className = 'student-badge badge-excused';
-          badge.textContent = '📋 Уважит.';
-        }
-      }
-
-      const gradeSel = row.querySelector('.grade-select');
-      if (gradeSel) {
-        gradeSel.value = studentAtt.grade || '';
-      }
-    }
-  });
-
-  // Показываем плашку режима редактирования
-  showEditModeNotice(entry);
-
-  // Плавный скролл к началу формы
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function showEditModeNotice(entry) {
-  let notice = document.getElementById('journalEditNotice');
-  if (!notice) {
-    notice = document.createElement('div');
-    notice.id = 'journalEditNotice';
-    notice.className = 'p-3 bg-amber-500/20 border border-amber-500/40 rounded-xl text-xs text-amber-300 flex items-center justify-between gap-2 mb-3';
-    const formContainer = document.querySelector('#tabJournal .journal-card-header');
-    formContainer?.parentNode?.insertBefore(notice, formContainer.nextSibling);
-  }
-
-  notice.innerHTML = `
-    <div class="flex items-center gap-2">
-      <span class="text-base">✏️</span>
-      <div>
-        <div class="font-bold text-white">Редактирование занятия</div>
-        <div class="text-[11px] text-amber-200/80">${entry.dateFormatted || entry.date} • Гр. ${entry.group} • ${entry.lessonNumber} пара</div>
-      </div>
-    </div>
-    <button type="button" id="cancelEditNoticeBtn" class="px-2.5 py-1 bg-amber-500/30 hover:bg-amber-500/50 text-white rounded-lg text-[11px] font-semibold transition">Отмена</button>
-  `;
-  notice.classList.remove('hidden');
-
-  document.getElementById('cancelEditNoticeBtn')?.addEventListener('click', () => {
-    notice.classList.add('hidden');
-    const g = document.getElementById('journalGroupSelect')?.value;
-    const l = document.getElementById('journalLessonNumSelect')?.value;
-    autoFillTopicForGroup(g, l);
-  });
-}
 
 export function setupJournalListeners() {
   const groupSel = document.getElementById('journalGroupSelect');
@@ -225,9 +140,32 @@ export function setupJournalListeners() {
     const topic = topicInput?.value || 'Практическое занятие';
     const notes = document.getElementById('journalNotesInput')?.value || '';
 
-    const rec = getRecommendedLesson(group, lessonNumber, date);
-    const courseLessonNumber = rec?.number || 1;
-    const entryType = rec?.type || (topic.toLowerCase().includes('лекци') || topic.toLowerCase().includes('теори') ? 'theory' : 'practice');
+    const currentTeacher = state.currentTeacher || 'Трипольский';
+    const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+
+    let currentSubject = isTripolsky ? 'Информатика' : 'Учебная дисциплина';
+    const foundLesson = state.schedule?.lessons?.find(
+      (l) => l.group === group && Number(l.lessonNumber) === lessonNumber
+    );
+    if (foundLesson?.subject) currentSubject = foundLesson.subject;
+
+    let courseLessonNumber = 1;
+    let entryType = 'theory';
+
+    if (isTripolsky) {
+      const rec = getRecommendedLesson(group, lessonNumber, date);
+      courseLessonNumber = rec?.number || 1;
+      entryType = rec?.type || (topic.toLowerCase().includes('лекци') || topic.toLowerCase().includes('теори') ? 'theory' : 'practice');
+    } else {
+      const lower = topic.toLowerCase();
+      if (lower.includes('практик')) entryType = 'practice';
+      else if (lower.includes('зачет') || lower.includes('экзамен')) entryType = 'exam';
+      else entryType = 'theory';
+      const priorEntries = (state.journalEntries || []).filter(
+        (e) => e.group === group && (!e.teacher || e.teacher === currentTeacher)
+      );
+      courseLessonNumber = priorEntries.length + 1;
+    }
 
     const attendance = {};
     document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
@@ -238,12 +176,21 @@ export function setupJournalListeners() {
       attendance[student] = { status, grade: grade || undefined };
     });
 
+    let entryId = `${group}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
+    if (isTripolsky) {
+      const legacyId = `${group}_${date}_${lessonNumber}`;
+      if ((state.journalEntries || []).some((e) => e.id === legacyId)) {
+        entryId = legacyId;
+      }
+    }
+
     const entry = {
-      id: `${group}_${date}_${lessonNumber}`,
+      id: entryId,
       date,
       dateFormatted: date,
       group,
-      subject: 'Информатика',
+      teacher: currentTeacher,
+      subject: currentSubject,
       lessonNumber,
       courseLessonNumber,
       type: entryType,
@@ -268,7 +215,7 @@ export function setupJournalListeners() {
     // Скрываем плашку редактирования после сохранения
     document.getElementById('journalEditNotice')?.classList.add('hidden');
 
-    alert('✅ Занятие успешно сохранено в электронный журнал!');
+    alert(`✅ Занятие (${currentTeacher}) успешно сохранено в журнал!`);
     renderJournalHistory();
     renderJournalStats(group);
     autoFillTopicForGroup(group, lessonNumber);

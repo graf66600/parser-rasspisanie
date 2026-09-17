@@ -9,13 +9,21 @@ function normalizeGroup(g) {
 
 function getGroupEntries(group) {
   const clean = normalizeGroup(group);
+  const currentTeacher = state.currentTeacher || 'Трипольский';
+  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+
   return (state.journalEntries || [])
-    .filter((e) => normalizeGroup(e.group) === clean || clean.includes(normalizeGroup(e.group)))
+    .filter((e) => {
+      const matchTeacher = !e.teacher ? isTripolsky : (e.teacher === currentTeacher);
+      const matchGroup = normalizeGroup(e.group) === clean || clean.includes(normalizeGroup(e.group));
+      return matchTeacher && matchGroup;
+    })
     .sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return Number(a.lessonNumber) - Number(b.lessonNumber);
     });
 }
+
 
 function getGroupStudents(group) {
   const list = state.studentsByGroup[group] || [];
@@ -179,12 +187,29 @@ export function openJournalSummary(group) {
   const modal = document.getElementById('journalSummaryModal');
   if (!modal) return;
 
+  const currentTeacher = state.currentTeacher || 'Трипольский';
+  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const subEl = document.querySelector('.summary-header-sub');
+  if (subEl) {
+    const subj = isTripolsky ? 'Информатика' : 'Учебная дисциплина';
+    subEl.textContent = `Преподаватель: ${currentTeacher} • ${subj}`;
+  }
+
   const sel = document.getElementById('summaryGroupSelect');
   if (sel) {
-    // Обновим список групп в селекторе
     const groups = new Set();
-    Object.keys(state.studentsByGroup || {}).forEach((g) => groups.add(g));
-    (state.journalEntries || []).forEach((e) => { if (e.group) groups.add(e.group); });
+    if (state.schedule?.lessons) {
+      state.schedule.lessons.forEach((l) => {
+        if (l.group && l.group !== '—') groups.add(l.group);
+      });
+    }
+    (state.journalEntries || []).forEach((e) => {
+      const matchTeacher = !e.teacher ? isTripolsky : (e.teacher === currentTeacher);
+      if (matchTeacher && e.group) groups.add(e.group);
+    });
+    if (groups.size === 0) {
+      Object.keys(state.studentsByGroup || {}).forEach((g) => groups.add(g));
+    }
     sel.innerHTML = '';
     Array.from(groups).sort().forEach((g) => {
       const opt = document.createElement('option');
@@ -193,7 +218,7 @@ export function openJournalSummary(group) {
       if (g === group) opt.selected = true;
       sel.appendChild(opt);
     });
-    if (group) sel.value = group;
+    if (group && groups.has(group)) sel.value = group;
   }
 
   const currentGroup = sel?.value || group || '51ф';
