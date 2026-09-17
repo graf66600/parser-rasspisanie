@@ -18,6 +18,7 @@ export const JournalEntrySchema = z.object({
   startTime: z.string(),
   endTime: z.string(),
   classroom: z.string().default(''),
+  teacher: z.string().optional().default('Трипольский'),
   topic: z.string(),
   topicIndex: z.number().int().optional(),
   courseLessonNumber: z.number().int().min(1).optional(),

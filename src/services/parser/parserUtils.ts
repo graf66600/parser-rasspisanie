@@ -1,4 +1,4 @@
-﻿import { Lesson, LessonTime } from '../../types/schedule.js';
+import { Lesson, LessonTime } from '../../types/schedule.js';
 import { DAY_NAME_TO_NUMBER } from '../../config/config.js';
 
 export function parseTimeRange(text: string): { startTime: string; endTime: string } | null {
@@ -133,7 +133,7 @@ export function deduplicateLessons(lessons: Lesson[]): Lesson[] {
   const result: Lesson[] = [];
 
   for (const l of lessons) {
-    const key = `${l.dayOfWeek}_${l.lessonNumber}_${l.subject.toLowerCase()}_${l.group.toLowerCase()}`;
+    const key = `${(l.teacher || '').toLowerCase()}_${l.dayOfWeek}_${l.lessonNumber}_${l.subject.toLowerCase()}_${l.group.toLowerCase()}_${l.subgroup || ''}`;
     if (!seen.has(key)) {
       seen.add(key);
       result.push(l);

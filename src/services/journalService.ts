@@ -92,6 +92,7 @@ export class JournalService {
     startTime: string;
     endTime: string;
     classroom?: string;
+    teacher?: string;
     topic: string;
     topicIndex?: number;
     courseLessonNumber?: number;
@@ -122,6 +123,7 @@ export class JournalService {
       date: effectiveDate,
       dateFormatted,
       group: cleanGroup,
+      teacher: params.teacher || 'Трипольский',
       subject: params.subject,
       lessonNumber: params.lessonNumber,
       startTime: params.startTime,
@@ -144,6 +146,15 @@ export class JournalService {
     } else {
       this.entries.push(newEntry);
     }
+
+    this.saveJournal();
+
+    // Синхронизация с Supabase
+    try {
+      import('./supabaseService.js').then(({ SupabaseService }) => {
+        SupabaseService.getInstance().saveJournalEntry(newEntry).catch(() => {});
+      }).catch(() => {});
+    } catch (_) {}
 
     // Пересчитываем сквозные номера пар по курсу для этой группы
     this.refreshCourseLessonNumbers(cleanGroup);

@@ -172,13 +172,15 @@ export function parseAsMultiGroupSchedule(
         if (num) lessonNum = num;
       }
 
-      let matchesTeacher = teacherFilter ? teacherLower.includes(teacherFilter) : true;
+      let matchesTeacher = teacherFilter ? teacherLower.includes(teacherFilter) : Boolean(teacherVal);
       const cleanG = (g.name || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
       
-      // Обработка подгрупп и спаренных пар для любых групп
+      // Обработка подгрупп и спаренных пар для преподавателя Трипольского
+      const isTripolskyTarget = !teacherFilter || teacherFilter.includes('трипольский') || teacherLower.includes('трипольский');
       let isSpecialSubgroupClass = false;
       let detectedSubgroup: string | undefined = undefined;
-      if (g.subjectCols.length >= 2) {
+
+      if (isTripolskyTarget && g.subjectCols.length >= 2) {
         const sub1Val = g.subjectCols[0] !== undefined ? String(row[g.subjectCols[0]] || '').trim().toLowerCase() : '';
         const sub2Val = g.subjectCols[1] !== undefined ? String(row[g.subjectCols[1]] || '').trim().toLowerCase() : '';
         const sub1Info = subjectFilter ? sub1Val.includes(subjectFilter) : false;
