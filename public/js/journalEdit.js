@@ -13,8 +13,10 @@ export function loadEntryToForm(entry) {
   const topicInput = document.getElementById('journalTopicInput');
   const notesInput = document.getElementById('journalNotesInput');
   const courseBadge = document.getElementById('coursePairBadge');
+  const subgSel = document.getElementById('journalSubgroupSelect');
 
   if (groupSel) groupSel.value = entry.group;
+  if (subgSel) subgSel.value = entry.subgroup ? String(entry.subgroup) : 'all';
   if (lessonSel) lessonSel.value = String(entry.lessonNumber);
   if (dateInput) dateInput.value = entry.date;
   if (topicInput) topicInput.value = entry.topic || '';

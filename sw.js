@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v21';
+const CACHE_NAME = 'schedule-pwa-v22';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -16,6 +16,8 @@ const STATIC_ASSETS = [
   './css/journalSummary.css',
   './app.js',
   './js/state.js',
+  './js/authView.js',
+  './js/supabaseSync.js',
   './js/scheduleView.js',
   './js/notifications.js',
   './js/journalView.js',

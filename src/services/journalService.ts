@@ -93,6 +93,7 @@ export class JournalService {
     endTime: string;
     classroom?: string;
     teacher?: string;
+    subgroup?: 1 | 2 | null;
     topic: string;
     topicIndex?: number;
     courseLessonNumber?: number;
@@ -104,8 +105,9 @@ export class JournalService {
     const effectiveDate = params.date || new Date().toISOString().split('T')[0];
     const teacherName = params.teacher?.trim() || 'Трипольский';
     const isTripolsky = teacherName.toLowerCase().includes('трипольский');
-    let id = `${cleanGroup}_${effectiveDate}_${params.lessonNumber}_${encodeURIComponent(teacherName)}`;
-    if (isTripolsky) {
+    const subg = params.subgroup ? `_sub${params.subgroup}` : '';
+    let id = `${cleanGroup}${subg}_${effectiveDate}_${params.lessonNumber}_${encodeURIComponent(teacherName)}`;
+    if (isTripolsky && !params.subgroup) {
       const legacyId = `${cleanGroup}_${effectiveDate}_${params.lessonNumber}`;
       if (this.entries.some((e) => e.id === legacyId)) {
         id = legacyId;
@@ -133,6 +135,7 @@ export class JournalService {
       group: cleanGroup,
       teacher: teacherName,
       subject: params.subject,
+      subgroup: params.subgroup || null,
       lessonNumber: params.lessonNumber,
       startTime: params.startTime,
       endTime: params.endTime,

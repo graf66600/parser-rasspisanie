@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // JOURNAL ATTENDANCE: STUDENT LIST & ATTENDANCE CONTROLS
 // ==========================================================================
 import { state } from './state.js';
@@ -9,31 +9,52 @@ export function updateJournalStudents() {
   const group = groupSel.value;
   const listEl = document.getElementById('journalStudentsList');
   const countEl = document.getElementById('studentsCountLabel');
+  const subgSel = document.getElementById('journalSubgroupSelect');
+  const chosenSubgroup = subgSel?.value || 'all';
   if (!listEl) return;
 
-  const students = state.studentsByGroup[group] || [];
-  if (countEl) countEl.textContent = students.length;
+  const allStudents = state.studentsByGroup[group] || [];
+  const mid = Math.ceil(allStudents.length / 2);
 
-  if (students.length === 0) {
+  let filteredStudents = allStudents.map((s, idx) => {
+    const defaultSub = idx < mid ? 1 : 2;
+    return { name: s, subgroup: defaultSub, originalIndex: idx };
+  });
+
+  if (chosenSubgroup === '1') {
+    filteredStudents = filteredStudents.filter((s) => s.subgroup === 1);
+  } else if (chosenSubgroup === '2') {
+    filteredStudents = filteredStudents.filter((s) => s.subgroup === 2);
+  }
+
+  if (countEl) {
+    const subLabel = chosenSubgroup === 'all' ? '' : ` (${chosenSubgroup} п/г)`;
+    countEl.textContent = `${filteredStudents.length}${subLabel}`;
+  }
+
+  if (filteredStudents.length === 0) {
     listEl.innerHTML = `
       <div style="text-align: center; color: #64748b; padding: 16px 12px; font-size: 12px; background: rgba(15,23,42,0.4); border-radius: 12px; border: 1px dashed #334155;">
-        В группе ${group} пока нет студентов.<br>
+        В выбранной подгруппе группы ${group} пока нет студентов.<br>
         <span style="color: #94a3b8; font-size: 11px;">Перейдите во вкладку «Студенты», чтобы добавить.</span>
       </div>`;
     return;
   }
 
   listEl.innerHTML = '';
-  students.forEach((student, idx) => {
+  filteredStudents.forEach((item, idx) => {
+    const student = item.name;
     const row = document.createElement('div');
     row.className = 'student-row';
     row.setAttribute('data-student', student);
+    row.setAttribute('data-subgroup', String(item.subgroup));
 
     row.innerHTML = `
       <div class="student-header">
         <div class="student-info">
           <span class="student-num">${idx + 1}</span>
           <span class="student-name">${student}</span>
+          <span class="text-[10px] text-slate-400 bg-slate-800 px-1 py-0.5 rounded border border-slate-700">${item.subgroup} п/г</span>
         </div>
         <span class="student-badge badge-present" data-badge>Был</span>
       </div>
