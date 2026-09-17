@@ -5,6 +5,7 @@ import { state, PWA_VERSION } from './state.js';
 import { renderJournalStats } from './journalStats.js';
 import { autoFillTopicForGroup, loadEntryToForm } from './journalView.js';
 import { createHistoryCardElement } from './journalCard.js';
+import { fetchRemoteJournal, deleteJournalEntryFromCloud } from './supabaseSync.js';
 
 export function deleteJournalEntry(id) {
   if (!confirm('Удалить эту запись занятия из журнала?')) return;
@@ -12,6 +13,7 @@ export function deleteJournalEntry(id) {
   state.journalEntries = (state.journalEntries || []).filter((e) => e.id !== id);
   localStorage.setItem('pwa_journal', JSON.stringify(state.journalEntries));
 
+  deleteJournalEntryFromCloud(id);
   fetch(`./api/journal/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
 
   renderJournalHistory();
@@ -81,6 +83,12 @@ export async function loadJournalHistory() {
         if (d.success && d.entries) freshEntries = d.entries;
       }
     } catch (e) {}
+
+    if (!freshEntries) {
+      try {
+        freshEntries = await fetchRemoteJournal(currentTeacher);
+      } catch (e) {}
+    }
 
     if (!freshEntries && isTripolsky) {
       try {

@@ -53,6 +53,7 @@ export async function handleJournalRoutes(
       date,
       group,
       teacher: teacher || CONFIG.DEFAULT_TEACHER,
+      subgroup: payload.subgroup ? (Number(payload.subgroup) as 1 | 2) : undefined,
       subject: subject || CONFIG.DEFAULT_SUBJECT,
       lessonNumber: Number(lessonNumber),
       startTime: startTime || '08:00',

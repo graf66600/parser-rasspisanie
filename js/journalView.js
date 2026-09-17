@@ -14,6 +14,7 @@ import {
   renderJournalHistory,
   deleteJournalEntry,
 } from './journalHistory.js';
+import { pushJournalEntryToCloud } from './supabaseSync.js';
 
 export { updateJournalStudents, loadJournalHistory, renderJournalHistory, deleteJournalEntry };
 
@@ -78,6 +79,10 @@ export function setupJournalListeners() {
     updateJournalStudents();
     autoFillTopicForGroup(groupSel.value, lessonSel?.value);
     renderJournalStats(groupSel.value);
+  });
+
+  document.getElementById('journalSubgroupSelect')?.addEventListener('change', () => {
+    updateJournalStudents();
   });
 
   lessonSel?.addEventListener('change', () => {
@@ -176,8 +181,12 @@ export function setupJournalListeners() {
       attendance[student] = { status, grade: grade || undefined };
     });
 
-    let entryId = `${group}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
-    if (isTripolsky) {
+    const subgroupSel = document.getElementById('journalSubgroupSelect')?.value;
+    const subgroupVal = (subgroupSel === '1' || subgroupSel === '2') ? Number(subgroupSel) : null;
+    const subg = subgroupVal ? `_sub${subgroupVal}` : '';
+
+    let entryId = `${group}${subg}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
+    if (isTripolsky && !subgroupVal) {
       const legacyId = `${group}_${date}_${lessonNumber}`;
       if ((state.journalEntries || []).some((e) => e.id === legacyId)) {
         entryId = legacyId;
@@ -189,6 +198,7 @@ export function setupJournalListeners() {
       date,
       dateFormatted: date,
       group,
+      subgroup: subgroupVal,
       teacher: currentTeacher,
       subject: currentSubject,
       lessonNumber,
@@ -205,6 +215,8 @@ export function setupJournalListeners() {
     else saved.push(entry);
     localStorage.setItem('pwa_journal', JSON.stringify(saved));
     state.journalEntries = saved;
+
+    pushJournalEntryToCloud(entry);
 
     fetch('./api/journal/mark', {
       method: 'POST',

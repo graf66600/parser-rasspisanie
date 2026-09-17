@@ -131,9 +131,10 @@ export function renderSummaryTable(group) {
   const dateHeaders = entries.map((e, idx) => {
     const d = e.date ? e.date.slice(5).replace('-', '.') : `Урок ${idx + 1}`;
     const typeShort = (e.type === 'practice' || (e.topic || '').toLowerCase().includes('практик')) ? 'П' : 'Л';
-    return `<th class="header-lesson" title="Пара №${idx + 1} (${e.dateFormatted || e.date}): ${e.topic || 'Без темы'}">
+    const subgLbl = e.subgroup ? ` (${e.subgroup})` : '';
+    return `<th class="header-lesson" title="Пара №${idx + 1}${e.subgroup ? ` (подгр. ${e.subgroup})` : ''} (${e.dateFormatted || e.date}): ${e.topic || 'Без темы'}">
       <div class="h-date">${d}</div>
-      <div class="h-type">${typeShort}</div>
+      <div class="h-type">${typeShort}${subgLbl}</div>
     </th>`;
   }).join('');
 

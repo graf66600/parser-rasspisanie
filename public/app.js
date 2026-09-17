@@ -8,6 +8,8 @@ import { renderManageStudents, setupStudentsListeners } from './js/studentsView.
 import { setupUploadListeners } from './js/uploadView.js';
 import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js';
 import { setupNotifications } from './js/notifications.js';
+import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/authView.js';
+import { setupRealtimeSubscription } from './js/supabaseSync.js';
 
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
@@ -120,17 +122,27 @@ async function initApp() {
   setupNotifications();
   setupJournalListeners();
   setupSummaryListeners();
+  setupAuthListeners(() => updateAuthModeUI());
+  updateAuthModeUI();
+  setupRealtimeSubscription();
 
-  // Слушатель переключения преподавателя (мульти-парсер)
-  document.getElementById('teacherSelect')?.addEventListener('change', async (e) => {
+  document.getElementById('unlockTeacherBtn')?.addEventListener('click', () => {
+    promptTeacherAuth(state.currentTeacher, () => updateAuthModeUI());
+  });
+
+  // Слушатель переключения преподавателя (мульти-парсер с PIN-защитой)
+  document.getElementById('teacherSelect')?.addEventListener('change', (e) => {
     const selected = e.target.value;
-    await loadSchedule(() => renderSchedule(onOpenLessonInJournal), selected);
-    populateGroupSelects(updateJournalStudents);
-    updateJournalStudents();
-    loadJournalHistory();
-    const g = document.getElementById('journalGroupSelect')?.value;
-    const l = document.getElementById('journalLessonNumSelect')?.value;
-    autoFillTopicForGroup(g, l);
+    promptTeacherAuth(selected, async () => {
+      await loadSchedule(() => renderSchedule(onOpenLessonInJournal), selected);
+      populateGroupSelects(updateJournalStudents);
+      updateJournalStudents();
+      loadJournalHistory();
+      const g = document.getElementById('journalGroupSelect')?.value;
+      const l = document.getElementById('journalLessonNumSelect')?.value;
+      autoFillTopicForGroup(g, l);
+      updateAuthModeUI();
+    });
   });
 
 

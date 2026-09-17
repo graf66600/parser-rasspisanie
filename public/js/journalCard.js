@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // JOURNAL CARD: RENDER INDIVIDUAL LESSON RECORD IN HISTORY
 // ==========================================================================
 
@@ -43,7 +43,7 @@ export function createHistoryCardElement(entry, { onDelete, onEdit }) {
         <span class="history-date-text">${entry.dateFormatted || entry.date} (${entry.lessonNumber} пара)</span>
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="history-group-badge">Гр. ${entry.group}</span>
+        <span class="history-group-badge">Гр. ${entry.group}${entry.subgroup ? ' (' + entry.subgroup + ' п/г)' : ''}</span>
         <button type="button" class="history-edit-btn" title="Загрузить пару в форму для просмотра или редактирования">✏️ Изменить</button>
         <button type="button" class="history-del-btn" title="Удалить запись">🗑️</button>
       </div>

@@ -238,6 +238,7 @@ export class SupabaseService {
         topic_index: entry.topicIndex || null,
         course_lesson_number: entry.courseLessonNumber || null,
         type: entry.type || 'theory',
+        subgroup: entry.subgroup || null,
         notes: entry.notes || null,
         attendance: entry.attendance || {},
       };
@@ -255,6 +256,34 @@ export class SupabaseService {
     } catch (e) {
       console.warn('⚠️ Supabase: ошибка записи в журнал:', e);
       return false;
+    }
+  }
+
+  /**
+   * Получить записи журнала из Supabase
+   */
+  public async getJournalEntries(teacher?: string): Promise<JournalEntry[] | null> {
+    try {
+      let q = `${this.url}/rest/v1/journal_entries?order=date.asc,lesson_number.asc`;
+      if (teacher) {
+        q += `&teacher_name=eq.${encodeURIComponent(teacher)}`;
+      }
+      const res = await fetch(q, { headers: this.headers });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data)) return null;
+      return data.map((r: any) => ({
+        id: r.id, date: r.date, dateFormatted: r.date_formatted,
+        group: r.group_name, teacher: r.teacher_name, lessonNumber: r.lesson_number,
+        subject: r.subject, startTime: r.start_time, endTime: r.end_time,
+        classroom: r.classroom || '', topic: r.topic || '', topicIndex: r.topic_index,
+        courseLessonNumber: r.course_lesson_number, type: r.type || 'theory',
+        subgroup: r.subgroup || null, notes: r.notes || '', attendance: r.attendance || {},
+        status: 'completed', completedAt: r.created_at || new Date().toISOString(),
+      }));
+    } catch (e) {
+      console.warn('⚠️ Supabase: ошибка чтения журнала:', e);
+      return null;
     }
   }
 }
