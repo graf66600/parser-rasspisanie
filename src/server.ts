@@ -1,4 +1,4 @@
-﻿import http from 'http';
+import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { URL } from 'url';
@@ -38,6 +38,7 @@ export class WebAppServer {
     if (!existing || existing.lessons.length === 0) {
       const candidates = [
         path.resolve(CONFIG.DATA_DIR, 'latest_schedule.xlsx'),
+        path.resolve(process.cwd(), 'на стенд 14_09__19_09 с изменениями.xlsx'),
         path.resolve(process.cwd(), 'на стенд2_1нед — копия.xlsx'),
       ];
       for (const file of candidates) {
@@ -88,7 +89,7 @@ export class WebAppServer {
 
     try {
       if (pathname.startsWith('/api/')) {
-        const scheduleHandled = await handleScheduleRoutes(req, res, pathname, this.storage, this.defaultUserId);
+        const scheduleHandled = await handleScheduleRoutes(req, res, pathname, parsedUrl, this.storage, this.defaultUserId);
         if (scheduleHandled) return;
 
         const studentHandled = await handleStudentRoutes(req, res, pathname, parsedUrl, this.students);

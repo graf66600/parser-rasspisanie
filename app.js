@@ -1,7 +1,7 @@
 // ==========================================================================
 // MAIN APPLICATION ENTRY POINT
 // ==========================================================================
-import { state, initLocalState, loadSchedule, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION } from './js/state.js';
+import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION } from './js/state.js';
 import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js';
 import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
@@ -120,12 +120,20 @@ async function initApp() {
   setupNotifications();
   setupJournalListeners();
   setupSummaryListeners();
+
+  // Слушатель переключения преподавателя (мульти-парсер)
+  document.getElementById('teacherSelect')?.addEventListener('change', (e) => {
+    const selected = e.target.value;
+    loadSchedule(() => renderSchedule(onOpenLessonInJournal), selected);
+  });
+
   document.getElementById('openSummaryModalBtn')?.addEventListener('click', () => {
     const currentGroup = document.getElementById('journalGroupSelect')?.value || '51ф';
     openJournalSummary(currentGroup);
   });
   setupStudentsListeners(updateJournalStudents);
   setupUploadListeners(async () => {
+    await loadTeachers();
     await loadSchedule(() => renderSchedule(onOpenLessonInJournal));
     populateGroupSelects(updateJournalStudents);
     setTimeout(() => switchTab('tabSchedule'), 1200);
@@ -133,6 +141,7 @@ async function initApp() {
 
   // 3. Фоновое параллельное обновление данных по сети
   Promise.allSettled([
+    loadTeachers(),
     loadSchedule(() => renderSchedule(onOpenLessonInJournal)),
     loadStudents(() => populateGroupSelects(updateJournalStudents)),
     loadCurriculum(() => {

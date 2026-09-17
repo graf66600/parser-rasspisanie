@@ -66,6 +66,20 @@
 
     <!-- ВКЛАДКА 1: РАСПИСАНИЕ -->
     <section id="tabSchedule" class="space-y-4">
+      <!-- Селектор преподавателя (мульти-парсер) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-base flex-shrink-0">👨‍🏫</span>
+          <div class="min-w-0">
+            <span class="text-[11px] text-slate-400 font-medium block">Преподаватель</span>
+            <span id="selectedTeacherSubtitle" class="text-xs font-bold text-white truncate block">Трипольский (Информатика + КТП)</span>
+          </div>
+        </div>
+        <select id="teacherSelect" class="bg-slate-950 text-blue-400 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-blue-500 max-w-[170px] truncate">
+          <option value="Трипольский">Трипольский</option>
+        </select>
+      </div>
+
       <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
         <button data-day="today" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white whitespace-nowrap shadow-sm transition">Сегодня</button>
         <button data-day="tomorrow" class="day-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition">Завтра</button>
@@ -349,6 +363,6 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=15"></script>
+  <script type="module" src="./app.js?v=20"></script>
 </body>
 </html>

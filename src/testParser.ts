@@ -283,4 +283,50 @@ journal.deleteEntry(newEntry.id);
 
 console.log('✅ ЭЛЕКТРОННЫЙ ЖУРНАЛ РАБОТАЕТ ИСПРАВНО!');
 
-console.log('\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!\n');
+console.log('\n======================================================');
+console.log('🌐 Тестирование Мульти-парсера для других преподавателей...');
+
+const multiBuffer = fs.readFileSync(newFilePath);
+const multiResult = ExcelParser.parseAllTeachers(multiBuffer, DEFAULT_BELLS);
+console.log(`- Всего обнаружено преподавателей: ${multiResult.teachers.length}`);
+console.log(`- Всего пар по всем преподавателям: ${multiResult.allLessons.length}`);
+
+if (multiResult.teachers.length >= 20 && multiResult.allLessons.length >= 200) {
+  console.log('✅ МУЛЬТИ-ПАРСЕР УСПЕШНО ИЗВЛЕК ВСЕХ ПРЕПОДАВАТЕЛЕЙ И ПАРЫ!');
+} else {
+  console.error('❌ ОШИБКА МУЛЬТИ-ПАРСЕРА: Слишком мало преподавателей или пар найдено.');
+  process.exit(1);
+}
+
+// Тестирование парсинга для преподавателя без тем КТП
+const odinetzLessons = ExcelParser.parseForTeacher(multiBuffer, 'Одинец', DEFAULT_BELLS);
+console.log(`- Пар преподавателя Одинец: ${odinetzLessons.totalFound}`);
+if (odinetzLessons.totalFound > 0) {
+  console.log(
+    `  Пример пары: [${odinetzLessons.lessons[0].dayName}] ${odinetzLessons.lessons[0].startTime}-${odinetzLessons.lessons[0].endTime} "${odinetzLessons.lessons[0].subject}" (${odinetzLessons.lessons[0].classroom})`
+  );
+  console.log('✅ РАСПИСАНИЕ СТОРОННЕГО ПРЕПОДАВАТЕЛЯ СФОРМИРОВАНО (БЕЗ ТЕМ КТП)!');
+} else {
+  console.error('❌ ОШИБКА: Не найдены пары для преподавателя Одинец');
+  process.exit(1);
+}
+
+console.log('\n======================================================');
+console.log('☁️ Тестирование интеграции с базой данных Supabase (PostgreSQL)...');
+import { SupabaseService } from './services/supabaseService.js';
+
+(async () => {
+  const supabase = SupabaseService.getInstance();
+  const teachersSaved = await supabase.saveTeachers(multiResult.teachers);
+  console.log(`- Сохранение преподавателей в Supabase: ${teachersSaved ? 'УСПЕШНО' : 'ОШИБКА'}`);
+
+  const cloudTeachers = await supabase.getTeachers();
+  console.log(`- Получено преподавателей из облака Supabase: ${cloudTeachers?.length || 0}`);
+  if (!cloudTeachers || cloudTeachers.length === 0) {
+    console.error('❌ ОШИБКА: Не удалось получить преподавателей из Supabase');
+    process.exit(1);
+  }
+  console.log('✅ БАЗА ДАННЫХ SUPABASE ПОЛНОСТЬЮ РАБОТОСПОСОБНА!');
+
+  console.log('\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!\n');
+})();

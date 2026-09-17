@@ -13,6 +13,8 @@ export const DAY_NAMES = {
 };
 
 export const state = {
+  currentTeacher: 'Трипольский',
+  teachersList: ['Трипольский'],
   schedule: null,
   activeDay: 'today',
   bells: [
@@ -39,10 +41,24 @@ export function updateHeaderStatus() {
   const now = new Date();
   const day = now.getDay() === 0 ? 7 : now.getDay();
   const todayLessons = state.schedule.lessons.filter((l) => l.dayOfWeek === day);
+  const tName = state.currentTeacher || 'Трипольский';
 
   statusEl.textContent = todayLessons.length === 0
-    ? `Пар сегодня нет • ${DAY_NAMES[day]}`
-    : `Сегодня ${todayLessons.length} пар(ы) • ${DAY_NAMES[day]}`;
+    ? `Пар нет (${tName}) • ${DAY_NAMES[day]}`
+    : `Сегодня ${todayLessons.length} пар(ы) (${tName}) • ${DAY_NAMES[day]}`;
+}
+
+export function updateTeacherDisplay() {
+  const subtitle = document.getElementById('selectedTeacherSubtitle');
+  if (subtitle) {
+    subtitle.textContent = state.currentTeacher === 'Трипольский'
+      ? 'Трипольский (Информатика + КТП)'
+      : `${state.currentTeacher} (Расписание)`;
+  }
+  const select = document.getElementById('teacherSelect');
+  if (select && select.value !== state.currentTeacher) {
+    select.value = state.currentTeacher;
+  }
 }
 
 export function populateGroupSelects(onGroupChange) {
@@ -79,7 +95,7 @@ export function populateGroupSelects(onGroupChange) {
   }
 }
 
-export const PWA_VERSION = 'v19';
+export const PWA_VERSION = 'v20';
 
 export function formatLocalDate(date = new Date()) {
   const d = date instanceof Date ? date : new Date(date);
@@ -97,6 +113,11 @@ export function initLocalState() {
       localStorage.removeItem('pwa_custom_schedule');
       localStorage.setItem('pwa_version', PWA_VERSION);
     }
+  } catch (e) {}
+
+  try {
+    const savedT = localStorage.getItem('pwa_current_teacher');
+    if (savedT) state.currentTeacher = savedT;
   } catch (e) {}
 
   try {
@@ -148,30 +169,73 @@ async function safeFetchJson(url, timeoutMs = 1500) {
   return null;
 }
 
-export async function loadSchedule(onScheduleLoaded) {
+export async function loadTeachers(onTeachersLoaded) {
   try {
-    let freshData = null;
+    let list = null;
     if (!isStaticHost) {
-      const apiData = await safeFetchJson('./api/schedule', 1500);
+      const res = await safeFetchJson('./api/teachers', 1500);
+      if (res?.success && Array.isArray(res.teachers)) list = res.teachers;
+    }
+    if (!list) {
+      list = await safeFetchJson(`./data/teachers.json?v=${PWA_VERSION}`, 2000);
+    }
+    if (Array.isArray(list) && list.length > 0) {
+      state.teachersList = list;
+    }
+  } catch (e) {}
+
+  const select = document.getElementById('teacherSelect');
+  if (select) {
+    select.innerHTML = '';
+    state.teachersList.forEach((t) => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t === 'Трипольский' ? 'Трипольский (КТП)' : t;
+      select.appendChild(opt);
+    });
+    select.value = state.currentTeacher;
+  }
+
+  updateTeacherDisplay();
+  if (typeof onTeachersLoaded === 'function') onTeachersLoaded();
+}
+
+export async function loadSchedule(onScheduleLoaded, targetTeacher = state.currentTeacher) {
+  try {
+    state.currentTeacher = targetTeacher;
+    localStorage.setItem('pwa_current_teacher', targetTeacher);
+    updateTeacherDisplay();
+    const isTripolsky = targetTeacher.toLowerCase().includes('трипольский');
+    let freshData = null;
+
+    if (!isStaticHost) {
+      const apiData = await safeFetchJson(`./api/schedule?teacher=${encodeURIComponent(targetTeacher)}`, 1500);
       if (apiData?.success && apiData.lessons) freshData = apiData;
     }
 
     if (!freshData) {
-      freshData = await safeFetchJson(`./data/schedule.json?v=${PWA_VERSION}`, 3000);
-      if (!freshData) {
-        const multi = await safeFetchJson(`./data/schedules.json?v=${PWA_VERSION}`, 3000);
-        if (multi) {
-          freshData = Array.isArray(multi)
-            ? (multi.find((s) => s.userId === 1 && s.lessons?.length) || multi[0])
-            : multi;
+      if (isTripolsky) {
+        freshData = await safeFetchJson(`./data/schedule.json?v=${PWA_VERSION}`, 3000);
+      } else {
+        const allByTeacher = await safeFetchJson(`./data/schedules_all.json?v=${PWA_VERSION}`, 3000);
+        if (allByTeacher && allByTeacher[targetTeacher]) {
+          freshData = {
+            success: true,
+            teacher: targetTeacher,
+            lessons: allByTeacher[targetTeacher],
+            bells: state.bells,
+            hasCurriculum: false,
+          };
         }
       }
     }
 
-    if (freshData?.lessons?.length) {
+    if (freshData?.lessons) {
       state.schedule = freshData;
       state.bells = freshData.bells || freshData.settings?.bellsSchedule || state.bells;
-      localStorage.setItem('pwa_custom_schedule', JSON.stringify(freshData));
+      if (isTripolsky) {
+        localStorage.setItem('pwa_custom_schedule', JSON.stringify(freshData));
+      }
     }
   } catch (err) {
     console.warn('Использованы локальные данные расписания:', err);
