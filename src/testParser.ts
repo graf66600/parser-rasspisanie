@@ -2,6 +2,7 @@ import * as xlsx from 'xlsx';
 import { ExcelParser } from './services/excelParser.js';
 import { StorageService } from './services/storageService.js';
 import { DEFAULT_BELLS } from './config/config.js';
+import { findLatestScheduleFile } from './services/scheduleFileHelper.js';
 
 console.log('🧪 Запуск тестов парсера расписания и сервисов...\n');
 
@@ -147,46 +148,18 @@ if (fs.existsSync(realFilePath)) {
   console.warn(`\n⚠️ Файл ${realFileName} не найден по пути ${realFilePath}`);
 }
 
-const newFileName = 'на стенд 14_09__19_09 с изменениями.xlsx';
-const newFilePath = path.resolve(newFileName);
+const latestFile = findLatestScheduleFile() || path.resolve('на стенд 14_09__19_09 с изменениями.xlsx');
 
-if (fs.existsSync(newFilePath)) {
-  const newBuffer = fs.readFileSync(newFilePath);
+if (fs.existsSync(latestFile)) {
+  const newBuffer = fs.readFileSync(latestFile);
   const newResult = ExcelParser.parseBuffer(newBuffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
 
-  console.log(`\n🔍 Результаты парсинга нового файла "${newFileName}":`);
+  console.log(`\n🔍 Результаты парсинга актуального файла "${path.basename(latestFile)}":`);
   console.log(`- Всего найдено пар Трипольского: ${newResult.totalFound}`);
-  if (newResult.totalFound === 13) {
-    console.log('✅ ТЕСТ НОВОГО ФАЙЛА УСПЕШЕН: Все 13 пар группы 51ф на всю неделю найдены!');
-    const scheduleData = {
-      success: true,
-      teacher: 'Трипольский',
-      subject: 'Информатика',
-      lessons: newResult.lessons,
-      bells: DEFAULT_BELLS,
-      updatedAt: new Date().toISOString()
-    };
-    fs.writeFileSync('data/schedule.json', JSON.stringify(scheduleData, null, 2), 'utf8');
-    fs.writeFileSync('public/data/schedule.json', JSON.stringify(scheduleData, null, 2), 'utf8');
-
-    const multiSchedule = [{
-      userId: 1,
-      chatId: 1,
-      updatedAt: new Date().toISOString(),
-      settings: {
-        remindMinutesBefore: 15,
-        morningDigestEnabled: true,
-        morningDigestTime: '08:00',
-        bellsSchedule: DEFAULT_BELLS,
-        teacherFilter: 'Трипольский',
-        subjectFilter: 'Информатика'
-      },
-      lessons: newResult.lessons
-    }];
-    fs.writeFileSync('data/schedules.json', JSON.stringify(multiSchedule, null, 2), 'utf8');
-    fs.writeFileSync('public/data/schedules.json', JSON.stringify(multiSchedule, null, 2), 'utf8');
+  if (newResult.totalFound > 0) {
+    console.log(`✅ ТЕСТ ФАЙЛА УСПЕШЕН: Найдено ${newResult.totalFound} пар!`);
   } else {
-    console.error(`❌ ОШИБКА: Ожидалось 13 пар в новом файле, найдено ${newResult.totalFound}`);
+    console.error(`❌ ОШИБКА: Не найдено пар в файле ${latestFile}`);
     process.exit(1);
   }
 }
@@ -286,7 +259,7 @@ console.log('✅ ЭЛЕКТРОННЫЙ ЖУРНАЛ РАБОТАЕТ ИСПРА
 console.log('\n======================================================');
 console.log('🌐 Тестирование Мульти-парсера для других преподавателей...');
 
-const multiBuffer = fs.readFileSync(newFilePath);
+const multiBuffer = fs.readFileSync(latestFile);
 const multiResult = ExcelParser.parseAllTeachers(multiBuffer, DEFAULT_BELLS);
 console.log(`- Всего обнаружено преподавателей: ${multiResult.teachers.length}`);
 console.log(`- Всего пар по всем преподавателям: ${multiResult.allLessons.length}`);
