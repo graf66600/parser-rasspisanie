@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Расписание занятий (Интерактивный стол)
+Comment=Автозапуск табло расписания в режиме киоска
+Exec=/home/user/kiosk-astra.sh
+Terminal=false
+StartupNotify=false
+Categories=Utility;Education;
+X-Astra-Autostart=true

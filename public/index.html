@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="./css/history.css">
   <link rel="stylesheet" href="./css/modals.css">
   <link rel="stylesheet" href="./css/journalSummary.css">
+  <link rel="stylesheet" href="./css/kiosk.css">
+  <link rel="stylesheet" href="./css/kioskCards.css">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <link rel="preconnect" href="https://telegram.org">
   <script defer src="https://cdn.tailwindcss.com"></script>
@@ -49,6 +51,11 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <button id="toggleKioskBtn" class="kiosk-toggle-btn" title="Режим табло / киоска (43″)">
+          <span>🖥️</span>
+          <span class="hidden sm:inline">Табло 43″</span>
+        </button>
+
         <button id="toggleNotificationsBtn" class="notification-toggle-btn btn-notif-inactive" title="Включить уведомления о парах">
           <span>🔔</span>
           <span class="hidden sm:inline">Уведомления</span>
@@ -415,6 +422,105 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=21"></script>
+  <!-- РЕЖИМ СЕНСОРНОЙ ПАНЕЛИ / ТАБЛО 43″ (KIOSK MODE) -->
+  <div id="kioskContainer" class="kiosk-container hidden">
+    <!-- Шапка табло -->
+    <header class="kiosk-top-bar">
+      <div class="kiosk-brand">
+        <div class="kiosk-brand-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <div class="kiosk-brand-title">Информационное табло расписания</div>
+          <div class="kiosk-brand-sub">Интерактивный стол • Расписание занятий и аудиторий</div>
+        </div>
+      </div>
+
+      <div class="kiosk-center-hub">
+        <div id="kioskClockTime" class="kiosk-clock-time">--:--:--</div>
+        <div id="kioskClockDate" class="kiosk-clock-date">Загрузка...</div>
+        <div id="kioskBellStatusPill" class="kiosk-bell-pill pill-idle">Определение текущей пары...</div>
+      </div>
+
+      <div class="kiosk-actions">
+        <div class="kiosk-reset-badge hidden">
+          <span>Сброс через: </span><span id="kioskResetTimer">60с</span>
+        </div>
+        <button type="button" id="kioskFullscreenBtn" class="kiosk-action-btn" title="Развернуть на весь экран">
+          <span>⛶</span><span>Во весь экран</span>
+        </button>
+        <button type="button" id="kioskExitBtn" class="kiosk-action-btn kiosk-exit-btn" title="Вернуться в обычный вид">
+          <span>✕</span><span>Обычный вид</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Навигация киоска -->
+    <nav class="kiosk-nav-bar">
+      <button type="button" id="kioskNavBtn_live" class="kiosk-nav-item active-subtab">
+        <span>🔴</span><span>Прямо сейчас (все аудитории)</span>
+      </button>
+      <button type="button" id="kioskNavBtn_groups" class="kiosk-nav-item">
+        <span>👥</span><span>Расписание групп</span>
+      </button>
+      <button type="button" id="kioskNavBtn_teachers" class="kiosk-nav-item">
+        <span>👨‍🏫</span><span>Преподаватели</span>
+      </button>
+      <button type="button" id="kioskNavBtn_bells" class="kiosk-nav-item">
+        <span>⏰</span><span>Расписание звонков</span>
+      </button>
+    </nav>
+
+    <!-- Основное содержимое киоска -->
+    <div class="kiosk-main-content">
+      <!-- Секция 1: Прямо сейчас -->
+      <section id="kioskSection_live">
+        <div class="kiosk-section-header">
+          <span id="kioskLiveTitle">Пары прямо сейчас:</span>
+        </div>
+        <div id="kioskLiveGrid" class="kiosk-cards-grid">
+          <!-- Карточки текущих пар через JS -->
+        </div>
+      </section>
+
+      <!-- Секция 2: Группы (для студентов) -->
+      <section id="kioskSection_groups" class="hidden">
+        <div class="kiosk-section-header">
+          <span>Выберите группу:</span>
+        </div>
+        <div id="kioskGroupsGrid" class="kiosk-tiles-grid">
+          <!-- Плитки групп через JS -->
+        </div>
+        <div id="kioskGroupScheduleView" class="hidden">
+          <!-- Расписание выбранной группы -->
+        </div>
+      </section>
+
+      <!-- Секция 3: Преподаватели -->
+      <section id="kioskSection_teachers" class="hidden">
+        <div class="kiosk-section-header">
+          <span>Выберите преподавателя:</span>
+        </div>
+        <div id="kioskTeachersGrid" class="kiosk-tiles-grid">
+          <!-- Плитки преподавателей через JS -->
+        </div>
+        <div id="kioskTeacherScheduleView" class="hidden">
+          <!-- Расписание выбранного преподавателя -->
+        </div>
+      </section>
+
+      <!-- Секция 4: Звонки -->
+      <section id="kioskSection_bells" class="hidden">
+        <div class="kiosk-section-header">
+          <span>График учебных пар и звонков:</span>
+        </div>
+        <div id="kioskBellsContainer">
+          <!-- Звонки через JS -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js?v=23"></script>
 </body>
 </html>

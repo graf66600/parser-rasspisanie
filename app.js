@@ -10,6 +10,7 @@ import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryVi
 import { setupNotifications } from './js/notifications.js';
 import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/authView.js';
 import { setupRealtimeSubscription } from './js/supabaseSync.js';
+import { setupKioskEventListeners } from './js/kioskView.js';
 
 // Инициализация PWA и Service Worker
 if ('serviceWorker' in navigator) {
@@ -125,6 +126,7 @@ async function initApp() {
   setupAuthListeners(() => updateAuthModeUI());
   updateAuthModeUI();
   setupRealtimeSubscription();
+  setupKioskEventListeners();
 
   document.getElementById('unlockTeacherBtn')?.addEventListener('click', () => {
     promptTeacherAuth(state.currentTeacher, () => updateAuthModeUI());
