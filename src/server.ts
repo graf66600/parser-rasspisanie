@@ -12,6 +12,7 @@ import { serveStaticFile, sendError } from './server/httpUtils.js';
 import { handleScheduleRoutes } from './server/routes/scheduleRoutes.js';
 import { handleStudentRoutes } from './server/routes/studentRoutes.js';
 import { handleJournalRoutes } from './server/routes/journalRoutes.js';
+import { findLatestScheduleFile } from './services/scheduleFileHelper.js';
 
 export class WebAppServer {
   private server: http.Server;
@@ -36,11 +37,8 @@ export class WebAppServer {
   private ensureInitialSchedule(): void {
     const existing = this.storage.getUserSchedule(this.defaultUserId);
     if (!existing || existing.lessons.length === 0) {
-      const candidates = [
-        path.resolve(CONFIG.DATA_DIR, 'latest_schedule.xlsx'),
-        path.resolve(process.cwd(), 'на стенд 14_09__19_09 с изменениями.xlsx'),
-        path.resolve(process.cwd(), 'на стенд2_1нед — копия.xlsx'),
-      ];
+      const latest = findLatestScheduleFile();
+      const candidates = latest ? [latest] : [];
       for (const file of candidates) {
         if (fs.existsSync(file)) {
           try {

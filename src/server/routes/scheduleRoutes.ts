@@ -9,6 +9,7 @@ import { CONFIG, DEFAULT_BELLS } from '../../config/config.js';
 import { sendJson, sendError, readBody } from '../httpUtils.js';
 import { parseMultipart } from '../multipartParser.js';
 import { Lesson } from '../../types/schedule.js';
+import { findLatestScheduleFile } from '../../services/scheduleFileHelper.js';
 
 export async function handleScheduleRoutes(
   req: http.IncomingMessage,
@@ -26,11 +27,8 @@ export async function handleScheduleRoutes(
 
     if (!teachers || teachers.length === 0) {
       // Fallback: извлекаем из файла расписания на диске
-      const candidates = [
-        path.resolve(CONFIG.DATA_DIR, 'latest_schedule.xlsx'),
-        path.resolve(process.cwd(), 'на стенд 14_09__19_09 с изменениями.xlsx'),
-        path.resolve(process.cwd(), 'на стенд2_1нед — копия.xlsx'),
-      ];
+      const latest = findLatestScheduleFile();
+      const candidates = latest ? [latest] : [];
       for (const file of candidates) {
         if (fs.existsSync(file)) {
           try {
@@ -78,11 +76,8 @@ export async function handleScheduleRoutes(
         lessons = cloudLessons;
       } else {
         // Fallback: парсинг из локального файла
-        const candidates = [
-          path.resolve(CONFIG.DATA_DIR, 'latest_schedule.xlsx'),
-          path.resolve(process.cwd(), 'на стенд 14_09__19_09 с изменениями.xlsx'),
-          path.resolve(process.cwd(), 'на стенд2_1нед — копия.xlsx'),
-        ];
+        const latest = findLatestScheduleFile();
+        const candidates = latest ? [latest] : [];
         for (const file of candidates) {
           if (fs.existsSync(file)) {
             try {
