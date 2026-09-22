@@ -168,7 +168,11 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
       if (subgroup && eSub && eSub !== subgroup) return false;
       return e.type === 'practice' || (e.topic && e.topic.toLowerCase().includes('практич'));
     });
-    const pastPracticesCount = new Set(pastPracticesInJournal.map((e) => `${e.date}_${e.lessonNumber}`)).size;
+    const weekStart = '2026-09-21';
+    const pastWeeksEntries = pastPracticesInJournal.filter((e) => e.date < weekStart);
+    const thisWeekEntries = pastPracticesInJournal.filter((e) => e.date >= weekStart);
+    const pastWeeksPracticesCount = new Set(pastWeeksEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
+    const thisWeekPracticesCount = new Set(thisWeekEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
 
     const priorDaysInSchedule = (state.schedule?.lessons || []).filter((l) => {
       if (!l.group) return false;
@@ -186,7 +190,7 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
       return matchG && l.dayOfWeek === dayOfWeek && lSub === subgroup && Number(l.lessonNumber) < bellNum;
     }).length;
 
-    const totalPast = Math.max(pastPracticesCount, priorDaysInSchedule) + priorToday;
+    const totalPast = pastWeeksPracticesCount + Math.max(thisWeekPracticesCount, priorDaysInSchedule) + priorToday;
     const validIdx = practices.length > 0 ? totalPast % practices.length : 0;
     const l = practices[validIdx] || prog.lessons[0];
     let pNum = validIdx + 1;
