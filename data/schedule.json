@@ -13,7 +13,7 @@
       "subject": "Информатика",
       "group": "31фм",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "О, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -27,7 +27,7 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "о, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -41,7 +41,7 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "о, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -55,7 +55,7 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "о, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -69,12 +69,12 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "о, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
     {
-      "id": "2_4_31фм_Информатика",
+      "id": "2_4_31фм_Информатика_1",
       "dayOfWeek": 2,
       "dayName": "Вторник",
       "lessonNumber": 4,
@@ -82,12 +82,13 @@
       "endTime": "14:20",
       "subject": "Информатика",
       "group": "31фм",
+      "subgroup": "1",
       "classroom": "ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
     {
-      "id": "2_5_31фм_Информатика",
+      "id": "2_5_31фм_Информатика_1",
       "dayOfWeek": 2,
       "dayName": "Вторник",
       "lessonNumber": 5,
@@ -95,6 +96,7 @@
       "endTime": "15:50",
       "subject": "Информатика",
       "group": "31фм",
+      "subgroup": "1",
       "classroom": "ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
@@ -108,7 +110,7 @@
       "endTime": "10:50",
       "subject": "Информатика",
       "group": "51ф",
-      "classroom": "О, ауд. 232",
+      "classroom": "о, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -122,7 +124,7 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "1",
-      "classroom": "гл, ауд. 6",
+      "classroom": "о, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -136,7 +138,7 @@
       "subject": "Информатика",
       "group": "31фм",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -150,7 +152,7 @@
       "subject": "Информатика",
       "group": "31фм",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -164,12 +166,12 @@
       "subject": "Информатика",
       "group": "31фм",
       "subgroup": "2",
-      "classroom": "гл, ауд. 6",
+      "classroom": "О, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
     {
-      "id": "4_3_31фм_Информатика",
+      "id": "4_3_31фм_Информатика_1",
       "dayOfWeek": 4,
       "dayName": "Четверг",
       "lessonNumber": 3,
@@ -177,12 +179,13 @@
       "endTime": "12:20",
       "subject": "Информатика",
       "group": "31фм",
+      "subgroup": "1",
       "classroom": "ауд. 230",
-      "teacher": "трипольский",
+      "teacher": "Трипольский",
       "weekType": "all"
     },
     {
-      "id": "4_4_31фм_Информатика",
+      "id": "4_4_31фм_Информатика_1",
       "dayOfWeek": 4,
       "dayName": "Четверг",
       "lessonNumber": 4,
@@ -190,8 +193,9 @@
       "endTime": "14:20",
       "subject": "Информатика",
       "group": "31фм",
+      "subgroup": "1",
       "classroom": "ауд. 230",
-      "teacher": "трипольский",
+      "teacher": "Трипольский",
       "weekType": "all"
     },
     {
@@ -204,7 +208,7 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "1",
-      "classroom": "гл, ауд. 6",
+      "classroom": "О, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     },
@@ -218,7 +222,7 @@
       "subject": "Информатика",
       "group": "51ф",
       "subgroup": "1",
-      "classroom": "гл, ауд. 6",
+      "classroom": "О, ауд. 230",
       "teacher": "Трипольский",
       "weekType": "all"
     }
@@ -260,5 +264,5 @@
       "endTime": "18:50"
     }
   ],
-  "updatedAt": "2026-09-21T07:32:15.821Z"
+  "updatedAt": "2026-09-22T11:33:36.370Z"
 }
