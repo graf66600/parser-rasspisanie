@@ -192,19 +192,18 @@ export function parseAsMultiGroupSchedule(
             matchesTeacher = true;
             subjectVal = 'Информатика';
             detectedSubgroup = '2';
-          } else if (sub1Info && sub2Val && !sub2Info) {
+          } else if (sub1Info && !sub2Info) {
             isSpecialSubgroupClass = true;
             matchesTeacher = true;
             subjectVal = 'Информатика';
-            detectedSubgroup = '1';
-          } else if (cleanG === '51ф' && sub1Info) {
-            const isLecture = (currentDayNumber === 1 && lessonNum === 3) ||
-                              (currentDayNumber === 2 && (lessonNum === 2 || lessonNum === 4)) ||
-                              (currentDayNumber === 3 && (lessonNum === 1 || lessonNum === 2));
-            isSpecialSubgroupClass = true;
-            matchesTeacher = true;
-            subjectVal = 'Информатика';
-            detectedSubgroup = isLecture ? undefined : '1';
+            if (cleanG === '51ф') {
+              const isLecture = (currentDayNumber === 1 && lessonNum === 3) ||
+                                (currentDayNumber === 2 && (lessonNum === 2 || lessonNum === 4)) ||
+                                (currentDayNumber === 3 && (lessonNum === 1 || lessonNum === 2));
+              detectedSubgroup = isLecture ? undefined : '1';
+            } else {
+              detectedSubgroup = '1';
+            }
           }
         }
       }
@@ -241,7 +240,7 @@ export function parseAsMultiGroupSchedule(
         classroom = `корп. ${building}`;
       }
 
-      if (isSpecialSubgroupClass) {
+      if (isSpecialSubgroupClass && !classroom) {
         if (detectedSubgroup) {
           classroom = 'гл, ауд. 6';
         } else if (currentDayNumber === 1) {

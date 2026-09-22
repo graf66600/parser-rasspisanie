@@ -116,9 +116,9 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     return matchG && l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) === bellNum;
   });
 
-  const subgroup = currentScheduleLesson?.subgroup;
+  const subgroup = currentScheduleLesson?.subgroup || (cleanG.includes('31фм') ? ((dayOfWeek === 2 || (dayOfWeek === 4 && bellNum >= 3)) ? '1' : '2') : undefined);
   const isBeforePractices = targetDate < '2026-09-14';
-  const isPractice = !isBeforePractices && Boolean(subgroup);
+  const isPractice = !isBeforePractices && (Boolean(subgroup) || cleanG.includes('31фм'));
 
   const theories = prog.lessons.filter((x) => x.type === 'theory');
   const practices = prog.lessons.filter((x) => x.type === 'practice');
@@ -173,13 +173,17 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     const priorDaysInSchedule = (state.schedule?.lessons || []).filter((l) => {
       if (!l.group) return false;
       const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      return (lg === cleanG || lg.includes(cleanG) || cleanG.includes(lg)) && l.dayOfWeek < dayOfWeek && l.subgroup === subgroup;
+      const matchG = lg === cleanG || lg.includes(cleanG) || cleanG.includes(lg);
+      const lSub = l.subgroup || (cleanG.includes('31фм') ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : undefined);
+      return matchG && l.dayOfWeek < dayOfWeek && lSub === subgroup;
     }).length;
 
     const priorToday = (state.schedule?.lessons || []).filter((l) => {
       if (!l.group) return false;
       const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      return (lg === cleanG || lg.includes(cleanG) || cleanG.includes(lg)) && l.dayOfWeek === dayOfWeek && l.subgroup === subgroup && Number(l.lessonNumber) < bellNum;
+      const matchG = lg === cleanG || lg.includes(cleanG) || cleanG.includes(lg);
+      const lSub = l.subgroup || (cleanG.includes('31фм') ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : undefined);
+      return matchG && l.dayOfWeek === dayOfWeek && lSub === subgroup && Number(l.lessonNumber) < bellNum;
     }).length;
 
     const totalPast = Math.max(pastPracticesCount, priorDaysInSchedule) + priorToday;

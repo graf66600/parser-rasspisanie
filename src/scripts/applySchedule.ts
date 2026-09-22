@@ -80,13 +80,17 @@ export async function applySchedule(filePath?: string) {
   try {
     const supabase = SupabaseService.getInstance();
     console.log('☁️ Синхронизация преподавателей и пар с Supabase...');
-    await supabase.saveTeachers(multiResult.teachers);
-    for (const [tName, tLessons] of Object.entries(multiResult.lessonsByTeacher)) {
-      await supabase.saveLessons(tName, tLessons);
-    }
+    const syncPromise = (async () => {
+      await supabase.saveTeachers(multiResult.teachers);
+      for (const [tName, tLessons] of Object.entries(multiResult.lessonsByTeacher)) {
+        await supabase.saveLessons(tName, tLessons);
+      }
+    })();
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase sync timeout (5s)')), 5000));
+    await Promise.race([syncPromise, timeoutPromise]);
     console.log('✅ Данные успешно синхронизированы с облаком Supabase!');
   } catch (err) {
-    console.warn('⚠️ Ошибка синхронизации с Supabase:', err);
+    console.warn('⚠️ Пропуск синхронизации с Supabase (таймаут или оффлайн):', (err as Error)?.message || err);
   }
 
   console.log('🎉 Расписание успешно применено во все файлы системы!');
