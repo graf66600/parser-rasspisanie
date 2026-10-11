@@ -1,5 +1,5 @@
 /* ==========================================================================
-   AMBIENT ANIMATED BACKGROUND (AURORA MESH & GLOW ORBS)
+   AMBIENT ANIMATED BACKGROUND (VIVID GLOWING ORBS & AURORA)
    ========================================================================== */
 
 .ambient-bg-container {
@@ -10,18 +10,18 @@
   pointer-events: none;
   z-index: -1;
   overflow: hidden;
-  background-color: #070b14;
+  background: radial-gradient(ellipse at 50% 10%, #0c1222 0%, #050811 100%);
 }
 
-/* Микро-сетка с радиальной маской */
+/* Деликатная звездная микро-сетка */
 .ambient-mesh-pattern {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
-  opacity: 0.55;
-  mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 85%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 85%);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.2px, transparent 1.2px);
+  background-size: 26px 26px;
+  opacity: 0.65;
+  mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, #000 40%, transparent 95%);
+  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, #000 40%, transparent 95%);
 }
 
 /* Базовый светящийся шар */
@@ -33,80 +33,88 @@
   mix-blend-mode: screen;
 }
 
-/* Шар 1: Лазурный / Синий (Верхний левый угол) */
+/* Сфера 1: Электрик Блю (Верхний левый сектор) */
 .ambient-orb-1 {
-  width: 380px;
-  height: 380px;
-  top: -80px;
-  left: -60px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.35) 0%, rgba(59, 130, 246, 0.18) 50%, transparent 75%);
-  filter: blur(75px);
-  -webkit-filter: blur(75px);
-  animation: orbFloat1 24s ease-in-out infinite alternate;
+  width: 230px;
+  height: 230px;
+  top: 14%;
+  left: 6%;
+  background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #2563eb 45%, #1d4ed8 72%, transparent 98%);
+  box-shadow: 0 0 70px 25px rgba(37, 99, 235, 0.45);
+  filter: blur(28px);
+  -webkit-filter: blur(28px);
+  opacity: 0.8;
+  animation: orbFloat1 9s ease-in-out infinite alternate;
 }
 
-/* Шар 2: Индиго / Фиолетовый (Верхний правый угол) */
+/* Сфера 2: Неоновый Фиолетовый (Правый сектор) */
 .ambient-orb-2 {
-  width: 420px;
-  height: 420px;
-  top: 10%;
-  right: -100px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);
-  filter: blur(85px);
-  -webkit-filter: blur(85px);
-  animation: orbFloat2 28s ease-in-out infinite alternate;
+  width: 260px;
+  height: 260px;
+  top: 36%;
+  right: 5%;
+  background: radial-gradient(circle at 35% 35%, #c084fc 0%, #8b5cf6 45%, #6d28d9 72%, transparent 98%);
+  box-shadow: 0 0 80px 30px rgba(139, 92, 246, 0.45);
+  filter: blur(32px);
+  -webkit-filter: blur(32px);
+  opacity: 0.75;
+  animation: orbFloat2 11s ease-in-out infinite alternate;
 }
 
-/* Шар 3: Бирюзовый / Cyan (Центр и левая часть) */
+/* Сфера 3: Изумрудный Cyan (Левый нижний сектор) */
 .ambient-orb-3 {
-  width: 320px;
-  height: 320px;
-  bottom: 25%;
-  left: -40px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.12) 50%, transparent 75%);
-  filter: blur(80px);
-  -webkit-filter: blur(80px);
-  animation: orbFloat3 32s ease-in-out infinite alternate;
+  width: 210px;
+  height: 210px;
+  bottom: 16%;
+  left: 8%;
+  background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #06b6d4 45%, #0d9488 72%, transparent 98%);
+  box-shadow: 0 0 65px 22px rgba(6, 182, 212, 0.4);
+  filter: blur(28px);
+  -webkit-filter: blur(28px);
+  opacity: 0.75;
+  animation: orbFloat3 12s ease-in-out infinite alternate;
 }
 
-/* Шар 4: Розовый / Неоновый закат (Нижний правый угол) */
+/* Сфера 4: Неоновая Роза / Закат (Нижний правый сектор) */
 .ambient-orb-4 {
-  width: 350px;
-  height: 350px;
-  bottom: -60px;
-  right: -50px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.18) 0%, rgba(124, 58, 237, 0.12) 50%, transparent 75%);
-  filter: blur(90px);
-  -webkit-filter: blur(90px);
-  animation: orbFloat4 26s ease-in-out infinite alternate;
+  width: 190px;
+  height: 190px;
+  top: 68%;
+  right: 18%;
+  background: radial-gradient(circle at 35% 35%, #f472b6 0%, #ec4899 45%, #be185d 72%, transparent 98%);
+  box-shadow: 0 0 60px 20px rgba(236, 72, 153, 0.4);
+  filter: blur(28px);
+  -webkit-filter: blur(28px);
+  opacity: 0.7;
+  animation: orbFloat4 10s ease-in-out infinite alternate;
 }
 
-/* Ключевые кадры медленного атмосферного парения (GPU transform) */
+/* Ключевые кадры выразительного парения и дыхания сфер */
 @keyframes orbFloat1 {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(60px, 80px, 0) scale(1.12); }
-  100% { transform: translate3d(-30px, 120px, 0) scale(0.92); }
+  50%  { transform: translate3d(75px, 85px, 0) scale(1.18); }
+  100% { transform: translate3d(-35px, 130px, 0) scale(0.92); }
 }
 
 @keyframes orbFloat2 {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(-80px, 70px, 0) scale(1.15); }
-  100% { transform: translate3d(-40px, -40px, 0) scale(0.95); }
+  50%  { transform: translate3d(-90px, -70px, 0) scale(1.16); }
+  100% { transform: translate3d(-50px, 80px, 0) scale(0.9); }
 }
 
 @keyframes orbFloat3 {
-  0%   { transform: translate3d(0, 0, 0) scale(0.95); }
-  50%  { transform: translate3d(70px, -60px, 0) scale(1.1); }
-  100% { transform: translate3d(40px, 50px, 0) scale(1.02); }
+  0%   { transform: translate3d(0, 0, 0) scale(0.92); }
+  50%  { transform: translate3d(80px, -75px, 0) scale(1.15); }
+  100% { transform: translate3d(45px, 55px, 0) scale(1.02); }
 }
 
 @keyframes orbFloat4 {
-  0%   { transform: translate3d(0, 0, 0) scale(1.05); }
-  50%  { transform: translate3d(-60px, -70px, 0) scale(0.9); }
-  100% { transform: translate3d(-90px, 20px, 0) scale(1.1); }
+  0%   { transform: translate3d(0, 0, 0) scale(1.06); }
+  50%  { transform: translate3d(-65px, -80px, 0) scale(0.88); }
+  100% { transform: translate3d(-95px, 35px, 0) scale(1.14); }
 }
 
-/* Отключение анимации при экономии заряда или настройках доступности */
+/* Энергосбережение и настройки доступности */
 @media (prefers-reduced-motion: reduce) {
   .ambient-orb {
     animation: none !important;
