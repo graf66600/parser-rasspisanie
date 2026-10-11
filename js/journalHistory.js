@@ -14,7 +14,8 @@ export function deleteJournalEntry(id) {
   localStorage.setItem('pwa_journal', JSON.stringify(state.journalEntries));
 
   deleteJournalEntryFromCloud(id);
-  if (!isStaticHost) {
+  const isStatic = Boolean(isStaticHost) || (typeof window !== 'undefined' && (window.location.hostname.includes('github.io') || window.location.protocol === 'file:'));
+  if (!isStatic) {
     fetch(`./api/journal/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
   }
 
@@ -78,7 +79,8 @@ export async function loadJournalHistory() {
   // Фоновая синхронизация с сервером / статическим файлом
   try {
     let freshEntries = null;
-    if (!isStaticHost) {
+    const isStatic = Boolean(isStaticHost) || (typeof window !== 'undefined' && (window.location.hostname.includes('github.io') || window.location.protocol === 'file:'));
+    if (!isStatic) {
       try {
         const res = await fetch(`./api/journal?teacher=${encodeURIComponent(currentTeacher)}`);
         if (res.ok) {
