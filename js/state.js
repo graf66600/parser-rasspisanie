@@ -95,7 +95,7 @@ export function populateGroupSelects(onGroupChange) {
   }
 }
 
-export const PWA_VERSION = 'v24';
+export const PWA_VERSION = 'v25';
 
 export function formatLocalDate(date = new Date()) {
   const d = date instanceof Date ? date : new Date(date);

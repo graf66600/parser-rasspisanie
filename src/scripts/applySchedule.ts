@@ -3,6 +3,8 @@ import path from 'path';
 import { SupabaseService } from '../services/supabaseService.js';
 import { StorageService } from '../services/storageService.js';
 import { DEFAULT_BELLS, CONFIG } from '../config/config.js';
+import { Lesson } from '../types/schedule.js';
+import { deduplicateLessons } from '../services/parser/parserUtils.js';
 import {
   findLatestScheduleFile,
   parseScheduleBuffer,
@@ -11,29 +13,81 @@ import {
 } from '../services/scheduleFileHelper.js';
 
 export async function applySchedule(filePath?: string) {
-  const targetFile = filePath || findLatestScheduleFile();
-  if (!targetFile || !fs.existsSync(targetFile)) {
+  let targets: string[] = [];
+
+  if (filePath) {
+    targets = [filePath];
+  } else {
+    const weekPdfs = [
+      path.resolve('на стенд 12.10-17.10 ЧИСТ Ч2.pdf'),
+      path.resolve('на стенд 12.10-17.10 ЧИСТ Ч1.pdf'),
+      path.resolve('на стенд 12.10-17.10 очн-заочн.pdf'),
+    ].filter((f) => fs.existsSync(f));
+
+    if (weekPdfs.length > 0) {
+      targets = weekPdfs;
+    } else {
+      const latest = findLatestScheduleFile();
+      if (latest) targets = [latest];
+    }
+  }
+
+  if (targets.length === 0) {
     console.error('❌ Не найден файл расписания (Excel или PDF) для обработки.');
     return false;
   }
 
-  console.log(`📄 Чтение и парсинг файла расписания: ${path.basename(targetFile)}...`);
-  const buffer = fs.readFileSync(targetFile);
+  console.log(`📄 Обработка файлов расписания (${targets.length}):`);
+  targets.forEach((t) => console.log(`   • ${path.basename(t)}`));
 
-  // 1. Парсинг для Трипольского (основной преподаватель с КТП)
-  const tripolskyResult = await parseScheduleBuffer(buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
-  console.log(`✅ Найдено пар Трипольского: ${tripolskyResult.totalFound}`);
+  const allTeachersSet = new Set<string>();
+  const lessonsByTeacher: Record<string, Lesson[]> = {};
+  let tripolskyLessons: Lesson[] = [];
 
-  // 2. Парсинг для всех преподавателей
-  const multiResult = await parseScheduleBufferAllTeachers(buffer, DEFAULT_BELLS);
-  console.log(`✅ Найдено преподавателей: ${multiResult.teachers.length}, всего пар: ${multiResult.allLessons.length}`);
+  for (const file of targets) {
+    const buffer = fs.readFileSync(file);
+    const multi = await parseScheduleBufferAllTeachers(buffer, DEFAULT_BELLS);
+    multi.teachers.forEach((t) => allTeachersSet.add(t));
+    for (const [t, lessons] of Object.entries(multi.lessonsByTeacher)) {
+      if (!lessonsByTeacher[t]) lessonsByTeacher[t] = [];
+      lessonsByTeacher[t].push(...lessons);
+    }
 
-  // 3. Формирование структур данных
+    const trip = await parseScheduleBuffer(buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
+    if (trip.lessons.length > 0) {
+      tripolskyLessons.push(...trip.lessons);
+    }
+  }
+
+  tripolskyLessons = deduplicateLessons(tripolskyLessons);
+  tripolskyLessons.sort((a, b) => {
+    if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
+    return a.lessonNumber - b.lessonNumber;
+  });
+
+  for (const t of Object.keys(lessonsByTeacher)) {
+    lessonsByTeacher[t] = deduplicateLessons(lessonsByTeacher[t]);
+    lessonsByTeacher[t].sort((a, b) => {
+      if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
+      return a.lessonNumber - b.lessonNumber;
+    });
+  }
+
+  const sortedTeachers = Array.from(allTeachersSet).sort((a, b) => {
+    if (a === 'Трипольский') return -1;
+    if (b === 'Трипольский') return 1;
+    return a.localeCompare(b, 'ru');
+  });
+
+  console.log(`✅ Найдено пар Трипольского: ${tripolskyLessons.length}`);
+  console.log(`✅ Найдено уникальных преподавателей: ${sortedTeachers.length}`);
+
+  // Формирование структур данных
   const scheduleData = {
     success: true,
     teacher: 'Трипольский',
     subject: 'Информатика',
-    lessons: tripolskyResult.lessons,
+    lessons: tripolskyLessons,
     bells: DEFAULT_BELLS,
     updatedAt: new Date().toISOString(),
   };
@@ -50,15 +104,15 @@ export async function applySchedule(filePath?: string) {
       teacherFilter: 'Трипольский',
       subjectFilter: 'Информатика',
     },
-    lessons: tripolskyResult.lessons,
+    lessons: tripolskyLessons,
   }];
 
-  // 4. Запись в папки data/ и public/data/
+  // Запись в папки data/ и public/data/
   const filesToSave: Array<{ subPath: string; content: string }> = [
     { subPath: 'schedule.json', content: JSON.stringify(scheduleData, null, 2) },
     { subPath: 'schedules.json', content: JSON.stringify(multiSchedule, null, 2) },
-    { subPath: 'schedules_all.json', content: JSON.stringify(multiResult.lessonsByTeacher, null, 2) },
-    { subPath: 'teachers.json', content: JSON.stringify(multiResult.teachers, null, 2) },
+    { subPath: 'schedules_all.json', content: JSON.stringify(lessonsByTeacher, null, 2) },
+    { subPath: 'teachers.json', content: JSON.stringify(sortedTeachers, null, 2) },
   ];
 
   for (const item of filesToSave) {
@@ -72,26 +126,30 @@ export async function applySchedule(filePath?: string) {
 
   // Сохраняем копию расписания
   try {
+    const firstTarget = targets[0];
+    const buffer = fs.readFileSync(firstTarget);
     const filename = isPdfBuffer(buffer) ? 'latest_schedule.pdf' : 'latest_schedule.xlsx';
     fs.writeFileSync(path.resolve(CONFIG.DATA_DIR, filename), buffer);
     fs.writeFileSync(path.resolve(process.cwd(), 'public', 'data', filename), buffer);
   } catch (e) {}
 
-  // 5. Сохранение в StorageService
+  // Сохранение в StorageService
   const storage = StorageService.getInstance();
-  storage.saveUserSchedule(1, 1, tripolskyResult.lessons);
+  storage.saveUserSchedule(1, 1, tripolskyLessons);
 
-  // 6. Синхронизация с Supabase
+  // Синхронизация с Supabase
   try {
     const supabase = SupabaseService.getInstance();
     console.log('☁️ Синхронизация преподавателей и пар с Supabase...');
     const syncPromise = (async () => {
-      await supabase.saveTeachers(multiResult.teachers);
-      for (const [tName, tLessons] of Object.entries(multiResult.lessonsByTeacher)) {
+      await supabase.saveTeachers(sortedTeachers);
+      for (const [tName, tLessons] of Object.entries(lessonsByTeacher)) {
         await supabase.saveLessons(tName, tLessons);
       }
     })();
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase sync timeout (5s)')), 5000));
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Supabase sync timeout (5s)')), 5000)
+    );
     await Promise.race([syncPromise, timeoutPromise]);
     console.log('✅ Данные успешно синхронизированы с облаком Supabase!');
   } catch (err) {
