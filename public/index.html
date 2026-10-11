@@ -85,19 +85,19 @@
           <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-500/20 border border-blue-500/30 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
             👨‍🏫
           </div>
-          <div class="min-w-0 flex-1">
-            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Преподаватель</span>
-            <span id="selectedTeacherSubtitle" class="text-xs font-bold text-white truncate block">Информатика • КТП</span>
+          <div class="min-w-0 flex-1 pr-1">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Преподаватель</span>
+              <span id="selectedTeacherSubtitle" class="text-[10px] font-semibold text-blue-400 bg-blue-500/15 px-1.5 py-0.5 rounded-full border border-blue-500/25">Информатика</span>
+            </div>
+            <select id="teacherSelect" class="teacher-select-pill text-xs font-bold text-white focus:outline-none w-full truncate mt-0.5" style="max-width: 100%; padding-top: 4px; padding-bottom: 4px;" title="Сменить преподавателя">
+              <option value="Трипольский">Трипольский</option>
+            </select>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 flex-shrink-0">
-          <select id="teacherSelect" class="teacher-select-pill text-xs font-semibold focus:outline-none truncate" title="Сменить преподавателя">
-            <option value="Трипольский">Трипольский</option>
-          </select>
-          <button type="button" id="headerAuthStatusBtn" class="auth-status-pill text-xs font-semibold" title="Статус доступа / Ввод PIN">
-            <span>🔐 PIN</span>
-          </button>
-        </div>
+        <button type="button" id="headerAuthStatusBtn" class="auth-status-pill text-xs font-semibold flex-shrink-0" title="Статус доступа / Ввод PIN">
+          <span>🔐 PIN</span>
+        </button>
       </div>
 
       <div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">

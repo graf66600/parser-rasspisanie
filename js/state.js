@@ -54,8 +54,8 @@ export function updateTeacherDisplay() {
   const subtitle = document.getElementById('selectedTeacherSubtitle');
   if (subtitle) {
     subtitle.textContent = state.currentTeacher === 'Трипольский'
-      ? 'Информатика • КТП'
-      : 'Расписание занятий';
+      ? 'Информатика'
+      : 'Расписание';
   }
   const select = document.getElementById('teacherSelect');
   if (select && select.value !== state.currentTeacher) {
