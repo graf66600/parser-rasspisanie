@@ -260,14 +260,10 @@ export function exportSummaryToCsv(group) {
       if (!att) row.push('');
       else if (att.status === 'absent') row.push('Н');
       else if (att.status === 'excused') row.push('У');
-      else if (att.grade) row.push(att.grade);
-      else row.push('+');
+      else row.push(att.grade ? att.grade : '+');
     });
 
-    row.push(stats.absentCount);
-    row.push(stats.excusedCount);
-    row.push(`"${stats.grades.join(', ')}"`);
-    row.push(stats.avgGrade || '');
+    row.push(stats.absentCount, stats.excusedCount, `"${stats.grades.join(', ')}"`, stats.avgGrade || '');
     csvRows.push(row.join(';'));
   });
 

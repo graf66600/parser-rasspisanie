@@ -17,6 +17,19 @@ export async function handleFiles(filesList, onUploadSuccess) {
   const sStatus = document.getElementById('uploadStatusBox');
   if (!sStatus) return;
 
+  const isStatic = (typeof window !== 'undefined' && (window.location.hostname.includes('github.io') || window.location.protocol === 'file:'));
+  if (isStatic) {
+    sStatus.classList.remove('hidden');
+    sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #93c5fd; font-size: 12px;';
+    sStatus.innerHTML = `
+      <div class="font-bold">ℹ️ Демонстрационный режим (GitHub Pages)</div>
+      <div class="mt-1 text-slate-300">
+        На GitHub Pages серверный парсинг Excel/PDF отключен. Запустите приложение локально (<code>npm start</code>) для автоматической обработки и слияния файлов.
+      </div>
+    `;
+    return;
+  }
+
   const files = Array.from(filesList || []);
   if (files.length === 0) return;
 

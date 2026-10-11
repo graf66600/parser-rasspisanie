@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v30';
+const CACHE_NAME = 'schedule-pwa-v31';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -103,7 +103,7 @@ self.addEventListener('fetch', (event) => {
   const isDynamicAsset = event.request.url.includes('/data/') || event.request.url.endsWith('.js') || event.request.url.includes('.js?');
   if (isDynamicAsset) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();

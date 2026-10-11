@@ -14,20 +14,33 @@ export const DAY_NAMES = {
   7: 'Воскресенье',
 };
 
-export const state = {
+if (typeof window !== 'undefined' && !window.__PWA_STATE__) {
+  window.__PWA_STATE__ = {
+    currentTeacher: 'Трипольский',
+    teachersList: ['Трипольский'],
+    schedule: null,
+    activeDay: 'today',
+    bells: [
+      { lessonNumber: 1, startTime: '08:00', endTime: '09:20' },
+      { lessonNumber: 2, startTime: '09:30', endTime: '10:50' },
+      { lessonNumber: 3, startTime: '11:00', endTime: '12:20' },
+      { lessonNumber: 4, startTime: '13:00', endTime: '14:20' },
+      { lessonNumber: 5, startTime: '14:30', endTime: '15:50' },
+      { lessonNumber: 6, startTime: '16:00', endTime: '17:20' },
+      { lessonNumber: 7, startTime: '17:30', endTime: '18:50' },
+    ],
+    studentsByGroup: {},
+    journalEntries: [],
+    curriculumPrograms: [],
+  };
+}
+
+export const state = typeof window !== 'undefined' ? window.__PWA_STATE__ : {
   currentTeacher: 'Трипольский',
   teachersList: ['Трипольский'],
   schedule: null,
   activeDay: 'today',
-  bells: [
-    { lessonNumber: 1, startTime: '08:00', endTime: '09:20' },
-    { lessonNumber: 2, startTime: '09:30', endTime: '10:50' },
-    { lessonNumber: 3, startTime: '11:00', endTime: '12:20' },
-    { lessonNumber: 4, startTime: '13:00', endTime: '14:20' },
-    { lessonNumber: 5, startTime: '14:30', endTime: '15:50' },
-    { lessonNumber: 6, startTime: '16:00', endTime: '17:20' },
-    { lessonNumber: 7, startTime: '17:30', endTime: '18:50' },
-  ],
+  bells: [],
   studentsByGroup: {},
   journalEntries: [],
   curriculumPrograms: [],
