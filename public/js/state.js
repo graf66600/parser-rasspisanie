@@ -1,6 +1,8 @@
 // ==========================================================================
 // STATE MANAGEMENT & DATA LOADERS
 // ==========================================================================
+import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload } from './cacheHelper.js';
+export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload };
 
 export const DAY_NAMES = {
   1: 'Понедельник',
@@ -95,8 +97,6 @@ export function populateGroupSelects(onGroupChange) {
   }
 }
 
-export const PWA_VERSION = 'v25';
-
 export function formatLocalDate(date = new Date()) {
   const d = date instanceof Date ? date : new Date(date);
   const year = d.getFullYear();
@@ -111,6 +111,7 @@ export function initLocalState() {
     if (ver !== PWA_VERSION) {
       localStorage.removeItem('pwa_custom_curriculum');
       localStorage.removeItem('pwa_custom_schedule');
+      localStorage.removeItem('pwa_custom_students');
       localStorage.setItem('pwa_version', PWA_VERSION);
     }
   } catch (e) {}
@@ -151,22 +152,6 @@ export function initLocalState() {
       if (Array.isArray(list)) state.journalEntries = list;
     }
   } catch (e) {}
-}
-
-const isStaticHost = typeof window !== 'undefined' && (
-  window.location.hostname.includes('github.io') ||
-  window.location.protocol === 'file:'
-);
-
-async function safeFetchJson(url, timeoutMs = 1500) {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
-    if (res?.ok) return await res.json();
-  } catch (e) {}
-  return null;
 }
 
 export async function loadTeachers(onTeachersLoaded) {

@@ -1,7 +1,8 @@
 import { Context } from 'telegraf';
 import { StorageService } from '../../services/storageService.js';
 import { DAYS_OF_WEEK } from '../../config/config.js';
-import { parseScheduleBuffer } from '../../services/scheduleFileHelper.js';
+import { deduplicateLessons } from '../../services/parser/parserUtils.js';
+import { parseScheduleBuffer, parseScheduleBufferAllTeachers } from '../../services/scheduleFileHelper.js';
 
 const storage = StorageService.getInstance();
 
@@ -50,36 +51,45 @@ export async function handleDocument(ctx: Context) {
     const parseResult = await parseScheduleBuffer(buffer, bells, teacherFilter, subjectFilter);
 
     if (parseResult.totalFound === 0) {
-      return ctx.telegram.editMessageText(
-        chatId,
-        statusMsg.message_id,
-        undefined,
-        `❌ В файле *${fileName}* не удалось найти пары по преподавателю *${teacherFilter}*.\n\n` +
-        `🔍 Проверено: ${parseResult.sheetsParsed.join(', ')}.\n` +
-        `Убедитесь, что в файле есть фамилия "${teacherFilter}" или предмет "${subjectFilter}".`,
-        { parse_mode: 'Markdown' }
-      );
+      const multiResult = await parseScheduleBufferAllTeachers(buffer, bells);
+      let hint = `❌ В файле *${fileName}* не удалось найти пары по преподавателю *${teacherFilter}*.`;
+      if (multiResult.teachers.length > 0) {
+        hint = `ℹ️ В файле *${fileName}* найдены другие группы и *${multiResult.teachers.length}* преподавателей, но пар для *${teacherFilter}* здесь нет.\n\n` +
+               `💡 Если расписание колледжа разбито на несколько файлов (например, *ЧИСТ Ч1* — старшие курсы, а *ЧИСТ Ч2* — младшие), просто отправьте следующую часть! Бот автоматически объединит все ваши пары.`;
+      }
+      return ctx.telegram.editMessageText(chatId, statusMsg.message_id, undefined, hint, {
+        parse_mode: 'Markdown',
+      });
     }
 
-    // Сохраняем расписание
-    storage.saveUserSchedule(userId, chatId, parseResult.lessons);
+    // Объединяем с уже имеющимися парами (для поддержки загрузки по частям)
+    const existingLessons = currentSchedule?.lessons || [];
+    const mergedLessons = deduplicateLessons([...existingLessons, ...parseResult.lessons]);
+    mergedLessons.sort((a, b) => {
+      if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
+      return a.lessonNumber - b.lessonNumber;
+    });
+
+    // Сохраняем объединенное расписание
+    storage.saveUserSchedule(userId, chatId, mergedLessons);
 
     // Формируем краткий отчет
-    let report = `✅ *Расписание успешно загружено из ${formatName}!*\n\n` +
+    let report = `✅ *Расписание успешно обновлено из ${formatName}!*\n\n` +
       `📁 Файл: \`${fileName}\`\n` +
       `👨‍🏫 Преподаватель: *${teacherFilter}*\n` +
-      `📊 Найдено пар: *${parseResult.totalFound}*\n\n` +
+      `➕ Найдено в этом файле: *${parseResult.totalFound}* пар\n` +
+      `📊 Всего пар в расписании: *${mergedLessons.length}*\n\n` +
       `🗓 *Распределение по дням:*\n`;
 
     for (let day = 1; day <= 6; day++) {
-      const dayLessons = parseResult.lessons.filter((l) => l.dayOfWeek === day);
+      const dayLessons = mergedLessons.filter((l) => l.dayOfWeek === day);
       if (dayLessons.length > 0) {
         report += `• *${DAYS_OF_WEEK[day]}:* ${dayLessons.length} пар\n`;
       }
     }
 
     report += `\n🔔 Напоминания перед парами активированы!\n` +
-              `Команда /today — посмотреть расписание на сегодня.`;
+              `💡 Если есть другие части расписания (Ч1, Ч2, заочники), отправьте их следом — они объединятся без дубликатов!`;
 
     await ctx.telegram.editMessageText(chatId, statusMsg.message_id, undefined, report, {
       parse_mode: 'Markdown',

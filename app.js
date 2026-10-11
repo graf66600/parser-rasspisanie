@@ -1,7 +1,7 @@
 // ==========================================================================
 // MAIN APPLICATION ENTRY POINT
 // ==========================================================================
-import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION } from './js/state.js';
+import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION, clearPwaCacheAndReload } from './js/state.js';
 import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js';
 import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
@@ -12,10 +12,30 @@ import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/au
 import { setupRealtimeSubscription } from './js/supabaseSync.js';
 import { setupKioskEventListeners } from './js/kioskView.js';
 
-// Инициализация PWA и Service Worker
+// Инициализация PWA и Service Worker с активным авто-обновлением
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`./sw.js?v=${PWA_VERSION}`).catch(() => {});
+    navigator.serviceWorker.register(`./sw.js?v=${PWA_VERSION}`).then((reg) => {
+      reg.update().catch(() => {});
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              window.location.reload();
+            }
+          });
+        }
+      });
+    }).catch(() => {});
+  });
+
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
   });
 }
 
@@ -45,6 +65,14 @@ installBtn?.addEventListener('click', async () => {
     }
     deferredPrompt = null;
   }
+});
+
+// Кнопка принудительного обновления и сброса кэша
+const forceRefreshBtn = document.getElementById('forceRefreshBtn');
+forceRefreshBtn?.addEventListener('click', async () => {
+  const icon = document.getElementById('forceRefreshIcon');
+  if (icon) icon.classList.add('animate-spin');
+  await clearPwaCacheAndReload();
 });
 
 // Управление табами

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v25';
+const CACHE_NAME = 'schedule-pwa-v26';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,7 @@ const STATIC_ASSETS = [
   './css/kioskCards.css',
   './app.js',
   './js/state.js',
+  './js/cacheHelper.js',
   './js/kioskView.js',
   './js/kioskCards.js',
   './js/kioskData.js',
@@ -82,22 +83,18 @@ self.addEventListener('fetch', (event) => {
 
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Для навигации HTML: Stale-While-Revalidate (мгновенная загрузка из кэша)
+  // Для навигации HTML: Network-First (всегда свежий HTML при наличии сети, быстрый кэш в офлайне)
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      caches.match('./index.html').then((cached) => {
-        const fetchPromise = fetch(event.request)
-          .then((networkRes) => {
-            if (networkRes && networkRes.status === 200) {
-              const clone = networkRes.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
-            }
-            return networkRes;
-          })
-          .catch(() => cached);
-
-        return cached || fetchPromise;
-      })
+      fetch(event.request)
+        .then((networkRes) => {
+          if (networkRes && networkRes.status === 200) {
+            const clone = networkRes.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
+          }
+          return networkRes;
+        })
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
@@ -148,3 +145,10 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+self.addEventListener('message', (event) => {
+  if (event.data && (event.data.action === 'skipWaiting' || event.data === 'skipWaiting')) {
+    self.skipWaiting();
+  }
+});
+

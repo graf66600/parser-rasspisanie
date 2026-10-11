@@ -18,14 +18,19 @@ export async function applySchedule(filePath?: string) {
   if (filePath) {
     targets = [filePath];
   } else {
-    const weekPdfs = [
-      path.resolve('на стенд 12.10-17.10 ЧИСТ Ч2.pdf'),
-      path.resolve('на стенд 12.10-17.10 ЧИСТ Ч1.pdf'),
-      path.resolve('на стенд 12.10-17.10 очн-заочн.pdf'),
-    ].filter((f) => fs.existsSync(f));
+    const rootFiles = fs.readdirSync(process.cwd());
+    const matchedPdfs = rootFiles
+      .filter((f) => {
+        const lower = f.toLowerCase();
+        return (
+          lower.endsWith('.pdf') &&
+          (lower.includes('чист') || lower.includes('стенд') || lower.includes('заочн') || lower.includes('расписани'))
+        );
+      })
+      .map((f) => path.resolve(process.cwd(), f));
 
-    if (weekPdfs.length > 0) {
-      targets = weekPdfs;
+    if (matchedPdfs.length > 0) {
+      targets = matchedPdfs.sort();
     } else {
       const latest = findLatestScheduleFile();
       if (latest) targets = [latest];
