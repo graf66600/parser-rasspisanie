@@ -18,15 +18,17 @@
 .summary-modal-backdrop.hidden { display: none !important; }
 
 .summary-modal-window {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
   width: 100%;
   max-width: 1040px;
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.7);
   overflow: hidden;
 }
 

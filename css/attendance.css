@@ -59,16 +59,18 @@
   flex-direction: column;
   gap: 9px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid #1f293d;
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   box-sizing: border-box;
   width: 100%;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition: all 0.2s ease;
 }
 .student-row:hover {
-  border-color: #334155;
-  background: rgba(22, 32, 54, 0.85);
+  border-color: rgba(96, 165, 250, 0.25);
+  background: rgba(22, 32, 54, 0.75);
 }
 
 .student-header {

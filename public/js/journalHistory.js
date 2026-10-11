@@ -1,7 +1,7 @@
 // ==========================================================================
 // JOURNAL HISTORY: DETAILED LESSON CARDS & RECORD EDITING
 // ==========================================================================
-import { state, PWA_VERSION } from './state.js';
+import { state, PWA_VERSION, isStaticHost } from './state.js';
 import { renderJournalStats } from './journalStats.js';
 import { autoFillTopicForGroup, loadEntryToForm } from './journalView.js';
 import { createHistoryCardElement } from './journalCard.js';
@@ -14,7 +14,9 @@ export function deleteJournalEntry(id) {
   localStorage.setItem('pwa_journal', JSON.stringify(state.journalEntries));
 
   deleteJournalEntryFromCloud(id);
-  fetch(`./api/journal/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+  if (!isStaticHost) {
+    fetch(`./api/journal/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+  }
 
   renderJournalHistory();
   const g = document.getElementById('journalGroupSelect')?.value;
@@ -76,13 +78,15 @@ export async function loadJournalHistory() {
   // Фоновая синхронизация с сервером / статическим файлом
   try {
     let freshEntries = null;
-    try {
-      const res = await fetch(`./api/journal?teacher=${encodeURIComponent(currentTeacher)}`);
-      if (res.ok) {
-        const d = await res.json();
-        if (d.success && d.entries) freshEntries = d.entries;
-      }
-    } catch (e) {}
+    if (!isStaticHost) {
+      try {
+        const res = await fetch(`./api/journal?teacher=${encodeURIComponent(currentTeacher)}`);
+        if (res.ok) {
+          const d = await res.json();
+          if (d.success && d.entries) freshEntries = d.entries;
+        }
+      } catch (e) {}
+    }
 
     if (!freshEntries) {
       try {

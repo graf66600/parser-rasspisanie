@@ -8,10 +8,12 @@
 
 .bg-slate-900 {
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
 
@@ -285,13 +287,11 @@ select option {
   color: #60a5fa;
   border: 1px solid rgba(59, 130, 246, 0.4);
 }
-
 .chip-practice {
   background: rgba(16, 185, 129, 0.2);
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.4);
 }
-
 .topic-chip-text {
   line-height: 1.35;
   word-break: break-word;
