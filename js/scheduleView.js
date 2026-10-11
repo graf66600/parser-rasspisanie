@@ -28,9 +28,35 @@ export function renderSchedule(onOpenJournal) {
 
   if (!state.schedule?.lessons) {
     container.innerHTML = `
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center">
-        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
-        <p style="font-size: 14px; font-weight: 600; color: #f1f5f9;">Загрузка расписания...</p>
+      <div class="space-y-3">
+        <div class="skeleton-card">
+          <div class="skeleton-header">
+            <div class="skeleton-pill" style="width: 36px; height: 36px; border-radius: 10px;"></div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+              <div class="skeleton-line" style="width: 45%; height: 12px; border-radius: 6px;"></div>
+              <div class="skeleton-line" style="width: 75%; height: 16px; border-radius: 6px;"></div>
+            </div>
+            <div class="skeleton-pill" style="width: 52px; height: 24px; border-radius: 8px;"></div>
+          </div>
+          <div class="skeleton-footer" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+            <div class="skeleton-line" style="width: 35%; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton-pill" style="width: 68px; height: 24px; border-radius: 8px;"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-header">
+            <div class="skeleton-pill" style="width: 36px; height: 36px; border-radius: 10px;"></div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+              <div class="skeleton-line" style="width: 35%; height: 12px; border-radius: 6px;"></div>
+              <div class="skeleton-line" style="width: 65%; height: 16px; border-radius: 6px;"></div>
+            </div>
+            <div class="skeleton-pill" style="width: 52px; height: 24px; border-radius: 8px;"></div>
+          </div>
+          <div class="skeleton-footer" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+            <div class="skeleton-line" style="width: 40%; height: 12px; border-radius: 6px;"></div>
+            <div class="skeleton-pill" style="width: 68px; height: 24px; border-radius: 8px;"></div>
+          </div>
+        </div>
       </div>`;
     return;
   }
