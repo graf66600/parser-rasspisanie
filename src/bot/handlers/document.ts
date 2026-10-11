@@ -1,7 +1,7 @@
 import { Context } from 'telegraf';
-import { ExcelParser } from '../../services/excelParser.js';
 import { StorageService } from '../../services/storageService.js';
 import { DAYS_OF_WEEK } from '../../config/config.js';
+import { parseScheduleBuffer } from '../../services/scheduleFileHelper.js';
 
 const storage = StorageService.getInstance();
 
@@ -18,14 +18,15 @@ export async function handleDocument(ctx: Context) {
   const fileName = doc.file_name || 'файл';
   const fileExt = fileName.split('.').pop()?.toLowerCase();
 
-  if (fileExt !== 'xlsx' && fileExt !== 'xls') {
+  if (fileExt !== 'xlsx' && fileExt !== 'xls' && fileExt !== 'pdf') {
     return ctx.reply(
-      '⚠️ Пожалуйста, отправьте файл в формате Excel (`.xlsx` или `.xls`).',
+      '⚠️ Пожалуйста, отправьте файл расписания в формате Excel (`.xlsx`, `.xls`) или PDF (`.pdf`).',
       { parse_mode: 'Markdown' }
     );
   }
 
-  const statusMsg = await ctx.reply('⏳ Скачиваю и анализирую файл расписания...');
+  const formatName = fileExt === 'pdf' ? 'PDF' : 'Excel';
+  const statusMsg = await ctx.reply(`⏳ Скачиваю и анализирую ${formatName} файл расписания...`);
 
   try {
     // Получаем ссылку на скачивание файла из Telegram
@@ -45,8 +46,8 @@ export async function handleDocument(ctx: Context) {
     const subjectFilter = currentSchedule?.settings.subjectFilter || 'Информатика';
     const bells = currentSchedule?.settings.bellsSchedule;
 
-    // Парсим расписание
-    const parseResult = ExcelParser.parseBuffer(buffer, bells, teacherFilter, subjectFilter);
+    // Универсальный парсинг расписания (Excel или PDF)
+    const parseResult = await parseScheduleBuffer(buffer, bells, teacherFilter, subjectFilter);
 
     if (parseResult.totalFound === 0) {
       return ctx.telegram.editMessageText(
@@ -54,7 +55,7 @@ export async function handleDocument(ctx: Context) {
         statusMsg.message_id,
         undefined,
         `❌ В файле *${fileName}* не удалось найти пары по преподавателю *${teacherFilter}*.\n\n` +
-        `🔍 Проверено листов: ${parseResult.sheetsParsed.join(', ')}.\n` +
+        `🔍 Проверено: ${parseResult.sheetsParsed.join(', ')}.\n` +
         `Убедитесь, что в файле есть фамилия "${teacherFilter}" или предмет "${subjectFilter}".`,
         { parse_mode: 'Markdown' }
       );
@@ -64,7 +65,7 @@ export async function handleDocument(ctx: Context) {
     storage.saveUserSchedule(userId, chatId, parseResult.lessons);
 
     // Формируем краткий отчет
-    let report = `✅ *Расписание успешно загружено!*\n\n` +
+    let report = `✅ *Расписание успешно загружено из ${formatName}!*\n\n` +
       `📁 Файл: \`${fileName}\`\n` +
       `👨‍🏫 Преподаватель: *${teacherFilter}*\n` +
       `📊 Найдено пар: *${parseResult.totalFound}*\n\n` +
@@ -84,7 +85,7 @@ export async function handleDocument(ctx: Context) {
       parse_mode: 'Markdown',
     });
   } catch (err: any) {
-    console.error('Ошибка при обработке файла Excel:', err);
+    console.error(`Ошибка при обработке файла ${formatName}:`, err);
     await ctx.telegram.editMessageText(
       chatId,
       statusMsg.message_id,
