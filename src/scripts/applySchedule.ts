@@ -1,15 +1,19 @@
 import fs from 'fs';
 import path from 'path';
-import { ExcelParser } from '../services/excelParser.js';
 import { SupabaseService } from '../services/supabaseService.js';
 import { StorageService } from '../services/storageService.js';
 import { DEFAULT_BELLS, CONFIG } from '../config/config.js';
-import { findLatestScheduleFile } from '../services/scheduleFileHelper.js';
+import {
+  findLatestScheduleFile,
+  parseScheduleBuffer,
+  parseScheduleBufferAllTeachers,
+  isPdfBuffer,
+} from '../services/scheduleFileHelper.js';
 
 export async function applySchedule(filePath?: string) {
   const targetFile = filePath || findLatestScheduleFile();
   if (!targetFile || !fs.existsSync(targetFile)) {
-    console.error('❌ Не найден файл расписания Excel для обработки.');
+    console.error('❌ Не найден файл расписания (Excel или PDF) для обработки.');
     return false;
   }
 
@@ -17,11 +21,11 @@ export async function applySchedule(filePath?: string) {
   const buffer = fs.readFileSync(targetFile);
 
   // 1. Парсинг для Трипольского (основной преподаватель с КТП)
-  const tripolskyResult = ExcelParser.parseBuffer(buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
+  const tripolskyResult = await parseScheduleBuffer(buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
   console.log(`✅ Найдено пар Трипольского: ${tripolskyResult.totalFound}`);
 
   // 2. Парсинг для всех преподавателей
-  const multiResult = ExcelParser.parseAllTeachers(buffer, DEFAULT_BELLS);
+  const multiResult = await parseScheduleBufferAllTeachers(buffer, DEFAULT_BELLS);
   console.log(`✅ Найдено преподавателей: ${multiResult.teachers.length}, всего пар: ${multiResult.allLessons.length}`);
 
   // 3. Формирование структур данных
@@ -66,10 +70,11 @@ export async function applySchedule(filePath?: string) {
     fs.writeFileSync(p2, item.content, 'utf8');
   }
 
-  // Сохраняем копию как latest_schedule.xlsx
+  // Сохраняем копию расписания
   try {
-    fs.writeFileSync(path.resolve(CONFIG.DATA_DIR, 'latest_schedule.xlsx'), buffer);
-    fs.writeFileSync(path.resolve(process.cwd(), 'public', 'data', 'latest_schedule.xlsx'), buffer);
+    const filename = isPdfBuffer(buffer) ? 'latest_schedule.pdf' : 'latest_schedule.xlsx';
+    fs.writeFileSync(path.resolve(CONFIG.DATA_DIR, filename), buffer);
+    fs.writeFileSync(path.resolve(process.cwd(), 'public', 'data', filename), buffer);
   } catch (e) {}
 
   // 5. Сохранение в StorageService

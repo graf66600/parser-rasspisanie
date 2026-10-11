@@ -38,7 +38,13 @@ export async function handleFile(file, onUploadSuccess) {
     }
   } catch (e) {}
 
-  // Клиентский парсинг через SheetJS (фоллбек для статики/GitHub Pages)
+  // Клиентский парсинг для статики/GitHub Pages
+  if (file.name.toLowerCase().endsWith('.pdf')) {
+    sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 12px;';
+    sStatus.textContent = 'ℹ️ PDF-расписания обрабатываются через Node.js сервер или Telegram-бота. Запустите сервер (npm run dev) или отправьте файл в Telegram-бота!';
+    return;
+  }
+
   try {
     await ensureXLSX();
   } catch (err) {

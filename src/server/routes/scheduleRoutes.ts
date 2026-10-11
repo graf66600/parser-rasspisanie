@@ -3,13 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import { URL } from 'url';
 import { StorageService } from '../../services/storageService.js';
-import { ExcelParser } from '../../services/excelParser.js';
 import { SupabaseService } from '../../services/supabaseService.js';
 import { CONFIG, DEFAULT_BELLS } from '../../config/config.js';
 import { sendJson, sendError, readBody } from '../httpUtils.js';
 import { parseMultipart } from '../multipartParser.js';
 import { Lesson } from '../../types/schedule.js';
-import { findLatestScheduleFile } from '../../services/scheduleFileHelper.js';
+import {
+  findLatestScheduleFile,
+  parseScheduleBuffer,
+  parseScheduleBufferAllTeachers,
+  isPdfBuffer,
+} from '../../services/scheduleFileHelper.js';
 
 export async function handleScheduleRoutes(
   req: http.IncomingMessage,
@@ -26,16 +30,14 @@ export async function handleScheduleRoutes(
     let teachers = await supabase.getTeachers();
 
     if (!teachers || teachers.length === 0) {
-      // Fallback: извлекаем из файла расписания на диске
       const latest = findLatestScheduleFile();
       const candidates = latest ? [latest] : [];
       for (const file of candidates) {
         if (fs.existsSync(file)) {
           try {
             const buf = fs.readFileSync(file);
-            const parsed = ExcelParser.parseAllTeachers(buf, DEFAULT_BELLS);
+            const parsed = await parseScheduleBufferAllTeachers(buf, DEFAULT_BELLS);
             teachers = parsed.teachers;
-            // Фоновая синхронизация с Supabase
             supabase.saveTeachers(teachers).catch(() => {});
             for (const [tName, tLessons] of Object.entries(parsed.lessonsByTeacher)) {
               supabase.saveLessons(tName, tLessons).catch(() => {});
@@ -70,19 +72,22 @@ export async function handleScheduleRoutes(
       const schedule = storage.getUserSchedule(defaultUserId);
       lessons = schedule?.lessons || [];
     } else {
-      // Ищем уроки в Supabase
       const cloudLessons = await supabase.getLessons(teacherParam);
       if (cloudLessons && cloudLessons.length > 0) {
         lessons = cloudLessons;
       } else {
-        // Fallback: парсинг из локального файла
         const latest = findLatestScheduleFile();
         const candidates = latest ? [latest] : [];
         for (const file of candidates) {
           if (fs.existsSync(file)) {
             try {
               const buf = fs.readFileSync(file);
-              const resParsed = ExcelParser.parseForTeacher(buf, teacherParam, DEFAULT_BELLS);
+              const resParsed = await parseScheduleBuffer(
+                buf,
+                DEFAULT_BELLS,
+                teacherParam,
+                isTripolsky ? CONFIG.DEFAULT_SUBJECT : ''
+              );
               if (resParsed.lessons.length > 0) {
                 lessons = resParsed.lessons;
                 supabase.saveLessons(teacherParam, lessons).catch(() => {});
@@ -109,7 +114,7 @@ export async function handleScheduleRoutes(
       updatedAt: new Date().toISOString(),
       currentDay,
       currentDate: now.toISOString().split('T')[0],
-      hasCurriculum: isTripolsky, // Только для Трипольского активны темы КТП
+      hasCurriculum: isTripolsky,
     });
     return true;
   }
@@ -124,7 +129,7 @@ export async function handleScheduleRoutes(
     return true;
   }
 
-  // 4. Загрузка файла расписания Excel (мульти-парсинг всех преподавателей)
+  // 4. Загрузка файла расписания (Excel или PDF)
   if (pathname === '/api/upload-schedule' && req.method === 'POST') {
     const contentType = req.headers['content-type'] || '';
     const bodyBuffer = await readBody(req);
@@ -147,8 +152,8 @@ export async function handleScheduleRoutes(
       return true;
     }
 
-    // Мульти-парсинг всех преподавателей
-    const multiResult = ExcelParser.parseAllTeachers(fileBuffer, DEFAULT_BELLS);
+    // Универсальный мульти-парсинг (Excel или PDF)
+    const multiResult = await parseScheduleBufferAllTeachers(fileBuffer, DEFAULT_BELLS);
 
     if (multiResult.teachers.length === 0 && multiResult.allLessons.length === 0) {
       sendError(res, 'В файле не найдено учебных занятий');
@@ -161,17 +166,19 @@ export async function handleScheduleRoutes(
       storage.saveUserSchedule(defaultUserId, defaultUserId, tripolskyLessons);
     }
 
-    // Фоновая отправка всех преподавателей и пар в Supabase
+    // Фоновая синхронизация с Supabase
     supabase.saveTeachers(multiResult.teachers).catch(() => {});
     for (const [tName, tLessons] of Object.entries(multiResult.lessonsByTeacher)) {
       supabase.saveLessons(tName, tLessons).catch(() => {});
     }
 
     try {
-      const dest = path.resolve(CONFIG.DATA_DIR, 'latest_schedule.xlsx');
+      const isPdf = isPdfBuffer(fileBuffer);
+      const filename = isPdf ? 'latest_schedule.pdf' : 'latest_schedule.xlsx';
+      const dest = path.resolve(CONFIG.DATA_DIR, filename);
       fs.writeFileSync(dest, fileBuffer);
     } catch (e) {
-      console.error('Ошибка сохранения latest_schedule.xlsx:', e);
+      console.error('Ошибка сохранения latest_schedule:', e);
     }
 
     sendJson(res, {
