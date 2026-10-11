@@ -54,8 +54,8 @@ export function updateTeacherDisplay() {
   const subtitle = document.getElementById('selectedTeacherSubtitle');
   if (subtitle) {
     subtitle.textContent = state.currentTeacher === 'Трипольский'
-      ? 'Трипольский (Информатика + КТП)'
-      : `${state.currentTeacher} (Расписание)`;
+      ? 'Трипольский • Информатика'
+      : state.currentTeacher;
   }
   const select = document.getElementById('teacherSelect');
   if (select && select.value !== state.currentTeacher) {
@@ -175,7 +175,7 @@ export async function loadTeachers(onTeachersLoaded) {
     state.teachersList.forEach((t) => {
       const opt = document.createElement('option');
       opt.value = t;
-      opt.textContent = t === 'Трипольский' ? 'Трипольский (КТП)' : t;
+      opt.textContent = t;
       select.appendChild(opt);
     });
     select.value = state.currentTeacher;

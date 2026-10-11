@@ -80,19 +80,23 @@
     <!-- ВКЛАДКА 1: РАСПИСАНИЕ -->
     <section id="tabSchedule" class="space-y-4">
       <!-- Селектор преподавателя (мульти-парсер) -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="text-base flex-shrink-0">👨‍🏫</span>
-          <div class="min-w-0">
-            <span class="text-[11px] text-slate-400 font-medium block">Преподаватель</span>
-            <span id="selectedTeacherSubtitle" class="text-xs font-bold text-white truncate block">Трипольский (Информатика + КТП)</span>
+      <div class="teacher-card-glass flex items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600/30 to-indigo-500/20 border border-blue-500/30 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
+            👨‍🏫
+          </div>
+          <div class="min-w-0 flex-1">
+            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Преподаватель</span>
+            <span id="selectedTeacherSubtitle" class="text-xs font-bold text-white truncate block">Трипольский • Информатика</span>
           </div>
         </div>
         <div class="flex items-center gap-1.5 flex-shrink-0">
-          <select id="teacherSelect" class="bg-slate-950 text-blue-400 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-blue-500 max-w-[150px] truncate">
+          <select id="teacherSelect" class="teacher-select-pill text-xs font-semibold focus:outline-none truncate" title="Сменить преподавателя">
             <option value="Трипольский">Трипольский</option>
           </select>
-          <button type="button" id="headerAuthStatusBtn" class="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-[11px] text-blue-300 font-semibold rounded-xl border border-slate-700 transition" title="Статус доступа / Ввод PIN">🔐</button>
+          <button type="button" id="headerAuthStatusBtn" class="auth-status-pill text-xs font-semibold" title="Статус доступа / Ввод PIN">
+            <span>🔐 PIN</span>
+          </button>
         </div>
       </div>
 
@@ -348,7 +352,7 @@
   </main>
 
   <!-- НИЖНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ -->
-  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800 px-3 py-1.5">
+  <nav class="floating-bottom-nav">
     <div class="max-w-2xl mx-auto grid grid-cols-5 gap-1">
       <button data-tab="tabSchedule" class="tab-nav-btn text-blue-500">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -533,6 +537,6 @@
     </div>
   </div>
 
-  <script type="module" src="./app.js?v=28"></script>
+  <script type="module" src="./app.js?v=29"></script>
 </body>
 </html>

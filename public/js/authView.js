@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // AUTH VIEW: PIN CODE VERIFICATION & GUEST (STUDENT) MODE
 // ==========================================================================
 import { state } from './state.js';
@@ -98,8 +98,11 @@ export function updateAuthModeUI() {
 
   if (authStatusBtn) {
     authStatusBtn.innerHTML = isGuest
-      ? '<span>👀 Гость (студент)</span>'
-      : `<span>🔐 ${state.currentTeacher}</span>`;
+      ? '<span>👀 Гость</span>'
+      : '<span>🔐 PIN</span>';
+    authStatusBtn.title = isGuest
+      ? 'Режим гостя (только чтение). Нажмите для ввода PIN'
+      : `Режим преподавателя (${state.currentTeacher}). Нажмите для смены PIN`;
   }
 }
 
