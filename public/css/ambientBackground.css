@@ -10,7 +10,7 @@
   pointer-events: none;
   z-index: -1;
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 10%, #0c1222 0%, #050811 100%);
+  background: radial-gradient(ellipse at 50% 15%, #0c1224 0%, #050811 100%);
 }
 
 /* Деликатная звездная микро-сетка */
@@ -19,9 +19,7 @@
   inset: 0;
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.2px, transparent 1.2px);
   background-size: 26px 26px;
-  opacity: 0.65;
-  mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, #000 40%, transparent 95%);
-  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, #000 40%, transparent 95%);
+  opacity: 0.6;
 }
 
 /* Базовый светящийся шар */
@@ -35,83 +33,83 @@
 
 /* Сфера 1: Электрик Блю (Верхний левый сектор) */
 .ambient-orb-1 {
-  width: 230px;
-  height: 230px;
-  top: 14%;
-  left: 6%;
-  background: radial-gradient(circle at 35% 35%, #60a5fa 0%, #2563eb 45%, #1d4ed8 72%, transparent 98%);
-  box-shadow: 0 0 70px 25px rgba(37, 99, 235, 0.45);
-  filter: blur(28px);
-  -webkit-filter: blur(28px);
-  opacity: 0.8;
-  animation: orbFloat1 9s ease-in-out infinite alternate;
+  width: 240px;
+  height: 240px;
+  top: 12%;
+  left: 8%;
+  background: radial-gradient(circle at 35% 35%, #93c5fd 0%, #3b82f6 40%, #1d4ed8 70%, transparent 95%);
+  box-shadow: 0 0 70px 25px rgba(37, 99, 235, 0.5);
+  filter: blur(22px);
+  -webkit-filter: blur(22px);
+  opacity: 0.85;
+  animation: orbFloat1 8s ease-in-out infinite alternate;
 }
 
-/* Сфера 2: Неоновый Фиолетовый (Правый сектор) */
+/* Сфера 2: Неоновый Фиолетовый (Правый центральный сектор) */
 .ambient-orb-2 {
-  width: 260px;
-  height: 260px;
+  width: 270px;
+  height: 270px;
   top: 36%;
-  right: 5%;
-  background: radial-gradient(circle at 35% 35%, #c084fc 0%, #8b5cf6 45%, #6d28d9 72%, transparent 98%);
-  box-shadow: 0 0 80px 30px rgba(139, 92, 246, 0.45);
-  filter: blur(32px);
-  -webkit-filter: blur(32px);
-  opacity: 0.75;
-  animation: orbFloat2 11s ease-in-out infinite alternate;
+  right: 6%;
+  background: radial-gradient(circle at 35% 35%, #d8b4fe 0%, #a855f7 40%, #7c3aed 70%, transparent 95%);
+  box-shadow: 0 0 80px 30px rgba(139, 92, 246, 0.5);
+  filter: blur(24px);
+  -webkit-filter: blur(24px);
+  opacity: 0.8;
+  animation: orbFloat2 10s ease-in-out infinite alternate;
 }
 
 /* Сфера 3: Изумрудный Cyan (Левый нижний сектор) */
 .ambient-orb-3 {
-  width: 210px;
-  height: 210px;
+  width: 220px;
+  height: 220px;
   bottom: 16%;
-  left: 8%;
-  background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #06b6d4 45%, #0d9488 72%, transparent 98%);
-  box-shadow: 0 0 65px 22px rgba(6, 182, 212, 0.4);
-  filter: blur(28px);
-  -webkit-filter: blur(28px);
-  opacity: 0.75;
-  animation: orbFloat3 12s ease-in-out infinite alternate;
+  left: 10%;
+  background: radial-gradient(circle at 35% 35%, #67e8f9 0%, #06b6d4 40%, #0d9488 70%, transparent 95%);
+  box-shadow: 0 0 65px 22px rgba(6, 182, 212, 0.45);
+  filter: blur(22px);
+  -webkit-filter: blur(22px);
+  opacity: 0.8;
+  animation: orbFloat3 11s ease-in-out infinite alternate;
 }
 
 /* Сфера 4: Неоновая Роза / Закат (Нижний правый сектор) */
 .ambient-orb-4 {
-  width: 190px;
-  height: 190px;
-  top: 68%;
-  right: 18%;
-  background: radial-gradient(circle at 35% 35%, #f472b6 0%, #ec4899 45%, #be185d 72%, transparent 98%);
-  box-shadow: 0 0 60px 20px rgba(236, 72, 153, 0.4);
-  filter: blur(28px);
-  -webkit-filter: blur(28px);
-  opacity: 0.7;
-  animation: orbFloat4 10s ease-in-out infinite alternate;
+  width: 200px;
+  height: 200px;
+  top: 66%;
+  right: 16%;
+  background: radial-gradient(circle at 35% 35%, #f472b6 0%, #ec4899 40%, #be185d 70%, transparent 95%);
+  box-shadow: 0 0 60px 20px rgba(236, 72, 153, 0.45);
+  filter: blur(22px);
+  -webkit-filter: blur(22px);
+  opacity: 0.75;
+  animation: orbFloat4 9s ease-in-out infinite alternate;
 }
 
 /* Ключевые кадры выразительного парения и дыхания сфер */
 @keyframes orbFloat1 {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(75px, 85px, 0) scale(1.18); }
-  100% { transform: translate3d(-35px, 130px, 0) scale(0.92); }
+  50%  { transform: translate3d(85px, 95px, 0) scale(1.2); }
+  100% { transform: translate3d(-35px, 140px, 0) scale(0.9); }
 }
 
 @keyframes orbFloat2 {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(-90px, -70px, 0) scale(1.16); }
-  100% { transform: translate3d(-50px, 80px, 0) scale(0.9); }
+  50%  { transform: translate3d(-95px, -80px, 0) scale(1.18); }
+  100% { transform: translate3d(-55px, 90px, 0) scale(0.88); }
 }
 
 @keyframes orbFloat3 {
-  0%   { transform: translate3d(0, 0, 0) scale(0.92); }
-  50%  { transform: translate3d(80px, -75px, 0) scale(1.15); }
-  100% { transform: translate3d(45px, 55px, 0) scale(1.02); }
+  0%   { transform: translate3d(0, 0, 0) scale(0.9); }
+  50%  { transform: translate3d(90px, -85px, 0) scale(1.18); }
+  100% { transform: translate3d(50px, 60px, 0) scale(1.02); }
 }
 
 @keyframes orbFloat4 {
-  0%   { transform: translate3d(0, 0, 0) scale(1.06); }
-  50%  { transform: translate3d(-65px, -80px, 0) scale(0.88); }
-  100% { transform: translate3d(-95px, 35px, 0) scale(1.14); }
+  0%   { transform: translate3d(0, 0, 0) scale(1.08); }
+  50%  { transform: translate3d(-75px, -85px, 0) scale(0.86); }
+  100% { transform: translate3d(-105px, 40px, 0) scale(1.16); }
 }
 
 /* Энергосбережение и настройки доступности */

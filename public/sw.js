@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v32';
+const CACHE_NAME = 'schedule-pwa-v33';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -100,8 +100,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-First для данных (JSON) и логики (JS), чтобы обновления отображались мгновенно
-  const isDynamicAsset = event.request.url.includes('/data/') || event.request.url.endsWith('.js') || event.request.url.includes('.js?');
+  // Network-First для данных (JSON), стилей (CSS) и логики (JS) для мгновенных обновлений
+  const isDynamicAsset = event.request.url.includes('/data/') || 
+    event.request.url.includes('.js') || 
+    event.request.url.includes('.css');
   if (isDynamicAsset) {
     event.respondWith(
       fetch(event.request, { cache: 'no-cache' })
