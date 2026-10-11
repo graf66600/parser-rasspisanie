@@ -1,0 +1,114 @@
+/* ==========================================================================
+   AMBIENT ANIMATED BACKGROUND (AURORA MESH & GLOW ORBS)
+   ========================================================================== */
+
+.ambient-bg-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+  background-color: #070b14;
+}
+
+/* Микро-сетка с радиальной маской */
+.ambient-mesh-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.55;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 85%);
+}
+
+/* Базовый светящийся шар */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+  mix-blend-mode: screen;
+}
+
+/* Шар 1: Лазурный / Синий (Верхний левый угол) */
+.ambient-orb-1 {
+  width: 380px;
+  height: 380px;
+  top: -80px;
+  left: -60px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.35) 0%, rgba(59, 130, 246, 0.18) 50%, transparent 75%);
+  filter: blur(75px);
+  -webkit-filter: blur(75px);
+  animation: orbFloat1 24s ease-in-out infinite alternate;
+}
+
+/* Шар 2: Индиго / Фиолетовый (Верхний правый угол) */
+.ambient-orb-2 {
+  width: 420px;
+  height: 420px;
+  top: 10%;
+  right: -100px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 75%);
+  filter: blur(85px);
+  -webkit-filter: blur(85px);
+  animation: orbFloat2 28s ease-in-out infinite alternate;
+}
+
+/* Шар 3: Бирюзовый / Cyan (Центр и левая часть) */
+.ambient-orb-3 {
+  width: 320px;
+  height: 320px;
+  bottom: 25%;
+  left: -40px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.22) 0%, rgba(16, 185, 129, 0.12) 50%, transparent 75%);
+  filter: blur(80px);
+  -webkit-filter: blur(80px);
+  animation: orbFloat3 32s ease-in-out infinite alternate;
+}
+
+/* Шар 4: Розовый / Неоновый закат (Нижний правый угол) */
+.ambient-orb-4 {
+  width: 350px;
+  height: 350px;
+  bottom: -60px;
+  right: -50px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.18) 0%, rgba(124, 58, 237, 0.12) 50%, transparent 75%);
+  filter: blur(90px);
+  -webkit-filter: blur(90px);
+  animation: orbFloat4 26s ease-in-out infinite alternate;
+}
+
+/* Ключевые кадры медленного атмосферного парения (GPU transform) */
+@keyframes orbFloat1 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(60px, 80px, 0) scale(1.12); }
+  100% { transform: translate3d(-30px, 120px, 0) scale(0.92); }
+}
+
+@keyframes orbFloat2 {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(-80px, 70px, 0) scale(1.15); }
+  100% { transform: translate3d(-40px, -40px, 0) scale(0.95); }
+}
+
+@keyframes orbFloat3 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.95); }
+  50%  { transform: translate3d(70px, -60px, 0) scale(1.1); }
+  100% { transform: translate3d(40px, 50px, 0) scale(1.02); }
+}
+
+@keyframes orbFloat4 {
+  0%   { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%  { transform: translate3d(-60px, -70px, 0) scale(0.9); }
+  100% { transform: translate3d(-90px, 20px, 0) scale(1.1); }
+}
+
+/* Отключение анимации при экономии заряда или настройках доступности */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb {
+    animation: none !important;
+  }
+}

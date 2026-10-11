@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
   './css/journalSummary.css',
   './css/kiosk.css',
   './css/kioskCards.css',
+  './css/ambientBackground.css',
   './app.js',
   './js/state.js',
   './js/cacheHelper.js',
