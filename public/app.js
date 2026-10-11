@@ -1,16 +1,16 @@
 // ==========================================================================
 // MAIN APPLICATION ENTRY POINT
 // ==========================================================================
-import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION, clearPwaCacheAndReload } from './js/state.js?v=29';
-import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js?v=29';
-import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js?v=29';
-import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js?v=29';
-import { setupUploadListeners } from './js/uploadView.js?v=29';
-import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js?v=29';
-import { setupNotifications } from './js/notifications.js?v=29';
-import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/authView.js?v=29';
-import { setupRealtimeSubscription } from './js/supabaseSync.js?v=29';
-import { setupKioskEventListeners } from './js/kioskView.js?v=29';
+import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION, clearPwaCacheAndReload } from './js/state.js?v=30';
+import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js?v=30';
+import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js?v=30';
+import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js?v=30';
+import { setupUploadListeners } from './js/uploadView.js?v=30';
+import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js?v=30';
+import { setupNotifications } from './js/notifications.js?v=30';
+import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/authView.js?v=30';
+import { setupRealtimeSubscription } from './js/supabaseSync.js?v=30';
+import { setupKioskEventListeners } from './js/kioskView.js?v=30';
 
 // Инициализация PWA и Service Worker с активным авто-обновлением
 if ('serviceWorker' in navigator) {

@@ -1,7 +1,7 @@
 // ==========================================================================
 // JOURNAL VIEW: LESSON ENTRY, TOPIC AUTOFILL & FORM LOGIC
 // ==========================================================================
-import { state } from './state.js';
+import { state, isStaticHost } from './state.js';
 import {
   getRecommendedLesson,
   updateTopicDatalist,
@@ -218,11 +218,13 @@ export function setupJournalListeners() {
 
     pushJournalEntryToCloud(entry);
 
-    fetch('./api/journal/mark', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry),
-    }).catch(() => {});
+    if (!isStaticHost) {
+      fetch('./api/journal/mark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      }).catch(() => {});
+    }
 
     // Скрываем плашку редактирования после сохранения
     document.getElementById('journalEditNotice')?.classList.add('hidden');

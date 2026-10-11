@@ -1,12 +1,14 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    MODALS, STUDENTS & UPLOAD STYLES
    ========================================================================== */
 
 /* ЗОНА ЗАГРУЗКИ ФАЙЛА (DROPZONE) */
 .dropzone-box {
-  border: 2px dashed rgba(59, 130, 246, 0.5);
-  background: rgba(30, 58, 138, 0.1);
-  border-radius: 16px;
+  border: 2px dashed rgba(59, 130, 246, 0.45);
+  background: rgba(30, 58, 138, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
   padding: 28px 16px;
   text-align: center;
   cursor: pointer;
@@ -15,7 +17,8 @@
 
 .dropzone-box:hover {
   border-color: #3b82f6;
-  background: rgba(30, 58, 138, 0.2);
+  background: rgba(30, 58, 138, 0.22);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
 }
 
 .dropzone-box:active {
@@ -27,19 +30,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid #1f293d;
+  padding: 11px 15px;
+  border-radius: 14px;
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 13px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  transition: all 0.18s ease;
+}
+.bell-item:hover {
+  border-color: rgba(96, 165, 250, 0.25);
 }
 
 .bell-badge {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: rgba(37, 99, 235, 0.15);
+  background: rgba(37, 99, 235, 0.18);
   color: #60a5fa;
   font-weight: 700;
   display: flex;
@@ -50,10 +59,11 @@
 .bell-time-badge {
   padding: 4px 10px;
   border-radius: 8px;
-  background: #1e293b;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   font-family: monospace;
   color: #cbd5e1;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 12px;
 }
 
@@ -62,13 +72,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid #1f293d;
+  padding: 9px 13px;
+  border-radius: 14px;
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12px;
   margin-bottom: 6px;
   gap: 8px;
+  transition: all 0.15s ease;
 }
 
 .student-manage-name {
