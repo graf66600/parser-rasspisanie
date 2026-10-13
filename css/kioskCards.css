@@ -2,7 +2,7 @@
    KIOSK CARDS & TILES STYLES (Карточки, плитки групп и преподавателей)
    ========================================================================== */
 
-/* Сетка карточек "Прямо сейчас" (адаптирована под 23" 1080p и мобильные) */
+/* Сетка карточек "Прямо сейчас" */
 .kiosk-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
@@ -21,25 +21,17 @@
 }
 .kiosk-live-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
 .kiosk-live-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.kiosk-group-badge {
-  background: #1e3a8a;
-  color: #93c5fd;
-  border: 1px solid #2563eb;
+
+.kiosk-group-badge, .kiosk-room-badge {
   padding: 4px 12px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 800;
 }
-.kiosk-room-badge {
-  background: #064e3b;
-  color: #6ee7b7;
-  border: 1px solid #059669;
-  padding: 4px 12px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 800;
-}
-.kiosk-live-subject {
+.kiosk-group-badge { background: #1e3a8a; color: #93c5fd; border: 1px solid #2563eb; }
+.kiosk-room-badge { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
+
+.kiosk-live-subject, .kiosk-lesson-subject {
   font-size: 15px;
   font-weight: 700;
   color: #ffffff;
@@ -103,27 +95,41 @@
 .kiosk-group-tile-name { font-size: 22px; font-weight: 800; color: #ffffff; }
 
 /* Сетка преподавателей */
+.kiosk-teachers-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 195px), 1fr));
+  gap: 14px;
+}
 .kiosk-teacher-tile {
-  min-height: 75px;
+  min-height: 64px;
   background: #1e293b;
   border: 2px solid #334155;
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
-  padding: 12px 18px;
-  gap: 12px;
+  padding: 10px 14px;
+  gap: 10px;
   color: #f1f5f9;
-  font-size: 17px;
-  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
+  user-select: none;
 }
 .kiosk-teacher-tile:hover, .kiosk-teacher-tile:active {
   background: #2563eb;
   border-color: #60a5fa;
-  transform: scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
 }
-.kiosk-teacher-icon { font-size: 24px; }
+.kiosk-teacher-icon { font-size: 22px; flex-shrink: 0; }
+.kiosk-teacher-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 
 /* Подстраница расписания группы/преподавателя */
 .kiosk-sub-header {
@@ -187,14 +193,6 @@
 }
 .kiosk-lesson-badge { font-size: 13px; font-weight: 800; color: #38bdf8; }
 .kiosk-lesson-time { font-size: 13px; font-weight: 600; color: #94a3b8; }
-.kiosk-lesson-subject {
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.35;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
 .kiosk-lesson-footer {
   display: flex;
   align-items: center;
@@ -280,13 +278,16 @@
     border-radius: 20px;
     gap: 14px;
   }
-  .kiosk-live-subject { font-size: 22px; }
-  .kiosk-lesson-subject { font-size: 20px; }
+  .kiosk-live-subject, .kiosk-lesson-subject { font-size: 22px; }
   .kiosk-group-badge, .kiosk-room-badge {
     font-size: 16px;
     padding: 6px 16px;
   }
   .kiosk-group-tile { min-height: 110px; }
   .kiosk-group-tile-name { font-size: 28px; }
-  .kiosk-teacher-tile { min-height: 95px; font-size: 22px; }
+  .kiosk-teachers-tiles-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 20px;
+  }
+  .kiosk-teacher-tile { min-height: 85px; font-size: 20px; }
 }

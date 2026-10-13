@@ -1,8 +1,8 @@
 // ==========================================================================
 // STATE MANAGEMENT & DATA LOADERS
 // ==========================================================================
-import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload } from './cacheHelper.js';
-export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload };
+import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames } from './cacheHelper.js';
+export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames };
 
 export const DAY_NAMES = {
   1: 'Понедельник',
@@ -94,7 +94,7 @@ export function populateGroupSelects(onGroupChange) {
     if (!sel) return;
     const currentVal = sel.value;
     sel.innerHTML = '';
-    Array.from(groups).sort().forEach((g) => {
+    Array.from(groups).sort(compareGroupNames).forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g;
       opt.textContent = `Группа ${g}`;
