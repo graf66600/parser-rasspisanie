@@ -12,29 +12,33 @@ import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/au
 import { setupRealtimeSubscription } from './js/supabaseSync.js';
 import { setupKioskEventListeners } from './js/kioskView.js';
 
-// Инициализация PWA и Service Worker с активным авто-обновлением
+// Инициализация PWA и Service Worker с безопасной фоновой регистрацией
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(`./sw.js?v=${PWA_VERSION}`).then((reg) => {
       reg.update().catch(() => {});
     }).catch(() => {});
   });
-
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
-  });
 }
 
-// Telegram WebApp адаптация
-if (window.Telegram?.WebApp) {
-  try {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-  } catch (e) {}
+// Асинхронное неблокирующее подключение Telegram WebApp только при запуске внутри Telegram
+const isTelegramEnv = typeof window !== 'undefined' && (
+  Boolean(window.TelegramWebviewProxy) ||
+  window.location.hash.includes('tgWebAppData') ||
+  window.location.search.includes('tgWebApp') ||
+  navigator.userAgent.includes('Telegram')
+);
+if (isTelegramEnv) {
+  const tgScript = document.createElement('script');
+  tgScript.src = 'https://telegram.org/js/telegram-web-app.js';
+  tgScript.async = true;
+  tgScript.onload = () => {
+    try {
+      window.Telegram?.WebApp?.ready();
+      window.Telegram?.WebApp?.expand();
+    } catch (e) {}
+  };
+  document.head.appendChild(tgScript);
 }
 
 // Установка PWA

@@ -122,9 +122,6 @@ export function initLocalState() {
   try {
     const ver = localStorage.getItem('pwa_version');
     if (ver !== PWA_VERSION) {
-      localStorage.removeItem('pwa_custom_curriculum');
-      localStorage.removeItem('pwa_custom_schedule');
-      localStorage.removeItem('pwa_custom_students');
       localStorage.setItem('pwa_version', PWA_VERSION);
     }
   } catch (e) {}
