@@ -185,37 +185,52 @@ body.kiosk-mode {
   background: rgba(239, 68, 68, 0.3);
 }
 
-/* Навигация табло */
+/* Нижняя панель табло (полноэкранная, без прокрутки, 4 равные колонки) */
 .kiosk-nav-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   padding: 12px 28px;
-  background: #0f172a;
-  border-bottom: 1px solid #1e293b;
-  overflow-x: auto;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(51, 65, 85, 0.7);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  position: relative !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
 }
 .kiosk-nav-item {
-  flex: 1;
-  min-height: 56px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 10px 20px;
+  padding: 10px 16px;
   background: #1e293b;
   color: #94a3b8;
-  border: 2px solid transparent;
-  border-radius: 16px;
-  font-size: 16px;
+  border: 2px solid rgba(51, 65, 85, 0.5);
+  border-radius: 14px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  user-select: none;
+  touch-action: manipulation;
 }
 .kiosk-nav-item:hover {
   color: #ffffff;
   background: #273549;
+  border-color: #3b82f6;
 }
 .kiosk-nav-item.active-subtab {
   background: linear-gradient(135deg, #1d4ed8, #2563eb);
@@ -223,6 +238,8 @@ body.kiosk-mode {
   border-color: #60a5fa;
   box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
 }
+.kiosk-nav-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+.kiosk-nav-label { font-size: 15px; font-weight: 700; line-height: 1.2; }
 
 /* Контентная область */
 .kiosk-main-content {
@@ -248,7 +265,8 @@ body.kiosk-mode {
   .kiosk-brand-title { font-size: 18px; }
   .kiosk-clock-time { font-size: 26px; }
   .kiosk-nav-bar { padding: 10px 18px; gap: 8px; }
-  .kiosk-nav-item { min-height: 48px; font-size: 14px; padding: 8px 14px; }
+  .kiosk-nav-item { min-height: 46px; font-size: 14px; padding: 8px 12px; gap: 8px; }
+  .kiosk-nav-label { font-size: 14px; }
   .kiosk-main-content { padding: 18px; }
 }
 
@@ -261,8 +279,10 @@ body.kiosk-mode {
   .kiosk-clock-time { font-size: 20px; }
   .kiosk-bell-pill { font-size: 11px; padding: 4px 10px; }
   .kiosk-action-btn { padding: 8px 12px; font-size: 12px; }
-  .kiosk-nav-bar { padding: 6px 10px; }
-  .kiosk-nav-item { min-height: 42px; font-size: 13px; padding: 6px 10px; border-radius: 12px; }
+  .kiosk-nav-bar { padding: 8px 8px; gap: 6px; }
+  .kiosk-nav-item { min-height: 44px; padding: 6px 4px; border-radius: 12px; flex-direction: column; gap: 2px; }
+  .kiosk-nav-icon { font-size: 16px; }
+  .kiosk-nav-label { font-size: 11px; }
   .kiosk-main-content { padding: 12px 8px; }
   .kiosk-section-header { font-size: 18px; margin-bottom: 12px; }
 }
