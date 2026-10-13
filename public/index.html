@@ -485,22 +485,6 @@
       </div>
     </header>
 
-    <!-- Навигация киоска -->
-    <nav class="kiosk-nav-bar">
-      <button type="button" id="kioskNavBtn_live" class="kiosk-nav-item active-subtab">
-        <span>🔴</span><span>Прямо сейчас (все аудитории)</span>
-      </button>
-      <button type="button" id="kioskNavBtn_groups" class="kiosk-nav-item">
-        <span>👥</span><span>Расписание групп</span>
-      </button>
-      <button type="button" id="kioskNavBtn_teachers" class="kiosk-nav-item">
-        <span>👨‍🏫</span><span>Преподаватели</span>
-      </button>
-      <button type="button" id="kioskNavBtn_bells" class="kiosk-nav-item">
-        <span>⏰</span><span>Расписание звонков</span>
-      </button>
-    </nav>
-
     <!-- Основное содержимое киоска -->
     <div class="kiosk-main-content">
       <!-- Секция 1: Прямо сейчас -->
@@ -549,8 +533,28 @@
         </div>
       </section>
     </div>
+
+    <!-- Нижняя панель табло (без прокрутки, все 4 раздела на виду) -->
+    <nav class="kiosk-nav-bar">
+      <button type="button" id="kioskNavBtn_live" class="kiosk-nav-item active-subtab" title="Текущие пары во всех аудиториях">
+        <span class="kiosk-nav-icon">🔴</span>
+        <span class="kiosk-nav-label">Прямо сейчас</span>
+      </button>
+      <button type="button" id="kioskNavBtn_groups" class="kiosk-nav-item" title="Расписание по группам студентов">
+        <span class="kiosk-nav-icon">👥</span>
+        <span class="kiosk-nav-label">Группы</span>
+      </button>
+      <button type="button" id="kioskNavBtn_teachers" class="kiosk-nav-item" title="Расписание преподавателей">
+        <span class="kiosk-nav-icon">👨‍🏫</span>
+        <span class="kiosk-nav-label">Преподаватели</span>
+      </button>
+      <button type="button" id="kioskNavBtn_bells" class="kiosk-nav-item" title="Расписание звонков">
+        <span class="kiosk-nav-icon">⏰</span>
+        <span class="kiosk-nav-label">Звонки</span>
+      </button>
+    </nav>
   </div>
 
-  <script type="module" src="./app.js?v=34"></script>
+  <script type="module" src="./app.js?v=35"></script>
 </body>
 </html>
