@@ -2,20 +2,20 @@
    KIOSK CARDS & TILES STYLES (Карточки, плитки групп и преподавателей)
    ========================================================================== */
 
-/* Сетка карточек "Прямо сейчас" */
+/* Сетка карточек "Прямо сейчас" (адаптирована под 23" 1080p и мобильные) */
 .kiosk-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
 }
 .kiosk-live-card {
   background: #111827;
   border: 1px solid #1f293d;
-  border-radius: 20px;
-  padding: 22px;
+  border-radius: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s, border-color 0.2s;
 }
@@ -25,31 +25,33 @@
   background: #1e3a8a;
   color: #93c5fd;
   border: 1px solid #2563eb;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 15px;
+  padding: 4px 12px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 800;
 }
 .kiosk-room-badge {
   background: #064e3b;
   color: #6ee7b7;
   border: 1px solid #059669;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 15px;
+  padding: 4px 12px;
+  border-radius: 10px;
+  font-size: 13px;
   font-weight: 800;
 }
 .kiosk-live-subject {
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
-  line-height: 1.3;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .kiosk-live-teacher {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #94a3b8;
 }
@@ -57,16 +59,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid #1f293d;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #cbd5e1;
 }
-.kiosk-lesson-num {
-  color: #38bdf8;
-  font-weight: 700;
-}
+.kiosk-lesson-num { color: #38bdf8; font-weight: 700; }
 
 /* Сетка сенсорных плиток групп */
 .kiosk-tiles-grid {
@@ -75,10 +74,10 @@
   gap: 16px;
 }
 .kiosk-group-tile {
-  min-height: 90px;
+  min-height: 85px;
   background: #1e293b;
   border: 2px solid #334155;
-  border-radius: 18px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -101,24 +100,20 @@
   color: #94a3b8;
   text-transform: uppercase;
 }
-.kiosk-group-tile-name {
-  font-size: 24px;
-  font-weight: 800;
-  color: #ffffff;
-}
+.kiosk-group-tile-name { font-size: 22px; font-weight: 800; color: #ffffff; }
 
 /* Сетка преподавателей */
 .kiosk-teacher-tile {
-  min-height: 80px;
+  min-height: 75px;
   background: #1e293b;
   border: 2px solid #334155;
   border-radius: 16px;
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  gap: 14px;
+  padding: 12px 18px;
+  gap: 12px;
   color: #f1f5f9;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -128,42 +123,38 @@
   border-color: #60a5fa;
   transform: scale(1.02);
 }
-.kiosk-teacher-icon { font-size: 26px; }
+.kiosk-teacher-icon { font-size: 24px; }
 
 /* Подстраница расписания группы/преподавателя */
 .kiosk-sub-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
 }
 .kiosk-back-btn {
-  padding: 12px 22px;
+  padding: 10px 20px;
   background: #1e293b;
   color: #38bdf8;
   border: 1px solid #334155;
-  border-radius: 14px;
-  font-size: 16px;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
 }
 .kiosk-back-btn:hover { background: #334155; }
-.kiosk-sub-title {
-  font-size: 26px;
-  font-weight: 800;
-  color: #ffffff;
-}
+.kiosk-sub-title { font-size: 24px; font-weight: 800; color: #ffffff; }
 .kiosk-day-filter { display: flex; gap: 8px; }
 .kiosk-day-pill {
-  padding: 10px 20px;
+  padding: 8px 18px;
   background: #1e293b;
   color: #94a3b8;
   border: 1px solid #334155;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -176,17 +167,17 @@
 /* Карточки занятий в расписании */
 .kiosk-lessons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
 }
 .kiosk-lesson-card {
   background: #111827;
   border: 1px solid #1f293d;
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 .kiosk-lesson-card-top {
   display: flex;
@@ -194,20 +185,15 @@
   justify-content: space-between;
   gap: 8px;
 }
-.kiosk-lesson-badge {
-  font-size: 14px;
-  font-weight: 800;
-  color: #38bdf8;
-}
-.kiosk-lesson-time {
-  font-size: 14px;
-  font-weight: 600;
-  color: #94a3b8;
-}
+.kiosk-lesson-badge { font-size: 13px; font-weight: 800; color: #38bdf8; }
+.kiosk-lesson-time { font-size: 13px; font-weight: 600; color: #94a3b8; }
 .kiosk-lesson-subject {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .kiosk-lesson-footer {
   display: flex;
@@ -215,7 +201,7 @@
   justify-content: space-between;
   padding-top: 10px;
   border-top: 1px solid #1f293d;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #94a3b8;
 }
@@ -231,45 +217,37 @@
 .kiosk-empty-box {
   background: #111827;
   border: 1px dashed #334155;
-  border-radius: 24px;
-  padding: 50px 20px;
+  border-radius: 20px;
+  padding: 40px 20px;
   text-align: center;
   width: 100%;
 }
-.kiosk-empty-icon { font-size: 56px; margin-bottom: 12px; }
-.kiosk-empty-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #f1f5f9;
-}
-.kiosk-empty-text {
-  font-size: 15px;
-  color: #94a3b8;
-  margin-top: 8px;
-}
+.kiosk-empty-icon { font-size: 48px; margin-bottom: 10px; }
+.kiosk-empty-title { font-size: 20px; font-weight: 800; color: #f1f5f9; }
+.kiosk-empty-text { font-size: 14px; color: #94a3b8; margin-top: 6px; }
 
 /* Расписание звонков */
 .kiosk-bells-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
 }
 .kiosk-bell-card {
   background: #111827;
   border: 2px solid #1f293d;
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 18px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 .kiosk-bell-card.active-bell {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(16, 185, 129, 0.15));
   border-color: #34d399;
-  box-shadow: 0 0 30px rgba(52, 211, 153, 0.2);
+  box-shadow: 0 0 25px rgba(52, 211, 153, 0.2);
 }
 .kiosk-bell-num {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   color: #f1f5f9;
   display: flex;
@@ -281,12 +259,34 @@
   font-weight: 800;
   color: #34d399;
   background: rgba(16, 185, 129, 0.2);
-  padding: 4px 10px;
-  border-radius: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
 }
 .kiosk-bell-time-range {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: #38bdf8;
   letter-spacing: 0.02em;
+}
+
+/* Масштабирование для сверхбольших 43" 4K экранов */
+@media (min-width: 2560px) {
+  .kiosk-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+    gap: 24px;
+  }
+  .kiosk-live-card, .kiosk-lesson-card {
+    padding: 24px;
+    border-radius: 20px;
+    gap: 14px;
+  }
+  .kiosk-live-subject { font-size: 22px; }
+  .kiosk-lesson-subject { font-size: 20px; }
+  .kiosk-group-badge, .kiosk-room-badge {
+    font-size: 16px;
+    padding: 6px 16px;
+  }
+  .kiosk-group-tile { min-height: 110px; }
+  .kiosk-group-tile-name { font-size: 28px; }
+  .kiosk-teacher-tile { min-height: 95px; font-size: 22px; }
 }
