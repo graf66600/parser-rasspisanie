@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v36';
+const CACHE_NAME = 'schedule-pwa-v37';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -43,19 +43,19 @@ const STATIC_ASSETS = [
   './data/curriculum.json',
   './data/journal.json',
   './data/teachers.json',
-  './data/schedules_all.json'
+  './data/schedules_all.json',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      for (const asset of STATIC_ASSETS) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          console.warn('Не удалось закэшировать ресурс при установке:', asset);
-        }
-      }
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.allSettled(
+        STATIC_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => {
+            console.warn('Не удалось предварительно закэшировать:', asset, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -79,47 +79,35 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Игнорируем API-запросы, отправляем напрямую на сервер без кэширования
+  // Игнорируем API-запросы, отправляем напрямую на сервер
   if (event.request.url.includes('/api/')) return;
-
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Для навигации HTML: Network-First (всегда свежий HTML при наличии сети, быстрый кэш в офлайне)
+  // 1. Для навигации HTML: Network с быстрым таймаутом (1.2 сек) и моментальным fallback на кэш
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request)
-        .then((networkRes) => {
+      (async () => {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 1200);
+          const networkRes = await fetch(event.request, { signal: controller.signal });
+          clearTimeout(timer);
           if (networkRes && networkRes.status === 200) {
             const clone = networkRes.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
+            return networkRes;
           }
-          return networkRes;
-        })
-        .catch(() => caches.match('./index.html'))
+        } catch (e) {}
+
+        const cached = await caches.match('./index.html');
+        return cached || fetch(event.request);
+      })()
     );
     return;
   }
 
-  // Network-First для данных (JSON), стилей (CSS) и логики (JS) для мгновенных обновлений
-  const isDynamicAsset = event.request.url.includes('/data/') || 
-    event.request.url.includes('.js') || 
-    event.request.url.includes('.css');
-  if (isDynamicAsset) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-cache' })
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return networkResponse;
-        })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }))
-    );
-    return;
-  }
-
-  // Stale-While-Revalidate for other static assets (CSS, SVG, icons)
+  // 2. Для всех остальных статических ресурсов (CSS, JS, JSON, SVG):
+  // Stale-While-Revalidate — моментальная отдача из кэша (0мс) + фоновое фоновое обновление
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
@@ -154,4 +142,3 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
-
