@@ -30,7 +30,12 @@ export async function enterKioskMode() {
   const kioskContainer = document.getElementById('kioskContainer');
   if (kioskContainer) kioskContainer.classList.remove('hidden');
 
-  await loadAllSchedulesData();
+  try {
+    await loadAllSchedulesData();
+  } catch (err) {
+    console.warn('Не удалось загрузить полные данные расписания для киоска:', err);
+  }
+
   switchKioskSubtab('live');
   startKioskClock();
   resetInactivityTimer();
@@ -242,7 +247,23 @@ export function setupKioskEventListeners() {
   });
 
   window.addEventListener('pointerdown', () => resetInactivityTimer(), { passive: true });
-  window.addEventListener('keydown', () => resetInactivityTimer(), { passive: true });
+  window.addEventListener('keydown', (e) => {
+    resetInactivityTimer();
+    if (e.key === 'Escape' && isKioskActive) {
+      exitKioskMode();
+    }
+  }, { passive: true });
+
+  let lastActivityTime = 0;
+  const onUserActivity = () => {
+    const now = Date.now();
+    if (now - lastActivityTime > 2000) {
+      lastActivityTime = now;
+      resetInactivityTimer();
+    }
+  };
+  window.addEventListener('mousemove', onUserActivity, { passive: true });
+  window.addEventListener('scroll', onUserActivity, { passive: true });
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has('kiosk') || urlParams.get('mode') === 'kiosk') {

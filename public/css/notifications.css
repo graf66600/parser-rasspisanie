@@ -5,7 +5,10 @@
 .notification-toggle-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  min-width: 38px;
+  min-height: 38px;
   padding: 6px 12px;
   border-radius: 12px;
   font-size: 12px;
@@ -15,22 +18,29 @@
   user-select: none;
   touch-action: manipulation;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-notif-active {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.2);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.btn-notif-active:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: #34d399;
 }
 
 .btn-notif-inactive {
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(30, 41, 59, 0.85);
   color: #94a3b8;
   border: 1px solid rgba(51, 65, 85, 0.6);
 }
 
 .btn-notif-inactive:hover {
-  background: rgba(51, 65, 85, 0.8);
+  background: rgba(51, 65, 85, 0.9);
   color: #f1f5f9;
 }
 
