@@ -77,39 +77,91 @@ export async function showNotification(title, body, tag = 'general') {
 }
 
 /**
+ * Проверить, включены ли уведомления в настройках пользователя
+ */
+export function isNotificationsEnabled() {
+  const pref = localStorage.getItem('pwa_notifications_enabled');
+  if (pref === 'false') return false;
+  if (pref === 'true') return true;
+  return 'Notification' in window && Notification.permission === 'granted';
+}
+
+/**
+ * Переключить статус уведомлений (включить / выключить)
+ */
+export async function toggleNotifications() {
+  const isEnabled = isNotificationsEnabled();
+  const hasBrowserPerm = 'Notification' in window && Notification.permission === 'granted';
+
+  // Если уведомления уже активны — отключаем
+  if (isEnabled && hasBrowserPerm) {
+    localStorage.setItem('pwa_notifications_enabled', 'false');
+    if (notificationTimer) {
+      clearInterval(notificationTimer);
+      notificationTimer = null;
+    }
+    updateNotificationButtonState();
+    return false;
+  }
+
+  // Если браузер не поддерживает Web Notifications (например, Safari на iOS вне PWA)
+  if (!('Notification' in window)) {
+    alert(
+      '📱 Уведомления на мобильных устройствах Apple (iPhone / iPad):\n\n' +
+      'Для работы push-уведомлений в iOS добавьте приложение на домашний экран:\n' +
+      '1. Нажмите иконку «Поделиться» (⎋) внизу в Safari\n' +
+      '2. Выберите «На экран „Домой“»\n' +
+      '3. Запустите приложение с экрана «Домой» и включите колокольчик.'
+    );
+    return false;
+  }
+
+  // Если уведомления заблокированы в браузере
+  if (Notification.permission === 'denied') {
+    alert('Уведомления заблокированы в настройках браузера. Разрешите их в настройках сайта / браузера, чтобы получать напоминания о парах.');
+    return false;
+  }
+
+  // Запрашиваем разрешение
+  if (Notification.permission !== 'granted') {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      updateNotificationButtonState();
+      return false;
+    }
+  }
+
+  // Включаем уведомления
+  localStorage.setItem('pwa_notifications_enabled', 'true');
+  updateNotificationButtonState();
+  startNotificationScheduler();
+
+  await showNotification(
+    '🔔 Уведомления активированы!',
+    'Вы будете получать напоминания за 10 минут до начала каждой пары с темой занятия.',
+    'test_enabled'
+  );
+  return true;
+}
+
+/**
  * Запросить разрешение на отправку уведомлений
  */
 export async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
-    alert('Ваш браузер не поддерживает Web Notifications.');
-    return false;
-  }
-
-  const permission = await Notification.requestPermission();
-  updateNotificationButtonState();
-
-  if (permission === 'granted') {
-    localStorage.setItem('pwa_notifications_enabled', 'true');
-    await showNotification(
-      '🔔 Уведомления активированы!',
-      'Вы будете получать напоминания за 10 минут до начала каждой пары с темой занятия.',
-      'test'
-    );
-    startNotificationScheduler();
-    return true;
-  } else if (permission === 'denied') {
-    alert('Уведомления заблокированы в настройках браузера. Разрешите их в настройках сайта, чтобы получать напоминания о парах.');
-    return false;
-  }
-  return false;
+  return await toggleNotifications();
 }
 
 /**
  * Отправить мгновенное тестовое уведомление для проверки
  */
 export async function sendTestNotification() {
+  if (!('Notification' in window)) {
+    alert('📱 На устройствах iPhone для работы уведомлений сохраните сайт на экран «Домой» (кнопка «Поделиться» ➔ «На экран Домой»).');
+    return;
+  }
+
   if (Notification.permission !== 'granted') {
-    const granted = await requestNotificationPermission();
+    const granted = await toggleNotifications();
     if (!granted) return;
   }
 
@@ -127,7 +179,8 @@ export function startNotificationScheduler() {
   if (notificationTimer) clearInterval(notificationTimer);
 
   const check = () => {
-    if (Notification.permission !== 'granted') return;
+    if (!isNotificationsEnabled()) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
     if (!state.schedule?.lessons?.length) return;
 
     const now = new Date();
@@ -175,19 +228,31 @@ export function updateNotificationButtonState() {
   const btn = document.getElementById('toggleNotificationsBtn');
   if (!btn) return;
 
-  if (!('Notification' in window)) {
-    btn.classList.add('hidden');
-    return;
-  }
+  // Значок колокольчика всегда остаётся видимым (в том числе на мобильных телефонах)
+  btn.classList.remove('hidden');
 
-  if (Notification.permission === 'granted') {
-    btn.innerHTML = '<span>🔔</span><span>Уведомления вкл.</span>';
+  const enabled = isNotificationsEnabled();
+  const hasPerm = 'Notification' in window && Notification.permission === 'granted';
+
+  if (enabled && hasPerm) {
+    btn.innerHTML = '<span>🔔</span><span class="hidden sm:inline">Уведомления вкл.</span>';
     btn.classList.add('btn-notif-active');
     btn.classList.remove('btn-notif-inactive');
+    btn.title = 'Уведомления о парах включены (нажмите, чтобы отключить)';
   } else {
-    btn.innerHTML = '<span>🔕</span><span>Включить уведомления</span>';
+    btn.innerHTML = '<span>🔔</span><span class="hidden sm:inline">Уведомления</span>';
     btn.classList.remove('btn-notif-active');
     btn.classList.add('btn-notif-inactive');
+    btn.title = 'Уведомления о парах выключены (нажмите, чтобы включить)';
+  }
+
+  const notifStatusText = document.getElementById('notifStatusText');
+  if (notifStatusText) {
+    if (enabled && hasPerm) {
+      notifStatusText.textContent = 'Напоминание за 10 мин до начала с темой пары (активно)';
+    } else {
+      notifStatusText.textContent = 'Нажмите на колокольчик, чтобы включить напоминания';
+    }
   }
 }
 
@@ -198,18 +263,14 @@ export function setupNotifications() {
   updateNotificationButtonState();
 
   document.getElementById('toggleNotificationsBtn')?.addEventListener('click', async () => {
-    if (Notification.permission === 'granted') {
-      await sendTestNotification();
-    } else {
-      await requestNotificationPermission();
-    }
+    await toggleNotifications();
   });
 
   document.getElementById('testNotificationBtn')?.addEventListener('click', async () => {
     await sendTestNotification();
   });
 
-  if (Notification.permission === 'granted') {
+  if (isNotificationsEnabled() && 'Notification' in window && Notification.permission === 'granted') {
     startNotificationScheduler();
   }
 }

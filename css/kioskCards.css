@@ -5,7 +5,7 @@
 /* Сетка карточек "Прямо сейчас" */
 .kiosk-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: 20px;
 }
 .kiosk-live-card {
@@ -71,7 +71,7 @@
 /* Сетка сенсорных плиток групп */
 .kiosk-tiles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 130px), 1fr));
   gap: 16px;
 }
 .kiosk-group-tile {
@@ -176,7 +176,7 @@
 /* Карточки занятий в расписании */
 .kiosk-lessons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 18px;
 }
 .kiosk-lesson-card {
@@ -251,7 +251,7 @@
 /* Расписание звонков */
 .kiosk-bells-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 20px;
 }
 .kiosk-bell-card {
