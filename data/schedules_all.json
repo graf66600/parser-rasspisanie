@@ -743,6 +743,201 @@
       "teacher": "Галич О.В.",
       "classroom": "о",
       "weekType": "all"
+    },
+    {
+      "id": "pdf_21ф_2_1_sub2",
+      "dayOfWeek": 2,
+      "dayName": "Вторник",
+      "lessonNumber": 1,
+      "startTime": "08:00",
+      "endTime": "09:20",
+      "subject": "Здоровый человек и его окружение",
+      "group": "21ф",
+      "subgroup": "2",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_21ф_2_2_sub2",
+      "dayOfWeek": 2,
+      "dayName": "Вторник",
+      "lessonNumber": 2,
+      "startTime": "09:30",
+      "endTime": "10:50",
+      "subject": "Здоровый человек и его окружение",
+      "group": "21ф",
+      "subgroup": "2",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_2_4_sub2",
+      "dayOfWeek": 2,
+      "dayName": "Вторник",
+      "lessonNumber": 4,
+      "startTime": "13:00",
+      "endTime": "14:20",
+      "subject": "Здоровый человек и его окружение",
+      "group": "22ф",
+      "subgroup": "2",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_2_5_sub2",
+      "dayOfWeek": 2,
+      "dayName": "Вторник",
+      "lessonNumber": 5,
+      "startTime": "14:30",
+      "endTime": "15:50",
+      "subject": "Здоровый человек и его окружение",
+      "group": "22ф",
+      "subgroup": "2",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_21ф_3_1_sub1",
+      "dayOfWeek": 3,
+      "dayName": "Среда",
+      "lessonNumber": 1,
+      "startTime": "08:00",
+      "endTime": "09:20",
+      "subject": "Латинский язык (II)",
+      "group": "21ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_21ф_3_2_sub1",
+      "dayOfWeek": 3,
+      "dayName": "Среда",
+      "lessonNumber": 2,
+      "startTime": "09:30",
+      "endTime": "10:50",
+      "subject": "Анатомия и физиология",
+      "group": "21ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_21ф_4_3_sub1",
+      "dayOfWeek": 4,
+      "dayName": "Четверг",
+      "lessonNumber": 3,
+      "startTime": "11:00",
+      "endTime": "12:20",
+      "subject": "Латинский язык (II)",
+      "group": "21ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_21ф_4_4_sub1",
+      "dayOfWeek": 4,
+      "dayName": "Четверг",
+      "lessonNumber": 4,
+      "startTime": "13:00",
+      "endTime": "14:20",
+      "subject": "Анатомия и физиология",
+      "group": "21ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_4_5_sub1",
+      "dayOfWeek": 4,
+      "dayName": "Четверг",
+      "lessonNumber": 5,
+      "startTime": "14:30",
+      "endTime": "15:50",
+      "subject": "Анатомия и физиология",
+      "group": "22ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_4_6",
+      "dayOfWeek": 4,
+      "dayName": "Четверг",
+      "lessonNumber": 6,
+      "startTime": "16:00",
+      "endTime": "17:20",
+      "subject": "Анатомия и физиология",
+      "group": "22ф",
+      "teacher": "Галич О.В.",
+      "classroom": "ГЛ",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_5_1_sub2",
+      "dayOfWeek": 5,
+      "dayName": "Пятница",
+      "lessonNumber": 1,
+      "startTime": "08:00",
+      "endTime": "09:20",
+      "subject": "Здоровый человек и его окружение",
+      "group": "22ф",
+      "subgroup": "2",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_5_2_sub2",
+      "dayOfWeek": 5,
+      "dayName": "Пятница",
+      "lessonNumber": 2,
+      "startTime": "09:30",
+      "endTime": "10:50",
+      "subject": "Латинский язык (I)",
+      "group": "22ф",
+      "subgroup": "2",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_5_3_sub1",
+      "dayOfWeek": 5,
+      "dayName": "Пятница",
+      "lessonNumber": 3,
+      "startTime": "11:00",
+      "endTime": "12:20",
+      "subject": "Латинский язык (II)",
+      "group": "22ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_22ф_5_4_sub1",
+      "dayOfWeek": 5,
+      "dayName": "Пятница",
+      "lessonNumber": 4,
+      "startTime": "13:00",
+      "endTime": "14:20",
+      "subject": "Анатомия и физиология",
+      "group": "22ф",
+      "subgroup": "1",
+      "teacher": "Галич О.В.",
+      "classroom": "",
+      "weekType": "all"
     }
   ],
   "Сницарь": [
@@ -1662,7 +1857,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1675,7 +1870,7 @@
       "endTime": "14:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1688,7 +1883,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1701,7 +1896,7 @@
       "endTime": "14:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1714,7 +1909,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1727,7 +1922,7 @@
       "endTime": "14:20",
       "subject": "Производственная практика",
       "group": "11фм",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1740,7 +1935,7 @@
       "endTime": "14:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1753,7 +1948,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1766,7 +1961,7 @@
       "endTime": "14:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1779,7 +1974,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1792,7 +1987,7 @@
       "endTime": "14:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1805,7 +2000,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "11фм",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     },
@@ -1818,7 +2013,7 @@
       "endTime": "12:20",
       "subject": "Производственная практика",
       "group": "21мс",
-      "teacher": "Производствен",
+      "teacher": "Руководитель практики",
       "classroom": "",
       "weekType": "all"
     }
@@ -2870,203 +3065,6 @@
       "group": "11фм",
       "teacher": "Саад",
       "classroom": "ГЛ, ауд. 5",
-      "weekType": "all"
-    }
-  ],
-  "Галич": [
-    {
-      "id": "pdf_21ф_2_1_sub2",
-      "dayOfWeek": 2,
-      "dayName": "Вторник",
-      "lessonNumber": 1,
-      "startTime": "08:00",
-      "endTime": "09:20",
-      "subject": "Здоровый человек и его окружение",
-      "group": "21ф",
-      "subgroup": "2",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_21ф_2_2_sub2",
-      "dayOfWeek": 2,
-      "dayName": "Вторник",
-      "lessonNumber": 2,
-      "startTime": "09:30",
-      "endTime": "10:50",
-      "subject": "Здоровый человек и его окружение",
-      "group": "21ф",
-      "subgroup": "2",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_2_4_sub2",
-      "dayOfWeek": 2,
-      "dayName": "Вторник",
-      "lessonNumber": 4,
-      "startTime": "13:00",
-      "endTime": "14:20",
-      "subject": "Здоровый человек и его окружение",
-      "group": "22ф",
-      "subgroup": "2",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_2_5_sub2",
-      "dayOfWeek": 2,
-      "dayName": "Вторник",
-      "lessonNumber": 5,
-      "startTime": "14:30",
-      "endTime": "15:50",
-      "subject": "Здоровый человек и его окружение",
-      "group": "22ф",
-      "subgroup": "2",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_21ф_3_1_sub1",
-      "dayOfWeek": 3,
-      "dayName": "Среда",
-      "lessonNumber": 1,
-      "startTime": "08:00",
-      "endTime": "09:20",
-      "subject": "Латинский язык (II)",
-      "group": "21ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_21ф_3_2_sub1",
-      "dayOfWeek": 3,
-      "dayName": "Среда",
-      "lessonNumber": 2,
-      "startTime": "09:30",
-      "endTime": "10:50",
-      "subject": "Анатомия и физиология",
-      "group": "21ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_21ф_4_3_sub1",
-      "dayOfWeek": 4,
-      "dayName": "Четверг",
-      "lessonNumber": 3,
-      "startTime": "11:00",
-      "endTime": "12:20",
-      "subject": "Латинский язык (II)",
-      "group": "21ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_21ф_4_4_sub1",
-      "dayOfWeek": 4,
-      "dayName": "Четверг",
-      "lessonNumber": 4,
-      "startTime": "13:00",
-      "endTime": "14:20",
-      "subject": "Анатомия и физиология",
-      "group": "21ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_4_5_sub1",
-      "dayOfWeek": 4,
-      "dayName": "Четверг",
-      "lessonNumber": 5,
-      "startTime": "14:30",
-      "endTime": "15:50",
-      "subject": "Анатомия и физиология",
-      "group": "22ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_4_6",
-      "dayOfWeek": 4,
-      "dayName": "Четверг",
-      "lessonNumber": 6,
-      "startTime": "16:00",
-      "endTime": "17:20",
-      "subject": "Анатомия и физиология",
-      "group": "22ф",
-      "teacher": "Галич",
-      "classroom": "ГЛ",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_5_1_sub2",
-      "dayOfWeek": 5,
-      "dayName": "Пятница",
-      "lessonNumber": 1,
-      "startTime": "08:00",
-      "endTime": "09:20",
-      "subject": "Здоровый человек и его окружение",
-      "group": "22ф",
-      "subgroup": "2",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_5_2_sub2",
-      "dayOfWeek": 5,
-      "dayName": "Пятница",
-      "lessonNumber": 2,
-      "startTime": "09:30",
-      "endTime": "10:50",
-      "subject": "Латинский язык (I)",
-      "group": "22ф",
-      "subgroup": "2",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_5_3_sub1",
-      "dayOfWeek": 5,
-      "dayName": "Пятница",
-      "lessonNumber": 3,
-      "startTime": "11:00",
-      "endTime": "12:20",
-      "subject": "Латинский язык (II)",
-      "group": "22ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_22ф_5_4_sub1",
-      "dayOfWeek": 5,
-      "dayName": "Пятница",
-      "lessonNumber": 4,
-      "startTime": "13:00",
-      "endTime": "14:20",
-      "subject": "Анатомия и физиология",
-      "group": "22ф",
-      "subgroup": "1",
-      "teacher": "Галич",
-      "classroom": "",
       "weekType": "all"
     }
   ],
@@ -5151,7 +5149,7 @@
       "endTime": "12:20",
       "subject": "Лекарствоведение с основами фармакогнозии",
       "group": "33ф",
-      "teacher": "Лекарствоведен",
+      "teacher": "Преподаватель",
       "classroom": "гл, ауд. 10",
       "weekType": "all"
     },
@@ -5164,7 +5162,7 @@
       "endTime": "18:50",
       "subject": "Занятие",
       "group": "31фм",
-      "teacher": "Лекарствоведен",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -5177,7 +5175,7 @@
       "endTime": "10:50",
       "subject": "Лекарствоведение с основами фармакогнозии",
       "group": "33ф",
-      "teacher": "Лекарствоведен",
+      "teacher": "Преподаватель",
       "classroom": "гл, ауд. 3",
       "weekType": "all"
     }
@@ -5233,6 +5231,62 @@
       "subject": "Лекарствоведение с основами фармакогнозии",
       "group": "31фм",
       "subgroup": "2",
+      "teacher": "Бондаренко",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_31фм_1_4_sub1",
+      "dayOfWeek": 1,
+      "dayName": "Понедельник",
+      "lessonNumber": 4,
+      "startTime": "13:00",
+      "endTime": "14:20",
+      "subject": "Лекарствоведение с основами фармакогнозии",
+      "group": "31фм",
+      "subgroup": "1",
+      "teacher": "Бондаренко",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_31фм_1_5_sub1",
+      "dayOfWeek": 1,
+      "dayName": "Понедельник",
+      "lessonNumber": 5,
+      "startTime": "14:30",
+      "endTime": "15:50",
+      "subject": "Лекарствоведение с основами фармакогнозии",
+      "group": "31фм",
+      "subgroup": "1",
+      "teacher": "Бондаренко",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_31фм_2_1_sub1",
+      "dayOfWeek": 2,
+      "dayName": "Вторник",
+      "lessonNumber": 1,
+      "startTime": "08:00",
+      "endTime": "09:20",
+      "subject": "Лекарствоведение с основами фармакогнозии",
+      "group": "31фм",
+      "subgroup": "1",
+      "teacher": "Бондаренко",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_31фм_4_2_sub1",
+      "dayOfWeek": 4,
+      "dayName": "Четверг",
+      "lessonNumber": 2,
+      "startTime": "09:30",
+      "endTime": "10:50",
+      "subject": "Лекарствоведение с основами фармакогнозии",
+      "group": "31фм",
+      "subgroup": "1",
       "teacher": "Бондаренко",
       "classroom": "",
       "weekType": "all"
@@ -5367,64 +5421,6 @@
       "group": "32ф",
       "teacher": "Новак",
       "classroom": "гл, ауд. 10",
-      "weekType": "all"
-    }
-  ],
-  "Бондарекно": [
-    {
-      "id": "pdf_31фм_1_4_sub1",
-      "dayOfWeek": 1,
-      "dayName": "Понедельник",
-      "lessonNumber": 4,
-      "startTime": "13:00",
-      "endTime": "14:20",
-      "subject": "Лекарствоведение с основами фармакогнозии",
-      "group": "31фм",
-      "subgroup": "1",
-      "teacher": "Бондарекно",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_31фм_1_5_sub1",
-      "dayOfWeek": 1,
-      "dayName": "Понедельник",
-      "lessonNumber": 5,
-      "startTime": "14:30",
-      "endTime": "15:50",
-      "subject": "Лекарствоведение с основами фармакогнозии",
-      "group": "31фм",
-      "subgroup": "1",
-      "teacher": "Бондарекно",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_31фм_2_1_sub1",
-      "dayOfWeek": 2,
-      "dayName": "Вторник",
-      "lessonNumber": 1,
-      "startTime": "08:00",
-      "endTime": "09:20",
-      "subject": "Лекарствоведение с основами фармакогнозии",
-      "group": "31фм",
-      "subgroup": "1",
-      "teacher": "Бондарекно",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_31фм_4_2_sub1",
-      "dayOfWeek": 4,
-      "dayName": "Четверг",
-      "lessonNumber": 2,
-      "startTime": "09:30",
-      "endTime": "10:50",
-      "subject": "Лекарствоведение с основами фармакогнозии",
-      "group": "31фм",
-      "subgroup": "1",
-      "teacher": "Бондарекно",
-      "classroom": "",
       "weekType": "all"
     }
   ],
@@ -5767,7 +5763,7 @@
       "endTime": "15:50",
       "subject": "Диагностика и лечение заболеваний",
       "group": "42ф",
-      "teacher": "Профилактика",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -5780,7 +5776,7 @@
       "endTime": "15:50",
       "subject": "Пропедевтика детских болезней",
       "group": "41ф",
-      "teacher": "Профилактика",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -5793,7 +5789,7 @@
       "endTime": "09:20",
       "subject": "Пропедевтика детских болезней",
       "group": "41ф",
-      "teacher": "Профилактика",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     }
@@ -6105,6 +6101,32 @@
       "teacher": "Шупрудько",
       "classroom": "О",
       "weekType": "all"
+    },
+    {
+      "id": "pdf_41ФМ_1_6",
+      "dayOfWeek": 1,
+      "dayName": "Понедельник",
+      "lessonNumber": 6,
+      "startTime": "16:00",
+      "endTime": "17:20",
+      "subject": "ТИЛС",
+      "group": "41ФМ",
+      "teacher": "Шупрудько",
+      "classroom": "",
+      "weekType": "all"
+    },
+    {
+      "id": "pdf_41ФМ_1_7",
+      "dayOfWeek": 1,
+      "dayName": "Понедельник",
+      "lessonNumber": 7,
+      "startTime": "17:30",
+      "endTime": "18:50",
+      "subject": "ТИЛС",
+      "group": "41ФМ",
+      "teacher": "Шупрудько",
+      "classroom": "",
+      "weekType": "all"
     }
   ],
   "Бурнышев": [
@@ -6316,7 +6338,7 @@
       "endTime": "12:20",
       "subject": "Занятие",
       "group": "41лм",
-      "teacher": "Психология",
+      "teacher": "Преподаватель",
       "classroom": "О, ауд. 214",
       "weekType": "all"
     },
@@ -6329,7 +6351,7 @@
       "endTime": "14:20",
       "subject": "Занятие",
       "group": "41лм",
-      "teacher": "Психология",
+      "teacher": "Преподаватель",
       "classroom": "О, ауд. 214",
       "weekType": "all"
     },
@@ -6342,7 +6364,7 @@
       "endTime": "15:50",
       "subject": "Занятие",
       "group": "41лм",
-      "teacher": "Психология",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6355,7 +6377,7 @@
       "endTime": "10:50",
       "subject": "Занятие",
       "group": "41лм",
-      "teacher": "Психология",
+      "teacher": "Преподаватель",
       "classroom": "о, ауд. 214",
       "weekType": "all"
     },
@@ -6368,7 +6390,7 @@
       "endTime": "12:20",
       "subject": "Занятие",
       "group": "41лм",
-      "teacher": "Психология",
+      "teacher": "Преподаватель",
       "classroom": "О, ауд. 214",
       "weekType": "all"
     },
@@ -6381,7 +6403,7 @@
       "endTime": "14:20",
       "subject": "Безопасность жизнедеятельности",
       "group": "41лм",
-      "teacher": "Психология",
+      "teacher": "Преподаватель",
       "classroom": "О, ауд. 214",
       "weekType": "all"
     }
@@ -6463,7 +6485,7 @@
       "endTime": "10:50",
       "subject": "Организация деятельности аптек",
       "group": "32ФМ",
-      "teacher": "Организация",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6476,7 +6498,7 @@
       "endTime": "10:50",
       "subject": "Организация деятельности аптек",
       "group": "32ФМ",
-      "teacher": "Организация",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6489,7 +6511,7 @@
       "endTime": "10:50",
       "subject": "Занятие",
       "group": "32ФМ",
-      "teacher": "Организация",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6502,7 +6524,7 @@
       "endTime": "14:20",
       "subject": "Занятие",
       "group": "32ФМ",
-      "teacher": "Организация",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     }
@@ -6597,7 +6619,7 @@
       "endTime": "17:20",
       "subject": "Сестринский уход",
       "group": "33МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 2",
       "weekType": "all"
     },
@@ -6610,7 +6632,7 @@
       "endTime": "18:50",
       "subject": "Сестринский уход",
       "group": "33МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 2",
       "weekType": "all"
     },
@@ -6623,7 +6645,7 @@
       "endTime": "17:20",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 8",
       "weekType": "all"
     },
@@ -6636,7 +6658,7 @@
       "endTime": "18:50",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 8",
       "weekType": "all"
     },
@@ -6649,7 +6671,7 @@
       "endTime": "09:20",
       "subject": "Сестринский уход",
       "group": "33МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ",
       "weekType": "all"
     },
@@ -6662,7 +6684,7 @@
       "endTime": "09:20",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 2",
       "weekType": "all"
     },
@@ -6675,7 +6697,7 @@
       "endTime": "10:50",
       "subject": "Сестринский уход",
       "group": "33МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 1",
       "weekType": "all"
     },
@@ -6688,7 +6710,7 @@
       "endTime": "10:50",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ",
       "weekType": "all"
     },
@@ -6701,7 +6723,7 @@
       "endTime": "12:20",
       "subject": "Сестринский уход",
       "group": "33МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 1",
       "weekType": "all"
     },
@@ -6714,7 +6736,7 @@
       "endTime": "12:20",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 2",
       "weekType": "all"
     },
@@ -6727,7 +6749,7 @@
       "endTime": "14:20",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 2",
       "weekType": "all"
     },
@@ -6740,7 +6762,7 @@
       "endTime": "15:50",
       "subject": "Сестринский уход",
       "group": "41МС",
-      "teacher": "Сестринский",
+      "teacher": "Преподаватель",
       "classroom": "ГЛ, ауд. 2",
       "weekType": "all"
     }
@@ -6755,7 +6777,7 @@
       "endTime": "17:20",
       "subject": "Занятие",
       "group": "41МС",
-      "teacher": "Безопасность",
+      "teacher": "Преподаватель ОБЗР",
       "classroom": "ГЛ, ауд. 8",
       "weekType": "all"
     },
@@ -6768,36 +6790,8 @@
       "endTime": "18:50",
       "subject": "Занятие",
       "group": "41МС",
-      "teacher": "Безопасность",
+      "teacher": "Преподаватель ОБЗР",
       "classroom": "ГЛ, ауд. 8",
-      "weekType": "all"
-    }
-  ],
-  "Шупрудькл": [
-    {
-      "id": "pdf_41ФМ_1_6",
-      "dayOfWeek": 1,
-      "dayName": "Понедельник",
-      "lessonNumber": 6,
-      "startTime": "16:00",
-      "endTime": "17:20",
-      "subject": "ТИЛС",
-      "group": "41ФМ",
-      "teacher": "Шупрудькл",
-      "classroom": "",
-      "weekType": "all"
-    },
-    {
-      "id": "pdf_41ФМ_1_7",
-      "dayOfWeek": 1,
-      "dayName": "Понедельник",
-      "lessonNumber": 7,
-      "startTime": "17:30",
-      "endTime": "18:50",
-      "subject": "ТИЛС",
-      "group": "41ФМ",
-      "teacher": "Шупрудькл",
-      "classroom": "",
       "weekType": "all"
     }
   ],
@@ -6811,7 +6805,7 @@
       "endTime": "09:20",
       "subject": "Занятие",
       "group": "41ФМ",
-      "teacher": "Оптовая",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6824,7 +6818,7 @@
       "endTime": "12:20",
       "subject": "Занятие",
       "group": "41ФМ",
-      "teacher": "Оптовая",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     }
@@ -6839,7 +6833,7 @@
       "endTime": "10:50",
       "subject": "Занятие",
       "group": "41ФМ",
-      "teacher": "Лекарствоведени",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6852,7 +6846,7 @@
       "endTime": "14:20",
       "subject": "Занятие",
       "group": "41ФМ",
-      "teacher": "Лекарствоведени",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     },
@@ -6865,7 +6859,7 @@
       "endTime": "15:50",
       "subject": "Занятие",
       "group": "41ФМ",
-      "teacher": "Лекарствоведени",
+      "teacher": "Преподаватель",
       "classroom": "",
       "weekType": "all"
     }

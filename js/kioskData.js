@@ -7,6 +7,48 @@ let allLessonsCache = null;
 let allGroupsCache = null;
 let allTeachersCache = null;
 
+const PSEUDO_TEACHERS = new Set([
+  'Безопасность',
+  'Лекарствоведен',
+  'Лекарствоведени',
+  'Оптовая',
+  'Организация',
+  'Производствен',
+  'Профилактика',
+  'Психология',
+  'Сестринский',
+]);
+
+export function compareGroupNames(a = '', b = '') {
+  const parse = (str) => {
+    const s = String(str || '').trim();
+    const match = s.match(/^(\d+)(.*)$/);
+    if (!match) return { num: 9999, suffix: s.toLowerCase() };
+    return {
+      num: parseInt(match[1], 10),
+      suffix: match[2].trim().toLowerCase(),
+    };
+  };
+
+  const pa = parse(a);
+  const pb = parse(b);
+
+  if (pa.num !== pb.num) return pa.num - pb.num;
+
+  const specPriority = {
+    'ф': 1, 'f': 1,
+    'мс': 2, 'mc': 2,
+    'фм': 3, 'fm': 3,
+    'лм': 4, 'lm': 4,
+  };
+
+  const prioA = specPriority[pa.suffix] ?? 99;
+  const prioB = specPriority[pb.suffix] ?? 99;
+
+  if (prioA !== prioB) return prioA - prioB;
+  return pa.suffix.localeCompare(pb.suffix, 'ru');
+}
+
 export async function loadAllSchedulesData() {
   if (allLessonsCache) return allLessonsCache;
 
@@ -27,7 +69,9 @@ export async function loadAllSchedulesData() {
   if (rawData && typeof rawData === 'object') {
     Object.entries(rawData).forEach(([teacher, teacherLessons]) => {
       if (Array.isArray(teacherLessons)) {
-        teachersSet.add(teacher);
+        if (!PSEUDO_TEACHERS.has(teacher)) {
+          teachersSet.add(teacher);
+        }
         teacherLessons.forEach((l) => {
           lessons.push({
             ...l,
@@ -42,7 +86,7 @@ export async function loadAllSchedulesData() {
   }
 
   allLessonsCache = lessons;
-  allGroupsCache = Array.from(groupsSet).sort((a, b) => a.localeCompare(b, 'ru', { numeric: true }));
+  allGroupsCache = Array.from(groupsSet).sort(compareGroupNames);
   allTeachersCache = Array.from(teachersSet).sort((a, b) => a.localeCompare(b, 'ru'));
 
   return allLessonsCache;
@@ -72,7 +116,8 @@ export function getLessonsForTeacher(teacherName, dayOfWeek = null) {
     .filter((l) => l.teacher === teacherName && (dayOfWeek === null || l.dayOfWeek === Number(dayOfWeek)))
     .sort((a, b) => {
       if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
-      return a.lessonNumber - b.lessonNumber;
+      if (a.lessonNumber !== b.lessonNumber) return a.lessonNumber - b.lessonNumber;
+      return compareGroupNames(a.group, b.group);
     });
 }
 
@@ -98,21 +143,23 @@ export function getCurrentBellStatus(now = new Date()) {
   const jsDay = now.getDay();
   const dayOfWeek = jsDay === 0 ? 7 : jsDay;
   if (dayOfWeek === 7) {
-    return { status: 'weekend', message: 'Сегодня воскресенье — занятий нет', dayOfWeek };
+    return { status: 'weekend', message: 'Сегодня воскресенье — выходной день' };
+  }
+
+  const bells = getBellsSchedule();
+  if (!bells.length) {
+    return { status: 'idle', message: 'Расписание звонков не настроено' };
   }
 
   const curMinutes = now.getHours() * 60 + now.getMinutes();
-  const bells = getBellsSchedule();
   const firstBell = bells[0];
   const lastBell = bells[bells.length - 1];
 
   if (curMinutes < timeToMinutes(firstBell.startTime)) {
-    const diff = timeToMinutes(firstBell.startTime) - curMinutes;
     return {
       status: 'before',
-      targetLessonNum: firstBell.lessonNumber,
-      minutesLeft: diff,
-      message: `Занятия начнутся в ${firstBell.startTime} (через ${diff} мин)`,
+      targetLessonNum: 1,
+      message: `Занятия начнутся в ${firstBell.startTime}`,
       dayOfWeek,
     };
   }
@@ -174,9 +221,7 @@ export function getLiveSchedule(now = new Date()) {
 
   const lessons = allLessonsCache
     .filter((l) => l.dayOfWeek === bellStatus.dayOfWeek && l.lessonNumber === targetNum)
-    .sort((a, b) => {
-      return (a.classroom || '').localeCompare(b.classroom || '', 'ru', { numeric: true });
-    });
+    .sort((a, b) => compareGroupNames(a.group, b.group));
 
   return {
     bellStatus,

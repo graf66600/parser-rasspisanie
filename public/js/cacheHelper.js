@@ -2,7 +2,7 @@
 // PWA CACHE AND NETWORK HELPERS
 // ==========================================================================
 
-export const PWA_VERSION = 'v37';
+export const PWA_VERSION = 'v38';
 
 export const isStaticHost = typeof window !== 'undefined' && (
   window.location.hostname.includes('github.io') ||
@@ -11,6 +11,36 @@ export const isStaticHost = typeof window !== 'undefined' && (
   window.location.hostname === '::1' ||
   window.location.protocol === 'file:'
 );
+
+export function compareGroupNames(a = '', b = '') {
+  const parse = (str) => {
+    const s = String(str || '').trim();
+    const match = s.match(/^(\d+)(.*)$/);
+    if (!match) return { num: 9999, suffix: s.toLowerCase() };
+    return {
+      num: parseInt(match[1], 10),
+      suffix: match[2].trim().toLowerCase(),
+    };
+  };
+
+  const pa = parse(a);
+  const pb = parse(b);
+
+  if (pa.num !== pb.num) return pa.num - pb.num;
+
+  const specPriority = {
+    'ф': 1, 'f': 1,
+    'мс': 2, 'mc': 2,
+    'фм': 3, 'fm': 3,
+    'лм': 4, 'lm': 4,
+  };
+
+  const prioA = specPriority[pa.suffix] ?? 99;
+  const prioB = specPriority[pb.suffix] ?? 99;
+
+  if (prioA !== prioB) return prioA - prioB;
+  return pa.suffix.localeCompare(pb.suffix, 'ru');
+}
 
 export async function safeFetchJson(url, timeoutMs = 4000) {
   try {
