@@ -23,8 +23,9 @@
   <link rel="stylesheet" href="./css/history.css?v=38">
   <link rel="stylesheet" href="./css/modals.css?v=38">
   <link rel="stylesheet" href="./css/journalSummary.css?v=38">
-  <link rel="stylesheet" href="./css/kiosk.css?v=38">
-  <link rel="stylesheet" href="./css/kioskCards.css?v=38">
+  <link rel="stylesheet" href="./css/kiosk.css?v=39">
+  <link rel="stylesheet" href="./css/kioskCards.css?v=39">
+  <link rel="stylesheet" href="./css/kioskSchedule.css?v=39">
   <link rel="stylesheet" href="./css/ambientBackground.css?v=38">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <script defer src="https://cdn.tailwindcss.com"></script>
@@ -497,7 +498,7 @@
 
       <!-- Секция 2: Группы (для студентов) -->
       <section id="kioskSection_groups" class="hidden">
-        <div class="kiosk-section-header">
+        <div id="kioskGroupsHeader" class="kiosk-section-header">
           <span>Выберите группу:</span>
         </div>
         <div id="kioskGroupsGrid" class="kiosk-tiles-grid">
@@ -510,7 +511,7 @@
 
       <!-- Секция 3: Преподаватели -->
       <section id="kioskSection_teachers" class="hidden">
-        <div class="kiosk-section-header">
+        <div id="kioskTeachersHeader" class="kiosk-section-header">
           <span>Выберите преподавателя:</span>
         </div>
         <div id="kioskTeachersGrid" class="kiosk-teachers-tiles-grid">
@@ -553,6 +554,6 @@
     </nav>
   </div>
 
-  <script type="module" src="./app.js?v=38"></script>
+  <script type="module" src="./app.js?v=39"></script>
 </body>
 </html>
