@@ -1,22 +1,15 @@
 // ==========================================================================
 // KIOSK DATA SERVICE (расчёт текущих пар, фильтрация по группам и аудиториям)
 // ==========================================================================
-import { state, DAY_NAMES, PWA_VERSION } from './state.js';
+import { state, PWA_VERSION } from './state.js';
 
 let allLessonsCache = null;
 let allGroupsCache = null;
 let allTeachersCache = null;
 
 const PSEUDO_TEACHERS = new Set([
-  'Безопасность',
-  'Лекарствоведен',
-  'Лекарствоведени',
-  'Оптовая',
-  'Организация',
-  'Производствен',
-  'Профилактика',
-  'Психология',
-  'Сестринский',
+  'Безопасность', 'Лекарствоведен', 'Лекарствоведени', 'Оптовая',
+  'Организация', 'Производствен', 'Профилактика', 'Психология', 'Сестринский',
 ]);
 
 export function compareGroupNames(a = '', b = '') {
@@ -24,42 +17,63 @@ export function compareGroupNames(a = '', b = '') {
     const s = String(str || '').trim();
     const match = s.match(/^(\d+)(.*)$/);
     if (!match) return { num: 9999, suffix: s.toLowerCase() };
-    return {
-      num: parseInt(match[1], 10),
-      suffix: match[2].trim().toLowerCase(),
-    };
+    return { num: parseInt(match[1], 10), suffix: match[2].trim().toLowerCase() };
   };
-
   const pa = parse(a);
   const pb = parse(b);
-
   if (pa.num !== pb.num) return pa.num - pb.num;
-
-  const specPriority = {
-    'ф': 1, 'f': 1,
-    'мс': 2, 'mc': 2,
-    'фм': 3, 'fm': 3,
-    'лм': 4, 'lm': 4,
-  };
-
+  const specPriority = { 'ф': 1, 'f': 1, 'мс': 2, 'mc': 2, 'фм': 3, 'fm': 3, 'лм': 4, 'lm': 4 };
   const prioA = specPriority[pa.suffix] ?? 99;
   const prioB = specPriority[pb.suffix] ?? 99;
-
   if (prioA !== prioB) return prioA - prioB;
   return pa.suffix.localeCompare(pb.suffix, 'ru');
 }
 
 export async function loadAllSchedulesData() {
-  if (allLessonsCache) return allLessonsCache;
+  if (allLessonsCache && allLessonsCache.length > 0) return allLessonsCache;
 
   let rawData = null;
+
+  // 1. Быстрое чтение из кэша localStorage (0мс)
   try {
-    const res = await fetch(`./data/schedules_all.json?v=${PWA_VERSION}`);
-    if (res.ok) rawData = await res.json();
+    const local = localStorage.getItem('pwa_kiosk_schedules_all');
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+        rawData = parsed;
+      }
+    }
   } catch (e) {}
 
-  if (!rawData && state.schedule?.lessons) {
-    rawData = { [state.currentTeacher || 'Трипольский']: state.schedule.lessons };
+  // 2. Сетевая загрузка schedules_all.json (с версией и без)
+  if (!rawData) {
+    try {
+      const res = await fetch(`./data/schedules_all.json?v=${PWA_VERSION}`);
+      if (res.ok) rawData = await res.json();
+    } catch (e) {}
+  }
+  if (!rawData) {
+    try {
+      const res = await fetch('./data/schedules_all.json');
+      if (res.ok) rawData = await res.json();
+    } catch (e) {}
+  }
+
+  // 3. Fallback на текущее расписание из state или localStorage
+  if (!rawData) {
+    if (state.schedule?.lessons?.length) {
+      rawData = { [state.currentTeacher || 'Трипольский']: state.schedule.lessons };
+    } else {
+      try {
+        const custom = localStorage.getItem('pwa_custom_schedule');
+        if (custom) {
+          const parsed = JSON.parse(custom);
+          if (parsed?.lessons?.length) {
+            rawData = { [state.currentTeacher || 'Трипольский']: parsed.lessons };
+          }
+        }
+      } catch (e) {}
+    }
   }
 
   const lessons = [];
@@ -69,27 +83,30 @@ export async function loadAllSchedulesData() {
   if (rawData && typeof rawData === 'object') {
     Object.entries(rawData).forEach(([teacher, teacherLessons]) => {
       if (Array.isArray(teacherLessons)) {
-        if (!PSEUDO_TEACHERS.has(teacher)) {
-          teachersSet.add(teacher);
-        }
+        if (!PSEUDO_TEACHERS.has(teacher)) teachersSet.add(teacher);
         teacherLessons.forEach((l) => {
-          lessons.push({
-            ...l,
-            teacher: l.teacher || teacher,
-          });
-          if (l.group && l.group !== '—' && l.group.trim()) {
-            groupsSet.add(l.group.trim());
-          }
+          lessons.push({ ...l, teacher: l.teacher || teacher });
+          if (l.group && l.group !== '—' && l.group.trim()) groupsSet.add(l.group.trim());
         });
       }
     });
+
+    try {
+      localStorage.setItem('pwa_kiosk_schedules_all', JSON.stringify(rawData));
+    } catch (e) {}
   }
 
-  allLessonsCache = lessons;
-  allGroupsCache = Array.from(groupsSet).sort(compareGroupNames);
-  allTeachersCache = Array.from(teachersSet).sort((a, b) => a.localeCompare(b, 'ru'));
+  if (lessons.length > 0) {
+    allLessonsCache = lessons;
+    allGroupsCache = Array.from(groupsSet).sort(compareGroupNames);
+    allTeachersCache = Array.from(teachersSet).sort((a, b) => a.localeCompare(b, 'ru'));
+  }
 
-  return allLessonsCache;
+  return allLessonsCache || [];
+}
+
+export function getAllLessonsList() {
+  return allLessonsCache || [];
 }
 
 export function getAllGroupsList() {
@@ -142,34 +159,20 @@ function timeToMinutes(str) {
 export function getCurrentBellStatus(now = new Date()) {
   const jsDay = now.getDay();
   const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-  if (dayOfWeek === 7) {
-    return { status: 'weekend', message: 'Сегодня воскресенье — выходной день' };
-  }
+  if (dayOfWeek === 7) return { status: 'weekend', message: 'Сегодня воскресенье — выходной день' };
 
   const bells = getBellsSchedule();
-  if (!bells.length) {
-    return { status: 'idle', message: 'Расписание звонков не настроено' };
-  }
+  if (!bells.length) return { status: 'idle', message: 'Расписание звонков не настроено' };
 
   const curMinutes = now.getHours() * 60 + now.getMinutes();
   const firstBell = bells[0];
   const lastBell = bells[bells.length - 1];
 
   if (curMinutes < timeToMinutes(firstBell.startTime)) {
-    return {
-      status: 'before',
-      targetLessonNum: 1,
-      message: `Занятия начнутся в ${firstBell.startTime}`,
-      dayOfWeek,
-    };
+    return { status: 'before', targetLessonNum: 1, message: `Занятия начнутся в ${firstBell.startTime}`, dayOfWeek };
   }
-
   if (curMinutes >= timeToMinutes(lastBell.endTime)) {
-    return {
-      status: 'after',
-      message: 'Все занятия на сегодня окончены',
-      dayOfWeek,
-    };
+    return { status: 'after', message: 'Все занятия на сегодня окончены', dayOfWeek };
   }
 
   for (let i = 0; i < bells.length; i++) {
@@ -188,7 +191,6 @@ export function getCurrentBellStatus(now = new Date()) {
         dayOfWeek,
       };
     }
-
     if (i < bells.length - 1) {
       const nextB = bells[i + 1];
       const nextStartM = timeToMinutes(nextB.startTime);
@@ -214,7 +216,6 @@ export function getLiveSchedule(now = new Date()) {
   if (!allLessonsCache || bellStatus.status === 'weekend') {
     return { bellStatus, lessons: [] };
   }
-
   const targetNum = bellStatus.status === 'lesson'
     ? bellStatus.currentLessonNum
     : (bellStatus.targetLessonNum || 1);
@@ -223,9 +224,5 @@ export function getLiveSchedule(now = new Date()) {
     .filter((l) => l.dayOfWeek === bellStatus.dayOfWeek && l.lessonNumber === targetNum)
     .sort((a, b) => compareGroupNames(a.group, b.group));
 
-  return {
-    bellStatus,
-    targetLessonNum: targetNum,
-    lessons,
-  };
+  return { bellStatus, targetLessonNum: targetNum, lessons };
 }
