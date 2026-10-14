@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v39';
+const CACHE_NAME = 'schedule-pwa-v40';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -110,7 +110,7 @@ self.addEventListener('fetch', (event) => {
   // 2. Для всех остальных статических ресурсов (CSS, JS, JSON, SVG):
   // Stale-While-Revalidate — моментальная отдача из кэша (0мс) + фоновое фоновое обновление
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+    caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
