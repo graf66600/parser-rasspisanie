@@ -1,0 +1,244 @@
+/* ==========================================================================
+   KIOSK SCHEDULE VIEW STYLES (Расписание группы / преподавателя, живые пары)
+   ========================================================================== */
+
+/* Подшапка с кнопкой возврата и переключателем дней */
+.kiosk-sub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.kiosk-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 44px;
+  background: #1e293b;
+  color: #38bdf8;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+.kiosk-back-btn:hover, .kiosk-back-btn:active {
+  background: #334155;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+.kiosk-sub-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+/* Фильтр дней (Сегодня, Завтра, Вся неделя) */
+.kiosk-day-filter {
+  display: flex;
+  gap: 8px;
+}
+.kiosk-day-pill {
+  padding: 8px 18px;
+  min-height: 42px;
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+.kiosk-day-pill:hover {
+  background: #273549;
+  color: #f1f5f9;
+}
+.kiosk-day-pill.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #60a5fa;
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.35);
+}
+
+/* Баннер статуса "Прямо сейчас" */
+.kiosk-live-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.kiosk-live-banner.is-active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 78, 59, 0.35));
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #a7f3d0;
+}
+.kiosk-live-banner.is-break {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(120, 53, 15, 0.35));
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+}
+.kiosk-live-banner.is-idle {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid #334155;
+  color: #cbd5e1;
+}
+.kiosk-live-banner-pulse {
+  font-size: 20px;
+  animation: kioskPulse 1.8s infinite ease-in-out;
+  flex-shrink: 0;
+}
+@keyframes kioskPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+.kiosk-live-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kiosk-live-banner-title {
+  font-weight: 800;
+  color: #34d399;
+}
+.kiosk-live-banner.is-break .kiosk-live-banner-title {
+  color: #fbbf24;
+}
+.kiosk-live-banner-sub {
+  font-size: 13px;
+  color: #e2e8f0;
+}
+
+/* Сетка карточек занятий */
+.kiosk-lessons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+}
+.kiosk-lesson-card {
+  background: #111827;
+  border: 1px solid #1f293d;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.kiosk-lesson-card:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+}
+
+/* Выделение пары, которая идёт прямо сейчас */
+.kiosk-lesson-card.is-live-now {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(6, 78, 59, 0.35));
+  border: 2px solid #10b981;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+}
+.kiosk-live-tag-active {
+  font-size: 11px;
+  font-weight: 800;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+/* Выделение следующей пары на перемене */
+.kiosk-lesson-card.is-next-soon {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(120, 53, 15, 0.25));
+  border: 2px solid #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+}
+.kiosk-next-tag-active {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.03em;
+}
+
+.kiosk-lesson-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kiosk-lesson-badge {
+  font-size: 13px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+.kiosk-lesson-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+.kiosk-lesson-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #1f293d;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  gap: 8px;
+}
+.kiosk-day-badge {
+  background: #1e293b;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Пустые состояния и быстрые действия */
+.kiosk-empty-box {
+  background: #111827;
+  border: 1px dashed #334155;
+  border-radius: 20px;
+  padding: 40px 20px;
+  text-align: center;
+  width: 100%;
+}
+.kiosk-empty-icon { font-size: 48px; margin-bottom: 10px; }
+.kiosk-empty-title { font-size: 20px; font-weight: 800; color: #f1f5f9; }
+.kiosk-empty-text { font-size: 14px; color: #94a3b8; margin-top: 6px; }
+.kiosk-empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .kiosk-sub-title { font-size: 18px; }
+  .kiosk-back-btn { padding: 8px 14px; font-size: 13px; min-height: 40px; }
+  .kiosk-day-pill { padding: 6px 12px; font-size: 12px; min-height: 38px; }
+  .kiosk-live-banner { padding: 10px 14px; font-size: 13px; }
+}

@@ -131,6 +131,9 @@ function updateResetIndicator() {
 
 export function switchKioskSubtab(subtab) {
   currentKioskSubtab = subtab;
+  selectedGroup = null;
+  selectedTeacher = null;
+  activeDayFilter = 'today';
   resetInactivityTimer();
 
   const subtabs = ['live', 'groups', 'teachers', 'bells'];
@@ -150,9 +153,11 @@ export function switchKioskSubtab(subtab) {
 function renderKioskGroups() {
   const groupsGrid = document.getElementById('kioskGroupsGrid');
   const scheduleView = document.getElementById('kioskGroupScheduleView');
+  const sectionHeader = document.getElementById('kioskGroupsHeader');
   if (!groupsGrid || !scheduleView) return;
 
   if (!selectedGroup) {
+    if (sectionHeader) sectionHeader.classList.remove('hidden');
     groupsGrid.classList.remove('hidden');
     scheduleView.classList.add('hidden');
 
@@ -167,21 +172,22 @@ function renderKioskGroups() {
       btn.addEventListener('click', () => {
         selectedGroup = btn.getAttribute('data-group');
         activeDayFilter = 'today';
-        renderKioskGroupCards(selectedGroup, activeDayFilter, () => {
-          selectedGroup = null;
-          renderKioskGroups();
-        }, (d) => {
-          activeDayFilter = d;
-          renderKioskGroups();
-        });
+        resetInactivityTimer();
+        renderKioskGroups();
       });
     });
   } else {
+    if (sectionHeader) sectionHeader.classList.add('hidden');
+    groupsGrid.classList.add('hidden');
+    scheduleView.classList.remove('hidden');
+
     renderKioskGroupCards(selectedGroup, activeDayFilter, () => {
       selectedGroup = null;
+      resetInactivityTimer();
       renderKioskGroups();
     }, (d) => {
       activeDayFilter = d;
+      resetInactivityTimer();
       renderKioskGroups();
     });
   }
@@ -190,9 +196,11 @@ function renderKioskGroups() {
 function renderKioskTeachers() {
   const teachersGrid = document.getElementById('kioskTeachersGrid');
   const scheduleView = document.getElementById('kioskTeacherScheduleView');
+  const sectionHeader = document.getElementById('kioskTeachersHeader');
   if (!teachersGrid || !scheduleView) return;
 
   if (!selectedTeacher) {
+    if (sectionHeader) sectionHeader.classList.remove('hidden');
     teachersGrid.classList.remove('hidden');
     scheduleView.classList.add('hidden');
 
@@ -207,21 +215,22 @@ function renderKioskTeachers() {
       btn.addEventListener('click', () => {
         selectedTeacher = btn.getAttribute('data-teacher');
         activeDayFilter = 'today';
-        renderKioskTeacherCards(selectedTeacher, activeDayFilter, () => {
-          selectedTeacher = null;
-          renderKioskTeachers();
-        }, (d) => {
-          activeDayFilter = d;
-          renderKioskTeachers();
-        });
+        resetInactivityTimer();
+        renderKioskTeachers();
       });
     });
   } else {
+    if (sectionHeader) sectionHeader.classList.add('hidden');
+    teachersGrid.classList.add('hidden');
+    scheduleView.classList.remove('hidden');
+
     renderKioskTeacherCards(selectedTeacher, activeDayFilter, () => {
       selectedTeacher = null;
+      resetInactivityTimer();
       renderKioskTeachers();
     }, (d) => {
       activeDayFilter = d;
+      resetInactivityTimer();
       renderKioskTeachers();
     });
   }
