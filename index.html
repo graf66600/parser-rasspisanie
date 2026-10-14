@@ -23,9 +23,9 @@
   <link rel="stylesheet" href="./css/history.css?v=38">
   <link rel="stylesheet" href="./css/modals.css?v=38">
   <link rel="stylesheet" href="./css/journalSummary.css?v=38">
-  <link rel="stylesheet" href="./css/kiosk.css?v=39">
-  <link rel="stylesheet" href="./css/kioskCards.css?v=39">
-  <link rel="stylesheet" href="./css/kioskSchedule.css?v=39">
+  <link rel="stylesheet" href="./css/kiosk.css?v=40">
+  <link rel="stylesheet" href="./css/kioskCards.css?v=40">
+  <link rel="stylesheet" href="./css/kioskSchedule.css?v=40">
   <link rel="stylesheet" href="./css/ambientBackground.css?v=38">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <script defer src="https://cdn.tailwindcss.com"></script>
@@ -504,9 +504,6 @@
         <div id="kioskGroupsGrid" class="kiosk-tiles-grid">
           <!-- Плитки групп через JS -->
         </div>
-        <div id="kioskGroupScheduleView" class="hidden">
-          <!-- Расписание выбранной группы -->
-        </div>
       </section>
 
       <!-- Секция 3: Преподаватели -->
@@ -516,9 +513,6 @@
         </div>
         <div id="kioskTeachersGrid" class="kiosk-teachers-tiles-grid">
           <!-- Плитки преподавателей через JS -->
-        </div>
-        <div id="kioskTeacherScheduleView" class="hidden">
-          <!-- Расписание выбранного преподавателя -->
         </div>
       </section>
 
@@ -531,6 +525,34 @@
           <!-- Звонки через JS -->
         </div>
       </section>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО РАСПИСАНИЯ ДЛЯ КИОСКА (ОКОШКО С ПАРАМИ ПРЯМО СЕЙЧАС) -->
+    <div id="kioskScheduleModal" class="kiosk-modal-backdrop hidden">
+      <div class="kiosk-modal-window">
+        <div class="kiosk-modal-header">
+          <div class="kiosk-modal-title-wrap">
+            <span id="kioskModalTypeBadge" class="kiosk-modal-type-badge">Группа</span>
+            <h2 id="kioskModalTitle" class="kiosk-modal-title">Группа</h2>
+          </div>
+          <div class="kiosk-modal-actions">
+            <div class="kiosk-day-filter">
+              <button type="button" class="kiosk-day-pill active" data-day="today">Сегодня</button>
+              <button type="button" class="kiosk-day-pill" data-day="tomorrow">Завтра</button>
+              <button type="button" class="kiosk-day-pill" data-day="all">Вся неделя</button>
+            </div>
+            <button type="button" id="kioskModalCloseBtn" class="kiosk-modal-close-btn" title="Закрыть окошко">
+              <span>✕</span><span>Закрыть</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="kioskModalLiveBanner" class="kiosk-modal-banner-container"></div>
+
+        <div id="kioskModalBody" class="kiosk-modal-body">
+          <div id="kioskModalLessonsGrid" class="kiosk-lessons-grid"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Нижняя панель табло (без прокрутки, все 4 раздела на виду) -->
@@ -554,6 +576,6 @@
     </nav>
   </div>
 
-  <script type="module" src="./app.js?v=39"></script>
+  <script type="module" src="./app.js?v=40"></script>
 </body>
 </html>

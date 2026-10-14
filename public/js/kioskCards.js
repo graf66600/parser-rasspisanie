@@ -104,20 +104,27 @@ export function renderKioskLiveCards() {
   }).join('');
 }
 
-function renderKioskScheduleView({
-  titlePrefix,
+export function renderKioskScheduleModalContent({
+  titleBadge,
   titleName,
   entityType,
-  containerId,
-  backBtnId,
-  backBtnText,
   lessons,
   activeDayFilter,
-  onBack,
   onDayChange,
 }) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
+  const badgeEl = document.getElementById('kioskModalTypeBadge');
+  const titleEl = document.getElementById('kioskModalTitle');
+  const bannerContainer = document.getElementById('kioskModalLiveBanner');
+  const gridContainer = document.getElementById('kioskModalLessonsGrid');
+  const modalWindow = document.getElementById('kioskScheduleModal');
+  if (!modalWindow || !gridContainer) return;
+
+  if (badgeEl) badgeEl.textContent = titleBadge;
+  if (titleEl) titleEl.textContent = titleName;
+
+  modalWindow.querySelectorAll('.kiosk-day-pill').forEach((btn) => {
+    btn.classList.toggle('active', btn.getAttribute('data-day') === activeDayFilter);
+  });
 
   const now = new Date();
   const bellStatus = getCurrentBellStatus(now);
@@ -129,12 +136,12 @@ function renderKioskScheduleView({
       const liveLesson = lessons.find((l) => l.lessonNumber === bellStatus.currentLessonNum);
       if (liveLesson) {
         const fullSubj = formatKioskSubject(liveLesson.subject);
-        const otherInfo = entityType === 'group' ? `👨‍🏫 ${liveLesson.teacher}` : `👥 Группа ${liveLesson.group}`;
+        const otherInfo = entityType === 'group' ? `Преподаватель: ${liveLesson.teacher}` : `Группа: ${liveLesson.group}`;
         liveBannerHtml = `
           <div class="kiosk-live-banner is-active">
             <span class="kiosk-live-banner-pulse">🔴</span>
             <div class="kiosk-live-banner-content">
-              <div class="kiosk-live-banner-title">Идёт ${bellStatus.currentLessonNum}-я пара (до ${bellStatus.bell?.endTime}, осталось ${bellStatus.minutesLeft} мин)</div>
+              <div class="kiosk-live-banner-title">СЕЙЧАС ИДЁТ ${bellStatus.currentLessonNum}-я ПАРА (до ${bellStatus.bell?.endTime}, осталось ${bellStatus.minutesLeft} мин)</div>
               <div class="kiosk-live-banner-sub"><strong>${fullSubj}</strong> • ${otherInfo} • 📍 ${liveLesson.classroom || 'Кабинет не указан'}</div>
             </div>
           </div>`;
@@ -142,149 +149,118 @@ function renderKioskScheduleView({
         liveBannerHtml = `
           <div class="kiosk-live-banner is-idle">
             <span>☕</span>
-            <span>Сейчас идёт ${bellStatus.currentLessonNum}-я пара (до ${bellStatus.bell?.endTime}), но по расписанию сейчас окно.</span>
+            <div class="kiosk-live-banner-content">
+              <div class="kiosk-live-banner-title">СЕЙЧАС ИДЁТ ${bellStatus.currentLessonNum}-я ПАРА (до ${bellStatus.bell?.endTime})</div>
+              <div class="kiosk-live-banner-sub">В текущую пару занятия нет (окно). Ближайшие пары ниже:</div>
+            </div>
           </div>`;
       }
     } else if (bellStatus.status === 'break') {
-      liveBannerHtml = `
-        <div class="kiosk-live-banner is-break">
-          <span>⏳</span>
-          <span>Перемена до ${bellStatus.bell?.startTime} (осталось ${bellStatus.minutesLeft} мин). Следующая пара #${bellStatus.targetLessonNum}.</span>
-        </div>`;
+      const nextLesson = lessons.find((l) => l.lessonNumber === bellStatus.targetLessonNum);
+      if (nextLesson) {
+        const fullSubj = formatKioskSubject(nextLesson.subject);
+        const otherInfo = entityType === 'group' ? `Преподаватель: ${nextLesson.teacher}` : `Группа: ${nextLesson.group}`;
+        liveBannerHtml = `
+          <div class="kiosk-live-banner is-break">
+            <span class="kiosk-live-banner-pulse">⏳</span>
+            <div class="kiosk-live-banner-content">
+              <div class="kiosk-live-banner-title">СЕЙЧАС ПЕРЕМЕНА (до ${bellStatus.bell?.startTime}, осталось ${bellStatus.minutesLeft} мин)</div>
+              <div class="kiosk-live-banner-sub">СЛЕДУЮЩАЯ ПАРА #${bellStatus.targetLessonNum} (в ${bellStatus.bell?.startTime}): <strong>${fullSubj}</strong> • ${otherInfo} • 📍 ${nextLesson.classroom || 'Кабинет не указан'}</div>
+            </div>
+          </div>`;
+      } else {
+        liveBannerHtml = `
+          <div class="kiosk-live-banner is-break">
+            <span>⏳</span>
+            <div class="kiosk-live-banner-content">
+              <div class="kiosk-live-banner-title">СЕЙЧАС ПЕРЕМЕНА (до ${bellStatus.bell?.startTime}, осталось ${bellStatus.minutesLeft} мин)</div>
+              <div class="kiosk-live-banner-sub">Следующая пара по расписанию звонков: #${bellStatus.targetLessonNum}.</div>
+            </div>
+          </div>`;
+      }
     } else if (bellStatus.status === 'before') {
       liveBannerHtml = `
         <div class="kiosk-live-banner is-idle">
           <span>⏰</span>
-          <span>Занятия сегодня начнутся в ${bellStatus.bell?.startTime || '08:00'}.</span>
+          <div class="kiosk-live-banner-content">
+            <div class="kiosk-live-banner-title">ЗАНЯТИЯ ЕЩЁ НЕ НАЧАЛИСЬ</div>
+            <div class="kiosk-live-banner-sub">Первая пара начнётся в ${bellStatus.bell?.startTime || '08:00'}. Расписание на сегодня:</div>
+          </div>
         </div>`;
     } else if (bellStatus.status === 'after') {
       liveBannerHtml = `
         <div class="kiosk-live-banner is-idle">
           <span>✓</span>
-          <span>Все занятия на сегодня завершены.</span>
+          <div class="kiosk-live-banner-content">
+            <div class="kiosk-live-banner-title">ВСЕ ЗАНЯТИЯ НА СЕГОДНЯ ОКОНЧЕНЫ</div>
+            <div class="kiosk-live-banner-sub">Вы можете посмотреть расписание на завтра или на всю неделю.</div>
+          </div>
         </div>`;
     } else if (bellStatus.status === 'weekend') {
       liveBannerHtml = `
         <div class="kiosk-live-banner is-idle">
           <span>🏖</span>
-          <span>Сегодня воскресенье — выходной день.</span>
+          <div class="kiosk-live-banner-content">
+            <div class="kiosk-live-banner-title">СЕГОДНЯ ВЫХОДНОЙ ДЕНЬ</div>
+            <div class="kiosk-live-banner-sub">Занятий нет. Посмотрите расписание на завтра или на всю неделю.</div>
+          </div>
         </div>`;
     }
   }
 
-  let cardsHtml = '';
+  if (bannerContainer) {
+    bannerContainer.innerHTML = liveBannerHtml;
+  }
+
   if (lessons.length === 0) {
-    cardsHtml = `
+    gridContainer.innerHTML = `
       <div class="kiosk-empty-box col-span-full">
         <div class="kiosk-empty-icon">☕</div>
         <div class="kiosk-empty-title">Занятий нет</div>
-        <p class="kiosk-empty-text">Для ${titleName} в выбранный период пар не запланировано.</p>
+        <p class="kiosk-empty-text">Для ${titleName} в выбранный период (${activeDayFilter === 'today' ? 'сегодня' : activeDayFilter === 'tomorrow' ? 'завтра' : 'на неделю'}) пар не запланировано.</p>
         <div class="kiosk-empty-actions">
-          ${activeDayFilter !== 'tomorrow' ? '<button type="button" class="kiosk-day-pill" data-day="tomorrow">📅 Расписание на завтра</button>' : ''}
-          ${activeDayFilter !== 'all' ? '<button type="button" class="kiosk-day-pill" data-day="all">🗓 Расписание на всю неделю</button>' : ''}
+          ${activeDayFilter !== 'tomorrow' ? '<button type="button" class="kiosk-day-pill" data-target-day="tomorrow">📅 На завтра</button>' : ''}
+          ${activeDayFilter !== 'all' ? '<button type="button" class="kiosk-day-pill" data-target-day="all">🗓 На всю неделю</button>' : ''}
         </div>
       </div>`;
-  } else {
-    cardsHtml = lessons.map((l) => {
-      const fullSubj = formatKioskSubject(l.subject);
-      const isLive = isToday && bellStatus.status === 'lesson' && l.lessonNumber === bellStatus.currentLessonNum;
-      const isNext = isToday && bellStatus.status === 'break' && l.lessonNumber === bellStatus.targetLessonNum;
-
-      const cardClass = isLive ? 'kiosk-lesson-card is-live-now' : isNext ? 'kiosk-lesson-card is-next-soon' : 'kiosk-lesson-card';
-      const badgeLive = isLive
-        ? `<span class="kiosk-live-tag-active">🔴 ИДЁТ СЕЙЧАС</span>`
-        : isNext
-        ? `<span class="kiosk-next-tag-active">⏳ СЛЕДУЮЩАЯ ПАРА</span>`
-        : '';
-      const otherInfo = entityType === 'group'
-        ? `<span class="kiosk-teacher-name">👨‍🏫 ${l.teacher}</span>`
-        : `<span class="kiosk-group-badge">Группа ${l.group}</span>`;
-
-      return `
-        <div class="${cardClass}">
-          <div class="kiosk-lesson-card-top">
-            <div class="flex items-center gap-2">
-              <span class="kiosk-lesson-badge">#${l.lessonNumber} пара</span>
-              ${badgeLive}
-            </div>
-            <span class="kiosk-lesson-time">${l.startTime} – ${l.endTime}</span>
-            <span class="kiosk-room-badge">📍 ${l.classroom || 'Кабинет не указан'}</span>
-          </div>
-          <h3 class="kiosk-lesson-subject" title="${fullSubj}">${fullSubj}</h3>
-          <div class="kiosk-lesson-footer">
-            ${otherInfo}
-            ${activeDayFilter === 'all' ? `<span class="kiosk-day-badge">${DAY_NAMES[l.dayOfWeek]}</span>` : ''}
-          </div>
-        </div>`;
-    }).join('');
+    gridContainer.querySelectorAll('.kiosk-empty-actions button').forEach((btn) => {
+      btn.addEventListener('click', () => onDayChange(btn.getAttribute('data-target-day')));
+    });
+    return;
   }
 
-  container.innerHTML = `
-    <div class="kiosk-sub-header">
-      <div class="flex items-center gap-3">
-        <button type="button" id="${backBtnId}" class="kiosk-back-btn">${backBtnText}</button>
-        <h2 class="kiosk-sub-title">${titlePrefix} ${titleName}</h2>
-      </div>
-      <div class="kiosk-day-filter">
-        <button type="button" class="kiosk-day-pill ${activeDayFilter === 'today' ? 'active' : ''}" data-day="today">Сегодня</button>
-        <button type="button" class="kiosk-day-pill ${activeDayFilter === 'tomorrow' ? 'active' : ''}" data-day="tomorrow">Завтра</button>
-        <button type="button" class="kiosk-day-pill ${activeDayFilter === 'all' ? 'active' : ''}" data-day="all">Вся неделя</button>
-      </div>
-    </div>
-    ${liveBannerHtml}
-    <div class="kiosk-lessons-grid">
-      ${cardsHtml}
-    </div>
-  `;
+  gridContainer.innerHTML = lessons.map((l) => {
+    const fullSubj = formatKioskSubject(l.subject);
+    const isLive = isToday && bellStatus.status === 'lesson' && l.lessonNumber === bellStatus.currentLessonNum;
+    const isNext = isToday && bellStatus.status === 'break' && l.lessonNumber === bellStatus.targetLessonNum;
 
-  document.getElementById(backBtnId)?.addEventListener('click', onBack);
-  container.querySelectorAll('.kiosk-day-pill').forEach((btn) => {
-    btn.addEventListener('click', () => onDayChange(btn.getAttribute('data-day')));
-  });
-}
+    const cardClass = isLive ? 'kiosk-lesson-card is-live-now' : isNext ? 'kiosk-lesson-card is-next-soon' : 'kiosk-lesson-card';
+    const badgeLive = isLive
+      ? `<span class="kiosk-live-tag-active">🔴 ИДЁТ СЕЙЧАС</span>`
+      : isNext
+      ? `<span class="kiosk-next-tag-active">⏳ СЛЕДУЮЩАЯ ПАРА</span>`
+      : '';
+    const otherInfo = entityType === 'group'
+      ? `<span class="kiosk-teacher-name">👨‍🏫 ${l.teacher}</span>`
+      : `<span class="kiosk-group-badge">Группа ${l.group}</span>`;
 
-export function renderKioskGroupCards(selectedGroup, activeDayFilter, onBack, onDayChange) {
-  const now = new Date();
-  const jsDay = now.getDay();
-  const todayNum = jsDay === 0 ? 7 : jsDay;
-  const tomorrowNum = todayNum === 7 ? 1 : todayNum + 1;
-  const targetDay = activeDayFilter === 'tomorrow' ? tomorrowNum : activeDayFilter === 'all' ? null : todayNum;
-  const lessons = getLessonsForGroup(selectedGroup, targetDay);
-
-  renderKioskScheduleView({
-    titlePrefix: 'Группа',
-    titleName: selectedGroup,
-    entityType: 'group',
-    containerId: 'kioskGroupScheduleView',
-    backBtnId: 'kioskBackToGroupsBtn',
-    backBtnText: '← Все группы',
-    lessons,
-    activeDayFilter,
-    onBack,
-    onDayChange,
-  });
-}
-
-export function renderKioskTeacherCards(selectedTeacher, activeDayFilter, onBack, onDayChange) {
-  const now = new Date();
-  const jsDay = now.getDay();
-  const todayNum = jsDay === 0 ? 7 : jsDay;
-  const tomorrowNum = todayNum === 7 ? 1 : todayNum + 1;
-  const targetDay = activeDayFilter === 'tomorrow' ? tomorrowNum : activeDayFilter === 'all' ? null : todayNum;
-  const lessons = getLessonsForTeacher(selectedTeacher, targetDay);
-
-  renderKioskScheduleView({
-    titlePrefix: '👨‍🏫',
-    titleName: selectedTeacher,
-    entityType: 'teacher',
-    containerId: 'kioskTeacherScheduleView',
-    backBtnId: 'kioskBackToTeachersBtn',
-    backBtnText: '← Все преподаватели',
-    lessons,
-    activeDayFilter,
-    onBack,
-    onDayChange,
-  });
+    return `
+      <div class="${cardClass}">
+        <div class="kiosk-lesson-card-top">
+          <div class="flex items-center gap-2">
+            <span class="kiosk-lesson-badge">#${l.lessonNumber} пара</span>
+            ${badgeLive}
+          </div>
+          <span class="kiosk-lesson-time">${l.startTime} – ${l.endTime}</span>
+          <span class="kiosk-room-badge">📍 ${l.classroom || 'Кабинет не указан'}</span>
+        </div>
+        <h3 class="kiosk-lesson-subject" title="${fullSubj}">${fullSubj}</h3>
+        <div class="kiosk-lesson-footer">
+          ${otherInfo}
+          ${activeDayFilter === 'all' ? `<span class="kiosk-day-badge">${DAY_NAMES[l.dayOfWeek]}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 export function renderKioskBellsCards() {

@@ -19,6 +19,10 @@ if ('serviceWorker' in navigator) {
       reg.update().catch(() => {});
     }).catch(() => {});
   });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
 }
 
 // Асинхронное неблокирующее подключение Telegram WebApp только при запуске внутри Telegram

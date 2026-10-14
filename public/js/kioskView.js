@@ -1,18 +1,23 @@
 // ==========================================================================
 // KIOSK VIEW CONTROLLER (Управление интерактивным табло 43″)
 // ==========================================================================
-import { loadAllSchedulesData, getAllGroupsList, getAllTeachersList, getCurrentBellStatus } from './kioskData.js';
+import {
+  loadAllSchedulesData,
+  getAllGroupsList,
+  getAllTeachersList,
+  getCurrentBellStatus,
+  getLessonsForGroup,
+  getLessonsForTeacher,
+} from './kioskData.js';
 import {
   renderKioskLiveCards,
-  renderKioskGroupCards,
-  renderKioskTeacherCards,
+  renderKioskScheduleModalContent,
   renderKioskBellsCards,
 } from './kioskCards.js';
 
 let isKioskActive = false;
 let currentKioskSubtab = 'live'; // 'live' | 'groups' | 'teachers' | 'bells'
-let selectedGroup = null;
-let selectedTeacher = null;
+let modalEntity = null; // { type: 'group' | 'teacher', name: string } | null
 let activeDayFilter = 'today';
 let inactivityTimer = null;
 let clockInterval = null;
@@ -33,7 +38,7 @@ export async function enterKioskMode() {
   try {
     await loadAllSchedulesData();
   } catch (err) {
-    console.warn('Не удалось загрузить полные данные расписания для киоска:', err);
+    console.warn('Не удалось загрузить данные расписания:', err);
   }
 
   switchKioskSubtab('live');
@@ -43,6 +48,7 @@ export async function enterKioskMode() {
 
 export function exitKioskMode() {
   isKioskActive = false;
+  closeKioskScheduleModal();
   document.body.classList.remove('kiosk-mode');
 
   const kioskContainer = document.getElementById('kioskContainer');
@@ -67,7 +73,6 @@ function startKioskClock() {
   const update = () => {
     if (!isKioskActive) return;
     const now = new Date();
-
     const clockEl = document.getElementById('kioskClockTime');
     const dateEl = document.getElementById('kioskClockDate');
     const bellStatusPill = document.getElementById('kioskBellStatusPill');
@@ -110,9 +115,8 @@ export function resetInactivityTimer() {
     updateResetIndicator();
 
     if (secondsUntilReset <= 0) {
-      if (currentKioskSubtab !== 'live' || selectedGroup || selectedTeacher) {
-        selectedGroup = null;
-        selectedTeacher = null;
+      if (currentKioskSubtab !== 'live' || modalEntity) {
+        closeKioskScheduleModal();
         switchKioskSubtab('live');
       }
       secondsUntilReset = INACTIVITY_TIMEOUT_SEC;
@@ -125,19 +129,16 @@ function updateResetIndicator() {
   const el = document.getElementById('kioskResetTimer');
   if (el) {
     el.textContent = `${secondsUntilReset}с`;
-    el.parentElement?.classList.toggle('hidden', currentKioskSubtab === 'live' && !selectedGroup && !selectedTeacher);
+    el.parentElement?.classList.toggle('hidden', currentKioskSubtab === 'live' && !modalEntity);
   }
 }
 
 export function switchKioskSubtab(subtab) {
   currentKioskSubtab = subtab;
-  selectedGroup = null;
-  selectedTeacher = null;
-  activeDayFilter = 'today';
+  closeKioskScheduleModal();
   resetInactivityTimer();
 
-  const subtabs = ['live', 'groups', 'teachers', 'bells'];
-  subtabs.forEach((st) => {
+  ['live', 'groups', 'teachers', 'bells'].forEach((st) => {
     const section = document.getElementById(`kioskSection_${st}`);
     const navBtn = document.getElementById(`kioskNavBtn_${st}`);
     if (section) section.classList.toggle('hidden', st !== subtab);
@@ -152,96 +153,107 @@ export function switchKioskSubtab(subtab) {
 
 function renderKioskGroups() {
   const groupsGrid = document.getElementById('kioskGroupsGrid');
-  const scheduleView = document.getElementById('kioskGroupScheduleView');
-  const sectionHeader = document.getElementById('kioskGroupsHeader');
-  if (!groupsGrid || !scheduleView) return;
-
-  if (!selectedGroup) {
-    if (sectionHeader) sectionHeader.classList.remove('hidden');
-    groupsGrid.classList.remove('hidden');
-    scheduleView.classList.add('hidden');
-
-    groupsGrid.innerHTML = getAllGroupsList().map((g) => `
-      <button type="button" class="kiosk-group-tile" data-group="${g}">
-        <span class="kiosk-group-tile-sub">Группа</span>
-        <span class="kiosk-group-tile-name">${g}</span>
-      </button>
-    `).join('');
-
-    groupsGrid.querySelectorAll('.kiosk-group-tile').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        selectedGroup = btn.getAttribute('data-group');
-        activeDayFilter = 'today';
-        resetInactivityTimer();
-        renderKioskGroups();
-      });
-    });
-  } else {
-    if (sectionHeader) sectionHeader.classList.add('hidden');
-    groupsGrid.classList.add('hidden');
-    scheduleView.classList.remove('hidden');
-
-    renderKioskGroupCards(selectedGroup, activeDayFilter, () => {
-      selectedGroup = null;
-      resetInactivityTimer();
-      renderKioskGroups();
-    }, (d) => {
-      activeDayFilter = d;
-      resetInactivityTimer();
-      renderKioskGroups();
-    });
-  }
+  if (!groupsGrid) return;
+  groupsGrid.innerHTML = getAllGroupsList().map((g) => `
+    <button type="button" class="kiosk-group-tile" data-group="${g}">
+      <span class="kiosk-group-tile-sub">Группа</span>
+      <span class="kiosk-group-tile-name">${g}</span>
+    </button>
+  `).join('');
 }
 
 function renderKioskTeachers() {
   const teachersGrid = document.getElementById('kioskTeachersGrid');
-  const scheduleView = document.getElementById('kioskTeacherScheduleView');
-  const sectionHeader = document.getElementById('kioskTeachersHeader');
-  if (!teachersGrid || !scheduleView) return;
+  if (!teachersGrid) return;
+  teachersGrid.innerHTML = getAllTeachersList().map((t) => `
+    <button type="button" class="kiosk-teacher-tile" data-teacher="${t}">
+      <span class="kiosk-teacher-icon">👨‍🏫</span>
+      <span class="kiosk-teacher-name">${t}</span>
+    </button>
+  `).join('');
+}
 
-  if (!selectedTeacher) {
-    if (sectionHeader) sectionHeader.classList.remove('hidden');
-    teachersGrid.classList.remove('hidden');
-    scheduleView.classList.add('hidden');
+export function openKioskScheduleModal(type, name) {
+  modalEntity = { type, name };
+  activeDayFilter = 'today';
+  resetInactivityTimer();
 
-    teachersGrid.innerHTML = getAllTeachersList().map((t) => `
-      <button type="button" class="kiosk-teacher-tile" data-teacher="${t}">
-        <span class="kiosk-teacher-icon">👨‍🏫</span>
-        <span class="kiosk-teacher-name">${t}</span>
-      </button>
-    `).join('');
+  const modal = document.getElementById('kioskScheduleModal');
+  if (modal) modal.classList.remove('hidden');
+  updateKioskModalContent();
+}
 
-    teachersGrid.querySelectorAll('.kiosk-teacher-tile').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        selectedTeacher = btn.getAttribute('data-teacher');
-        activeDayFilter = 'today';
-        resetInactivityTimer();
-        renderKioskTeachers();
-      });
-    });
-  } else {
-    if (sectionHeader) sectionHeader.classList.add('hidden');
-    teachersGrid.classList.add('hidden');
-    scheduleView.classList.remove('hidden');
+export function closeKioskScheduleModal() {
+  modalEntity = null;
+  const modal = document.getElementById('kioskScheduleModal');
+  if (modal) modal.classList.add('hidden');
+  resetInactivityTimer();
+}
 
-    renderKioskTeacherCards(selectedTeacher, activeDayFilter, () => {
-      selectedTeacher = null;
+export function updateKioskModalContent() {
+  if (!modalEntity) return;
+  const { type, name } = modalEntity;
+
+  const now = new Date();
+  const jsDay = now.getDay();
+  const todayNum = jsDay === 0 ? 7 : jsDay;
+  const tomorrowNum = todayNum === 7 ? 1 : todayNum + 1;
+  const targetDay = activeDayFilter === 'tomorrow' ? tomorrowNum : activeDayFilter === 'all' ? null : todayNum;
+
+  const lessons = type === 'group'
+    ? getLessonsForGroup(name, targetDay)
+    : getLessonsForTeacher(name, targetDay);
+
+  renderKioskScheduleModalContent({
+    titleBadge: type === 'group' ? 'ГРУППА' : 'ПРЕПОДАВАТЕЛЬ',
+    titleName: type === 'group' ? `Группа ${name}` : `👨‍🏫 ${name}`,
+    entityType: type,
+    lessons,
+    activeDayFilter,
+    onDayChange: (newDay) => {
+      activeDayFilter = newDay;
       resetInactivityTimer();
-      renderKioskTeachers();
-    }, (d) => {
-      activeDayFilter = d;
-      resetInactivityTimer();
-      renderKioskTeachers();
-    });
-  }
+      updateKioskModalContent();
+    },
+  });
 }
 
 export function setupKioskEventListeners() {
   ['live', 'groups', 'teachers', 'bells'].forEach((st) => {
-    document.getElementById(`kioskNavBtn_${st}`)?.addEventListener('click', () => {
-      selectedGroup = null;
-      selectedTeacher = null;
-      switchKioskSubtab(st);
+    document.getElementById(`kioskNavBtn_${st}`)?.addEventListener('click', () => switchKioskSubtab(st));
+  });
+
+  // Делегированные обработчики кликов на плитки групп и преподавателей
+  const groupsGrid = document.getElementById('kioskGroupsGrid');
+  groupsGrid?.addEventListener('click', (e) => {
+    const tile = e.target.closest('.kiosk-group-tile');
+    if (!tile) return;
+    const group = tile.getAttribute('data-group');
+    if (group) openKioskScheduleModal('group', group);
+  });
+
+  const teachersGrid = document.getElementById('kioskTeachersGrid');
+  teachersGrid?.addEventListener('click', (e) => {
+    const tile = e.target.closest('.kiosk-teacher-tile');
+    if (!tile) return;
+    const teacher = tile.getAttribute('data-teacher');
+    if (teacher) openKioskScheduleModal('teacher', teacher);
+  });
+
+  // Управление модальным окошком расписания
+  document.getElementById('kioskModalCloseBtn')?.addEventListener('click', closeKioskScheduleModal);
+  document.getElementById('kioskScheduleModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'kioskScheduleModal') closeKioskScheduleModal();
+  });
+
+  document.querySelectorAll('#kioskScheduleModal .kiosk-day-pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const day = btn.getAttribute('data-day');
+      if (day) {
+        activeDayFilter = day;
+        resetInactivityTimer();
+        updateKioskModalContent();
+      }
     });
   });
 
@@ -258,8 +270,9 @@ export function setupKioskEventListeners() {
   window.addEventListener('pointerdown', () => resetInactivityTimer(), { passive: true });
   window.addEventListener('keydown', (e) => {
     resetInactivityTimer();
-    if (e.key === 'Escape' && isKioskActive) {
-      exitKioskMode();
+    if (e.key === 'Escape') {
+      if (modalEntity) closeKioskScheduleModal();
+      else if (isKioskActive) exitKioskMode();
     }
   }, { passive: true });
 
