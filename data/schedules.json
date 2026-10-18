@@ -2,7 +2,7 @@
   {
     "userId": 1,
     "chatId": 1,
-    "updatedAt": "2026-10-11T20:24:46.600Z",
+    "updatedAt": "2026-10-18T20:56:14.115Z",
     "settings": {
       "remindMinutesBefore": 15,
       "morningDigestEnabled": true,
@@ -49,7 +49,7 @@
     },
     "lessons": [
       {
-        "id": "pdf_11фм_1_3_sub2",
+        "id": "1_3_11фм_Информатика_2",
         "dayOfWeek": 1,
         "dayName": "Понедельник",
         "lessonNumber": 3,
@@ -57,13 +57,13 @@
         "endTime": "12:20",
         "subject": "Информатика",
         "group": "11фм",
-        "classroom": "О, ауд. 230",
+        "classroom": "ГЛ, ауд. 6/230",
         "teacher": "Трипольский",
         "subgroup": "2",
         "weekType": "all"
       },
       {
-        "id": "pdf_11ф_2_2_sub2",
+        "id": "2_2_11ф_Информатика_2",
         "dayOfWeek": 2,
         "dayName": "Вторник",
         "lessonNumber": 2,
@@ -71,13 +71,13 @@
         "endTime": "10:50",
         "subject": "Информатика",
         "group": "11ф",
-        "classroom": "О, ауд. 230",
+        "classroom": "ГЛ, ауд. 6/230",
         "teacher": "Трипольский",
         "subgroup": "2",
         "weekType": "all"
       },
       {
-        "id": "pdf_11МС_3_1_sub2",
+        "id": "3_1_11МС_Информатика_2",
         "dayOfWeek": 3,
         "dayName": "Среда",
         "lessonNumber": 1,
@@ -85,13 +85,13 @@
         "endTime": "09:20",
         "subject": "Информатика",
         "group": "11МС",
-        "classroom": "О, ауд. 230",
+        "classroom": "ГЛ, ауд. 6/230",
         "teacher": "Трипольский",
         "subgroup": "2",
         "weekType": "all"
       },
       {
-        "id": "pdf_11ф_4_3_sub2",
+        "id": "4_3_11ф_Информатика_2",
         "dayOfWeek": 4,
         "dayName": "Четверг",
         "lessonNumber": 3,
@@ -99,13 +99,13 @@
         "endTime": "12:20",
         "subject": "Информатика",
         "group": "11ф",
-        "classroom": "О, ауд. 230",
+        "classroom": "ГЛ, ауд. 6/230",
         "teacher": "Трипольский",
         "subgroup": "2",
         "weekType": "all"
       },
       {
-        "id": "pdf_11МС_4_4_sub2",
+        "id": "4_4_11МС_Информатика_2",
         "dayOfWeek": 4,
         "dayName": "Четверг",
         "lessonNumber": 4,
@@ -113,13 +113,13 @@
         "endTime": "14:20",
         "subject": "Информатика",
         "group": "11МС",
-        "classroom": "О, ауд. 230",
+        "classroom": "ГЛ, ауд. 6/230",
         "teacher": "Трипольский",
         "subgroup": "2",
         "weekType": "all"
       },
       {
-        "id": "pdf_11фм_5_1_sub2",
+        "id": "5_1_11фм_Информатика_2",
         "dayOfWeek": 5,
         "dayName": "Пятница",
         "lessonNumber": 1,
@@ -127,7 +127,7 @@
         "endTime": "09:20",
         "subject": "Информатика",
         "group": "11фм",
-        "classroom": "О, ауд. 230",
+        "classroom": "ГЛ, ауд. 6/230",
         "teacher": "Трипольский",
         "subgroup": "2",
         "weekType": "all"
@@ -137,7 +137,7 @@
   {
     "userId": 999999999,
     "chatId": 999999999,
-    "updatedAt": "2026-10-11T21:22:43.189Z",
+    "updatedAt": "2026-10-18T20:56:22.728Z",
     "settings": {
       "remindMinutesBefore": 15,
       "morningDigestEnabled": true,
@@ -184,12 +184,12 @@
     },
     "lessons": [
       {
-        "id": "1_3__Информатика",
+        "id": "1_1__Информатика",
         "dayOfWeek": 1,
         "dayName": "Понедельник",
-        "lessonNumber": 3,
-        "startTime": "11:00",
-        "endTime": "12:20",
+        "lessonNumber": 1,
+        "startTime": "08:00",
+        "endTime": "09:20",
         "subject": "Информатика",
         "group": "",
         "classroom": "305",
@@ -197,12 +197,12 @@
         "weekType": "all"
       },
       {
-        "id": "2_3__Информатика",
+        "id": "2_1__Информатика",
         "dayOfWeek": 2,
         "dayName": "Вторник",
-        "lessonNumber": 3,
-        "startTime": "11:00",
-        "endTime": "12:20",
+        "lessonNumber": 1,
+        "startTime": "08:00",
+        "endTime": "09:20",
         "subject": "Информатика",
         "group": "",
         "classroom": "305",
@@ -210,12 +210,12 @@
         "weekType": "all"
       },
       {
-        "id": "3_3__Информатика",
+        "id": "3_1__Информатика",
         "dayOfWeek": 3,
         "dayName": "Среда",
-        "lessonNumber": 3,
-        "startTime": "11:00",
-        "endTime": "12:20",
+        "lessonNumber": 1,
+        "startTime": "08:00",
+        "endTime": "09:20",
         "subject": "Информатика",
         "group": "",
         "classroom": "305",
@@ -236,12 +236,12 @@
         "weekType": "all"
       },
       {
-        "id": "5_2__Информатика",
+        "id": "5_1__Информатика",
         "dayOfWeek": 5,
         "dayName": "Пятница",
-        "lessonNumber": 2,
-        "startTime": "09:30",
-        "endTime": "10:50",
+        "lessonNumber": 1,
+        "startTime": "08:00",
+        "endTime": "09:20",
         "subject": "Информатика",
         "group": "",
         "classroom": "305",
