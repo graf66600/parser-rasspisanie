@@ -17,7 +17,11 @@ export function parseTimeRange(text: string): { startTime: string; endTime: stri
 
 export function extractLessonNumber(text: string): number | null {
   if (!text) return null;
-  const match = text.match(/([1-9])\s*(?:пара|урок)?/i);
+  const clean = String(text).trim();
+  // Standalone number 1-10 or "1 пара", "Пара 1", "№ 1"
+  const match = clean.match(/^(?:[№#]\s*)?([1-9]|10)(?:\s*(?:пара|урок))?$/i) ||
+                clean.match(/^(?:пара|урок)\s*([1-9]|10)$/i) ||
+                clean.match(/\b([1-9]|10)\s*(?:пара|урок)\b/i);
   if (match) {
     const num = parseInt(match[1], 10);
     if (num >= 1 && num <= 10) return num;

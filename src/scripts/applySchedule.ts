@@ -12,25 +12,54 @@ import {
   isPdfBuffer,
 } from '../services/scheduleFileHelper.js';
 
-export async function applySchedule(filePath?: string) {
+export async function applySchedule(inputFiles?: string | string[]) {
   let targets: string[] = [];
 
-  if (filePath) {
-    targets = [filePath];
+  if (inputFiles) {
+    const list = Array.isArray(inputFiles) ? inputFiles : [inputFiles];
+    targets = list.map((f) => path.resolve(process.cwd(), f));
   } else {
     const rootFiles = fs.readdirSync(process.cwd());
-    const matchedPdfs = rootFiles
+    const validScheduleFiles = rootFiles
       .filter((f) => {
         const lower = f.toLowerCase();
+        if (f.startsWith('~$') || lower.includes('кп_') || lower.includes('стол')) return false;
+        if (lower.startsWith('latest_schedule')) return false;
+        const isSupported = lower.endsWith('.xlsx') || lower.endsWith('.xls') || lower.endsWith('.pdf');
+        if (!isSupported) return false;
         return (
-          lower.endsWith('.pdf') &&
-          (lower.includes('чист') || lower.includes('стенд') || lower.includes('заочн') || lower.includes('расписани'))
+          lower.includes('чист') ||
+          lower.includes('стенд') ||
+          lower.includes('заочн') ||
+          lower.includes('расписани') ||
+          lower.includes('неделя') ||
+          lower.includes('правк')
         );
       })
-      .map((f) => path.resolve(process.cwd(), f));
+      .map((f) => ({
+        name: f,
+        path: path.resolve(process.cwd(), f),
+        stat: fs.statSync(path.resolve(process.cwd(), f)),
+      }));
 
-    if (matchedPdfs.length > 0) {
-      targets = matchedPdfs.sort();
+    if (validScheduleFiles.length > 0) {
+      validScheduleFiles.sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
+      const newest = validScheduleFiles[0];
+      const dateMatch = newest.name.match(/(\d{1,2}[._]\d{1,2})[-_]+(\d{1,2}[._]\d{1,2})/);
+
+      if (dateMatch) {
+        const dateTag = dateMatch[0];
+        targets = validScheduleFiles
+          .filter((item) => item.name.includes(dateTag))
+          .map((item) => item.path)
+          .sort();
+      } else {
+        const threshold = newest.stat.mtimeMs - 24 * 60 * 60 * 1000;
+        targets = validScheduleFiles
+          .filter((item) => item.stat.mtimeMs >= threshold)
+          .map((item) => item.path)
+          .sort();
+      }
     } else {
       const latest = findLatestScheduleFile();
       if (latest) targets = [latest];
@@ -131,8 +160,14 @@ export async function applySchedule(filePath?: string) {
 
   // Сохраняем копию расписания
   try {
-    const firstTarget = targets[0];
-    const buffer = fs.readFileSync(firstTarget);
+    const mainTarget =
+      targets.find((t) => {
+        const l = t.toLowerCase();
+        return l.includes('правк') || l.includes('стационар');
+      }) ||
+      targets.find((t) => !t.toLowerCase().includes('заочн')) ||
+      targets[0];
+    const buffer = fs.readFileSync(mainTarget);
     const filename = isPdfBuffer(buffer) ? 'latest_schedule.pdf' : 'latest_schedule.xlsx';
     fs.writeFileSync(path.resolve(CONFIG.DATA_DIR, filename), buffer);
     fs.writeFileSync(path.resolve(process.cwd(), 'public', 'data', filename), buffer);
@@ -166,8 +201,8 @@ export async function applySchedule(filePath?: string) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
-  const argFile = process.argv[2] ? path.resolve(process.argv[2]) : undefined;
-  applySchedule(argFile).then(() => process.exit(0)).catch((e) => {
+  const argFiles = process.argv.slice(2).filter(Boolean);
+  applySchedule(argFiles.length > 0 ? argFiles : undefined).then(() => process.exit(0)).catch((e) => {
     console.error('Ошибка выполнения:', e);
     process.exit(1);
   });
