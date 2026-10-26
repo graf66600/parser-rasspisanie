@@ -4,8 +4,8 @@ import { DEFAULT_BELLS } from '../config/config.js';
 import { parseAsMultiGroupSchedule } from './parser/multiGroupStrategy.js';
 import { parseAsListTable } from './parser/listTableStrategy.js';
 import { parseAsGridMatrix } from './parser/gridMatrixStrategy.js';
-import { deduplicateLessons } from './parser/parserUtils.js';
-import { extractTeachersFromMatrix, isLikelyTeacherName } from './parser/teacherExtractor.js';
+import { deduplicateLessons, fillSheetDataMerges } from './parser/parserUtils.js';
+import { extractTeachersFromMatrix, isLikelyTeacherName, normalizeTeacherName } from './parser/teacherExtractor.js';
 
 export interface ParseResult {
   lessons: Lesson[];
@@ -40,6 +40,7 @@ export class ExcelParser {
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName];
       if (!sheet) continue;
+      fillSheetDataMerges(sheet, 2);
       sheetsParsed.push(sheetName);
 
       const matrix: any[][] = xlsx.utils.sheet_to_json(sheet, {
@@ -129,6 +130,7 @@ export class ExcelParser {
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName];
       if (!sheet) continue;
+      fillSheetDataMerges(sheet, 2);
       sheetsParsed.push(sheetName);
 
       const matrix: any[][] = xlsx.utils.sheet_to_json(sheet, {
@@ -153,14 +155,24 @@ export class ExcelParser {
     const lessonsByTeacher: Record<string, Lesson[]> = {};
 
     for (const lesson of uniqueAllLessons) {
-      const teacher = (lesson.teacher || '').trim();
-      if (!teacher || !isLikelyTeacherName(teacher)) continue;
+      const rawTeacher = (lesson.teacher || '').trim();
+      if (!rawTeacher) continue;
 
-      teacherSet.add(teacher);
-      if (!lessonsByTeacher[teacher]) {
-        lessonsByTeacher[teacher] = [];
+      if (rawTeacher.includes('/')) {
+        const parts = rawTeacher.split('/').map((t) => normalizeTeacherName(t));
+        for (const t of parts) {
+          if (!isLikelyTeacherName(t)) continue;
+          teacherSet.add(t);
+          if (!lessonsByTeacher[t]) lessonsByTeacher[t] = [];
+          lessonsByTeacher[t].push({ ...lesson, teacher: t });
+        }
+      } else {
+        const teacher = normalizeTeacherName(rawTeacher);
+        if (!isLikelyTeacherName(teacher)) continue;
+        teacherSet.add(teacher);
+        if (!lessonsByTeacher[teacher]) lessonsByTeacher[teacher] = [];
+        lessonsByTeacher[teacher].push({ ...lesson, teacher });
       }
-      lessonsByTeacher[teacher].push(lesson);
     }
 
     // Добавляем специальный парсинг для Трипольского с его подгруппами 51ф, если он есть

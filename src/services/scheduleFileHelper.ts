@@ -42,7 +42,7 @@ export function findLatestScheduleFile(type: 'all' | 'excel' | 'pdf' = 'all'): s
         if (type === 'all' && !isXlsx && !isPdf) continue;
 
         if (entry.startsWith('~$')) continue; // Временные файлы Excel
-        if (entry.includes('КП_') || entry.includes('стол')) continue; // Не расписание
+        if (entry.includes('КП_') || entry.includes('стол') || entry.includes('преподавателей_')) continue; // Не первичное расписание
 
         const fullPath = path.join(dir, entry);
         const stat = fs.statSync(fullPath);

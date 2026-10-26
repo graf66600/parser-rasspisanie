@@ -1,10 +1,32 @@
 import { Lesson, LessonTime } from '../types/schedule.js';
 import { DEFAULT_BELLS } from '../config/config.js';
 import { ParseResult, MultiTeacherParseResult } from './excelParser.js';
-import { extractAllPdfItems, detectLessonRows, detectColumnGroups } from './parser/pdfLayoutDetector.js';
+import {
+  extractAllPdfItems,
+  detectLessonRows,
+  detectColumnGroups,
+} from './parser/pdfLayoutDetector.js';
 import { extractLessonsFromCell } from './parser/pdfCellExtractor.js';
 import { deduplicateLessons } from './parser/parserUtils.js';
 import { isLikelyTeacherName } from './parser/teacherExtractor.js';
+import { PdfColumnGroup, PdfLessonRow, PdfTextItem } from './parser/pdfTypes.js';
+
+function filterCellItems(
+  pageItems: PdfTextItem[],
+  col: PdfColumnGroup,
+  row: PdfLessonRow,
+  lessonRows: PdfLessonRow[]
+): PdfTextItem[] {
+  return pageItems.filter((i) => {
+    if (i.x < col.xMin || i.x > col.xMax) return false;
+    if (Math.abs(i.y - row.y) > 3.5) return false;
+    const closest = lessonRows.reduce(
+      (best, curr) => (Math.abs(curr.y - i.y) < Math.abs(best.y - i.y) ? curr : best),
+      lessonRows[0]
+    );
+    return closest.y === row.y;
+  });
+}
 
 export class PdfParser {
   /**
@@ -31,9 +53,7 @@ export class PdfParser {
 
       for (const row of lessonRows) {
         for (const col of colRanges) {
-          const cellItems = pageItems.filter(
-            (i) => Math.abs(i.y - row.y) <= 3.5 && i.x >= col.xMin && i.x <= col.xMax
-          );
+          const cellItems = filterCellItems(pageItems, col, row, lessonRows);
           if (cellItems.length === 0) continue;
 
           const cellLessons = extractLessonsFromCell(cellItems, col, row, bells);
@@ -115,9 +135,7 @@ export class PdfParser {
 
       for (const row of lessonRows) {
         for (const col of colRanges) {
-          const cellItems = pageItems.filter(
-            (i) => Math.abs(i.y - row.y) <= 3.5 && i.x >= col.xMin && i.x <= col.xMax
-          );
+          const cellItems = filterCellItems(pageItems, col, row, lessonRows);
           if (cellItems.length === 0) continue;
 
           const cellLessons = extractLessonsFromCell(cellItems, col, row, bells);

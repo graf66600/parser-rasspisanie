@@ -12,6 +12,14 @@ import {
   isPdfBuffer,
 } from '../services/scheduleFileHelper.js';
 
+function parseDateScore(name: string): number {
+  const match = name.match(/(\d{1,2})[._](\d{1,2})/);
+  if (!match) return 0;
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  return month * 100 + day;
+}
+
 export async function applySchedule(inputFiles?: string | string[]) {
   let targets: string[] = [];
 
@@ -24,7 +32,7 @@ export async function applySchedule(inputFiles?: string | string[]) {
       .filter((f) => {
         const lower = f.toLowerCase();
         if (f.startsWith('~$') || lower.includes('кп_') || lower.includes('стол')) return false;
-        if (lower.startsWith('latest_schedule')) return false;
+        if (lower.startsWith('latest_schedule') || lower.includes('преподавателей_')) return false;
         const isSupported = lower.endsWith('.xlsx') || lower.endsWith('.xls') || lower.endsWith('.pdf');
         if (!isSupported) return false;
         return (
@@ -32,6 +40,7 @@ export async function applySchedule(inputFiles?: string | string[]) {
           lower.includes('стенд') ||
           lower.includes('заочн') ||
           lower.includes('расписани') ||
+          lower.includes('стационар') ||
           lower.includes('неделя') ||
           lower.includes('правк')
         );
@@ -43,7 +52,14 @@ export async function applySchedule(inputFiles?: string | string[]) {
       }));
 
     if (validScheduleFiles.length > 0) {
-      validScheduleFiles.sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
+      // Сортировка по календарной дате в имени файла (например, 26.10 > 12.10)
+      validScheduleFiles.sort((a, b) => {
+        const scoreA = parseDateScore(a.name);
+        const scoreB = parseDateScore(b.name);
+        if (scoreA !== scoreB) return scoreB - scoreA;
+        return b.stat.mtimeMs - a.stat.mtimeMs;
+      });
+
       const newest = validScheduleFiles[0];
       const dateMatch = newest.name.match(/(\d{1,2}[._]\d{1,2})[-_]+(\d{1,2}[._]\d{1,2})/);
 
@@ -107,6 +123,10 @@ export async function applySchedule(inputFiles?: string | string[]) {
     });
   }
 
+  // Гарантируем, что для Трипольского записаны выверенные пары
+  lessonsByTeacher['Трипольский'] = tripolskyLessons;
+  allTeachersSet.add('Трипольский');
+
   const sortedTeachers = Array.from(allTeachersSet).sort((a, b) => {
     if (a === 'Трипольский') return -1;
     if (b === 'Трипольский') return 1;
@@ -126,20 +146,22 @@ export async function applySchedule(inputFiles?: string | string[]) {
     updatedAt: new Date().toISOString(),
   };
 
-  const multiSchedule = [{
-    userId: 1,
-    chatId: 1,
-    updatedAt: new Date().toISOString(),
-    settings: {
-      remindMinutesBefore: 15,
-      morningDigestEnabled: true,
-      morningDigestTime: '08:00',
-      bellsSchedule: DEFAULT_BELLS,
-      teacherFilter: 'Трипольский',
-      subjectFilter: 'Информатика',
+  const multiSchedule = [
+    {
+      userId: 1,
+      chatId: 1,
+      updatedAt: new Date().toISOString(),
+      settings: {
+        remindMinutesBefore: 15,
+        morningDigestEnabled: true,
+        morningDigestTime: '08:00',
+        bellsSchedule: DEFAULT_BELLS,
+        teacherFilter: 'Трипольский',
+        subjectFilter: 'Информатика',
+      },
+      lessons: tripolskyLessons,
     },
-    lessons: tripolskyLessons,
-  }];
+  ];
 
   // Запись в папки data/ и public/data/
   const filesToSave: Array<{ subPath: string; content: string }> = [
@@ -163,7 +185,7 @@ export async function applySchedule(inputFiles?: string | string[]) {
     const mainTarget =
       targets.find((t) => {
         const l = t.toLowerCase();
-        return l.includes('правк') || l.includes('стационар');
+        return l.includes('стационар1') || l.includes('правк') || l.includes('стационар');
       }) ||
       targets.find((t) => !t.toLowerCase().includes('заочн')) ||
       targets[0];
@@ -176,6 +198,13 @@ export async function applySchedule(inputFiles?: string | string[]) {
   // Сохранение в StorageService
   const storage = StorageService.getInstance();
   storage.saveUserSchedule(1, 1, tripolskyLessons);
+
+  // Синхронизируем schedules.json в public/data
+  const schedP1 = path.resolve(CONFIG.DATA_DIR, 'schedules.json');
+  const schedP2 = path.resolve(process.cwd(), 'public', 'data', 'schedules.json');
+  if (fs.existsSync(schedP1)) {
+    fs.copyFileSync(schedP1, schedP2);
+  }
 
   // Синхронизация с Supabase
   try {
@@ -202,8 +231,10 @@ export async function applySchedule(inputFiles?: string | string[]) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
   const argFiles = process.argv.slice(2).filter(Boolean);
-  applySchedule(argFiles.length > 0 ? argFiles : undefined).then(() => process.exit(0)).catch((e) => {
-    console.error('Ошибка выполнения:', e);
-    process.exit(1);
-  });
+  applySchedule(argFiles.length > 0 ? argFiles : undefined)
+    .then(() => process.exit(0))
+    .catch((e) => {
+      console.error('Ошибка выполнения:', e);
+      process.exit(1);
+    });
 }

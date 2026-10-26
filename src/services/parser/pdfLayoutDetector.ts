@@ -130,7 +130,7 @@ export function detectColumnGroups(items: PdfTextItem[], pageIndex: number): Pdf
 
     const rightMarker = pairMarkers.find((p) => p.x > g.x - 10 && p.x > prevRight);
     if (rightMarker) {
-      xMax = rightMarker.x + 4;
+      xMax = rightMarker.x + 1;
     } else if (idx < groups.length - 1) {
       xMax = Math.round((g.x + groups[idx + 1].x) / 2);
     } else {

@@ -1,3 +1,4 @@
+import * as xlsx from 'xlsx';
 import { Lesson, LessonTime } from '../../types/schedule.js';
 import { DAY_NAME_TO_NUMBER } from '../../config/config.js';
 
@@ -18,10 +19,12 @@ export function parseTimeRange(text: string): { startTime: string; endTime: stri
 export function extractLessonNumber(text: string): number | null {
   if (!text) return null;
   const clean = String(text).trim();
+  if (/^\d{3,}$/.test(clean)) return null;
   // Standalone number 1-10 or "1 пара", "Пара 1", "№ 1"
-  const match = clean.match(/^(?:[№#]\s*)?([1-9]|10)(?:\s*(?:пара|урок))?$/i) ||
-                clean.match(/^(?:пара|урок)\s*([1-9]|10)$/i) ||
-                clean.match(/\b([1-9]|10)\s*(?:пара|урок)\b/i);
+  const match =
+    clean.match(/^(?:[№#]\s*)?([1-9]|10)(?:\s*(?:пара|урок))?$/i) ||
+    clean.match(/^(?:пара|урок)\s*([1-9]|10)$/i) ||
+    clean.match(/\b([1-9]|10)\s*(?:пара|урок)\b/i);
   if (match) {
     const num = parseInt(match[1], 10);
     if (num >= 1 && num <= 10) return num;
@@ -145,4 +148,22 @@ export function deduplicateLessons(lessons: Lesson[]): Lesson[] {
   }
 
   return result;
+}
+
+export function fillSheetDataMerges(sheet: xlsx.WorkSheet, minRow: number = 2): void {
+  if (!sheet || !sheet['!merges']) return;
+  for (const merge of sheet['!merges']) {
+    if (merge.s.r < minRow) continue;
+    const startCellAddress = xlsx.utils.encode_cell(merge.s);
+    const startCell = sheet[startCellAddress];
+    if (!startCell || startCell.v === undefined || startCell.v === '') continue;
+    for (let r = merge.s.r; r <= merge.e.r; r++) {
+      for (let c = merge.s.c; c <= merge.e.c; c++) {
+        const addr = xlsx.utils.encode_cell({ r, c });
+        if (!sheet[addr] || sheet[addr].v === undefined || sheet[addr].v === '') {
+          sheet[addr] = { ...startCell };
+        }
+      }
+    }
+  }
 }

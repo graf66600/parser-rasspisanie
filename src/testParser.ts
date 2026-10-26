@@ -148,7 +148,10 @@ if (fs.existsSync(realFilePath)) {
   console.warn(`\n⚠️ Файл ${realFileName} не найден по пути ${realFilePath}`);
 }
 
-const latestFile = findLatestScheduleFile('excel') || path.resolve('на стенд 14_09__19_09 с изменениями.xlsx');
+const ch2File = path.resolve('на стенд 12.10-17.10 ЧИСТ Ч2.xlsx');
+const latestFile = fs.existsSync(ch2File)
+  ? ch2File
+  : (findLatestScheduleFile('excel') || path.resolve('на стенд 14_09__19_09 с изменениями.xlsx'));
 
 if (fs.existsSync(latestFile)) {
   const newBuffer = fs.readFileSync(latestFile);
