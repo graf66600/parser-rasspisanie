@@ -2,7 +2,7 @@
 // PWA CACHE AND NETWORK HELPERS
 // ==========================================================================
 
-export const PWA_VERSION = 'v42';
+export const PWA_VERSION = 'v43';
 
 export const isStaticHost = typeof window !== 'undefined' && (
   window.location.hostname.includes('github.io') ||
@@ -59,6 +59,8 @@ export async function safeFetchJson(url, timeoutMs = 4000) {
 export async function clearPwaCacheAndReload() {
   try {
     localStorage.removeItem('pwa_custom_schedule');
+    localStorage.removeItem('pwa_kiosk_schedules_all');
+    localStorage.removeItem('pwa_kiosk_groups_cache');
     localStorage.removeItem('pwa_custom_curriculum');
     localStorage.removeItem('pwa_custom_students');
     localStorage.removeItem('pwa_version');
