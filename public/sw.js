@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v45';
+const CACHE_NAME = 'schedule-pwa-v46';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -52,7 +52,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
         STATIC_ASSETS.map((asset) =>
-          cache.add(asset).catch((err) => {
+          cache.add(new Request(asset, { cache: 'reload' })).catch((err) => {
             console.warn('Не удалось предварительно закэшировать:', asset, err);
           })
         )
