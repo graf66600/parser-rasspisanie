@@ -112,14 +112,14 @@ export function renderSchedule(onOpenJournal) {
       ? `<span class="lesson-day-prefix">${DAY_NAMES[lesson.dayOfWeek]?.slice(0, 2) || ''}</span>`
       : '';
 
-    const isTripolsky = !state.currentTeacher || state.currentTeacher.toLowerCase().includes('трипольский');
+    // Поддержка рекомендаций тем для всех преподавателей
     const subgroupText = lesson.subgroup ? ` (${lesson.subgroup} п/г)` : '';
     const groupText = lesson.group ? `Гр. ${lesson.group}${subgroupText}` : '';
     const lessonDate = getDateForDayOfWeek(lesson.dayOfWeek);
-    const rec = (isTripolsky && lesson.group) ? getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate) : null;
+    const rec = lesson.group ? getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate) : null;
     const isTheory = rec?.type === 'theory' || (rec?.text && (rec.text.toLowerCase().includes('лекци') || rec.text.toLowerCase().includes('теори')));
 
-    const topicPreview = (isTripolsky && rec?.text) ? `
+    const topicPreview = rec?.text ? `
       <div class="lesson-topic-preview">
         <div class="lesson-topic-meta">
           <span class="topic-pill ${isTheory ? 'pill-theory' : 'pill-practice'}">

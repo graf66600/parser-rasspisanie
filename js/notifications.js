@@ -48,8 +48,8 @@ export async function showNotification(title, body, tag = 'general') {
 
   const options = {
     body,
-    icon: './icon.svg',
-    badge: './icon.svg',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
     tag,
     renotify: true,
     data: { url: './' },
@@ -104,7 +104,7 @@ export async function toggleNotifications() {
     return false;
   }
 
-  // Если браузер не поддерживает Web Notifications (например, Safari на iOS вне PWA)
+  // Если браузер не поддерживает Web Notifications
   if (!('Notification' in window)) {
     alert(
       '📱 Уведомления на мобильных устройствах Apple (iPhone / iPad):\n\n' +
@@ -138,7 +138,7 @@ export async function toggleNotifications() {
 
   await showNotification(
     '🔔 Уведомления активированы!',
-    'Вы будете получать напоминания за 10 минут до начала каждой пары с темой занятия.',
+    'Вы будете получать напоминания за 10 минут до начала каждой пары и при изменении аудиторий.',
     'test_enabled'
   );
   return true;
@@ -167,7 +167,7 @@ export async function sendTestNotification() {
 
   await showNotification(
     '🔔 Тест уведомления о паре',
-    'Пара №4 (13:00) | Группа 51ф | Тема: Диспансерный прием в МИС',
+    'Пара №4 (13:00) | Группа 51ф | Ауд. 230 | Тема: Диспансерный прием в МИС',
     'test_check'
   );
 }
@@ -228,7 +228,6 @@ export function updateNotificationButtonState() {
   const btn = document.getElementById('toggleNotificationsBtn');
   if (!btn) return;
 
-  // Значок колокольчика всегда остаётся видимым (в том числе на мобильных телефонах)
   btn.classList.remove('hidden');
 
   const enabled = isNotificationsEnabled();
@@ -253,6 +252,46 @@ export function updateNotificationButtonState() {
     } else {
       notifStatusText.textContent = 'Нажмите на колокольчик, чтобы включить напоминания';
     }
+  }
+}
+
+/**
+ * Уведомление при оперативном изменении своей пары (кабинет, время, замена, предмет)
+ */
+export async function notifyScheduleChanges(oldLessons = [], newLessons = [], teacherName = '') {
+  if (!isNotificationsEnabled() || !('Notification' in window) || Notification.permission !== 'granted') {
+    return;
+  }
+  if (!Array.isArray(oldLessons) || !Array.isArray(newLessons)) return;
+  if (oldLessons.length === 0 || newLessons.length === 0) return;
+
+  const oldMap = new Map();
+  oldLessons.forEach((l) => {
+    const key = `${l.dayOfWeek}_${l.lessonNumber}_${(l.group || '').trim()}`;
+    oldMap.set(key, l);
+  });
+
+  const changes = [];
+
+  newLessons.forEach((nl) => {
+    const key = `${nl.dayOfWeek}_${nl.lessonNumber}_${(nl.group || '').trim()}`;
+    const ol = oldMap.get(key);
+    if (!ol) {
+      changes.push(`Добавлена пара №${nl.lessonNumber} (${nl.group || ''}): ${nl.subject}, ауд. ${nl.classroom || '—'}`);
+    } else {
+      if (ol.classroom && nl.classroom && ol.classroom.trim() !== nl.classroom.trim()) {
+        changes.push(`Пара №${nl.lessonNumber} (${nl.group || ''}): кабинет изменён с «${ol.classroom}» на «${nl.classroom}»`);
+      }
+      if (ol.subject && nl.subject && ol.subject.trim() !== nl.subject.trim()) {
+        changes.push(`Пара №${nl.lessonNumber} (${nl.group || ''}): предмет изменён на «${nl.subject}»`);
+      }
+    }
+  });
+
+  if (changes.length > 0) {
+    const title = `⚡ Изменение в расписании (${teacherName || 'Ваша пара'})`;
+    const body = changes.slice(0, 3).join('\n') + (changes.length > 3 ? `\n...и еще ${changes.length - 3}` : '');
+    await showNotification(title, body, `sched_change_${Date.now()}`);
   }
 }
 

@@ -9,12 +9,11 @@ function normalizeGroup(g) {
 
 function getGroupEntries(group) {
   const clean = normalizeGroup(group);
-  const currentTeacher = state.currentTeacher || 'Трипольский';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const currentTeacher = state.currentTeacher || '';
 
   return (state.journalEntries || [])
     .filter((e) => {
-      const matchTeacher = !e.teacher ? isTripolsky : (e.teacher === currentTeacher);
+      const matchTeacher = !currentTeacher || !e.teacher || (e.teacher === currentTeacher);
       const matchGroup = normalizeGroup(e.group) === clean || clean.includes(normalizeGroup(e.group));
       return matchTeacher && matchGroup;
     })
@@ -188,11 +187,10 @@ export function openJournalSummary(group) {
   const modal = document.getElementById('journalSummaryModal');
   if (!modal) return;
 
-  const currentTeacher = state.currentTeacher || 'Трипольский';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const currentTeacher = state.currentTeacher || 'Все преподаватели';
   const subEl = document.querySelector('.summary-header-sub');
   if (subEl) {
-    const subj = isTripolsky ? 'Информатика' : 'Учебная дисциплина';
+    const subj = state.schedule?.subject || 'Учебная дисциплина';
     subEl.textContent = `Преподаватель: ${currentTeacher} • ${subj}`;
   }
 
@@ -205,7 +203,7 @@ export function openJournalSummary(group) {
       });
     }
     (state.journalEntries || []).forEach((e) => {
-      const matchTeacher = !e.teacher ? isTripolsky : (e.teacher === currentTeacher);
+      const matchTeacher = !currentTeacher || !e.teacher || (e.teacher === currentTeacher);
       if (matchTeacher && e.group) groups.add(e.group);
     });
     if (groups.size === 0) {

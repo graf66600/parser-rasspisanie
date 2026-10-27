@@ -5,13 +5,12 @@ import { state } from './state.js';
 import { findProgramForGroup } from './topicHelper.js';
 
 export function calculateGroupStats(group) {
-  const currentTeacher = state.currentTeacher || 'Трипольский';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
-  const prog = isTripolsky ? findProgramForGroup(group) : null;
+  const currentTeacher = state.currentTeacher || '';
+  const prog = findProgramForGroup(group);
 
   const entries = (state.journalEntries || []).filter((e) => {
     if (!e.group || !group) return false;
-    const matchTeacher = !e.teacher ? isTripolsky : (e.teacher === currentTeacher);
+    const matchTeacher = !currentTeacher || !e.teacher || (e.teacher === currentTeacher);
     if (!matchTeacher) return false;
     const cleanG = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
     const cleanEG = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '');
@@ -94,7 +93,7 @@ export function renderJournalStats(group) {
     group = gSel?.value || '51ф';
   }
 
-  const currentTeacher = state.currentTeacher || 'Трипольский';
+  const currentTeacher = state.currentTeacher || '';
   const stats = calculateGroupStats(group);
 
   if (!stats.totalLessons) {

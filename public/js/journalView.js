@@ -25,16 +25,15 @@ export function autoFillTopicForGroup(group, lessonNum) {
   }
   if (!group) return;
 
-  const currentTeacher = state.currentTeacher || 'Трипольский';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const currentTeacher = state.currentTeacher || 'Преподаватель';
   const dateInput = document.getElementById('journalDateInput');
   const date = dateInput?.value || new Date().toISOString().split('T')[0];
   const topicInput = document.getElementById('journalTopicInput');
   const notesInput = document.getElementById('journalNotesInput');
   const courseBadge = document.getElementById('coursePairBadge');
 
-  if (isTripolsky) {
-    const rec = getRecommendedLesson(group, lessonNum, date);
+  const rec = getRecommendedLesson(group, lessonNum, date);
+  if (rec?.text) {
     if (topicInput && rec?.text) topicInput.value = rec.text;
     if (notesInput && rec?.homework) notesInput.value = rec.homework;
     if (courseBadge && rec?.number) {
@@ -145,10 +144,8 @@ export function setupJournalListeners() {
     const topic = topicInput?.value || 'Практическое занятие';
     const notes = document.getElementById('journalNotesInput')?.value || '';
 
-    const currentTeacher = state.currentTeacher || 'Трипольский';
-    const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
-
-    let currentSubject = isTripolsky ? 'Информатика' : 'Учебная дисциплина';
+    const currentTeacher = state.currentTeacher || 'Преподаватель';
+    let currentSubject = state.schedule?.subject || 'Учебная дисциплина';
     const foundLesson = state.schedule?.lessons?.find(
       (l) => l.group === group && Number(l.lessonNumber) === lessonNumber
     );
@@ -157,10 +154,10 @@ export function setupJournalListeners() {
     let courseLessonNumber = 1;
     let entryType = 'theory';
 
-    if (isTripolsky) {
-      const rec = getRecommendedLesson(group, lessonNumber, date);
-      courseLessonNumber = rec?.number || 1;
-      entryType = rec?.type || (topic.toLowerCase().includes('лекци') || topic.toLowerCase().includes('теори') ? 'theory' : 'practice');
+    const rec = getRecommendedLesson(group, lessonNumber, date);
+    if (rec?.text) {
+      courseLessonNumber = rec.number || 1;
+      entryType = rec.type || (topic.toLowerCase().includes('лекци') || topic.toLowerCase().includes('теори') ? 'theory' : 'practice');
     } else {
       const lower = topic.toLowerCase();
       if (lower.includes('практик')) entryType = 'practice';
@@ -186,12 +183,7 @@ export function setupJournalListeners() {
     const subg = subgroupVal ? `_sub${subgroupVal}` : '';
 
     let entryId = `${group}${subg}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
-    if (isTripolsky && !subgroupVal) {
-      const legacyId = `${group}_${date}_${lessonNumber}`;
-      if ((state.journalEntries || []).some((e) => e.id === legacyId)) {
-        entryId = legacyId;
-      }
-    }
+    
 
     const entry = {
       id: entryId,

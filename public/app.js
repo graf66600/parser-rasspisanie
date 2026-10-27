@@ -152,7 +152,17 @@ async function initApp() {
   setupSummaryListeners();
   setupAuthListeners(() => updateAuthModeUI());
   updateAuthModeUI();
-  setupRealtimeSubscription();
+  setupRealtimeSubscription(() => {
+    renderSchedule(onOpenLessonInJournal);
+    updateHeaderStatus();
+    populateGroupSelects(updateJournalStudents);
+  });
+
+  window.addEventListener('pwa_schedule_updated', () => {
+    renderSchedule(onOpenLessonInJournal);
+    updateHeaderStatus();
+    populateGroupSelects(updateJournalStudents);
+  });
   setupKioskEventListeners();
 
   document.getElementById('unlockTeacherBtn')?.addEventListener('click', () => {

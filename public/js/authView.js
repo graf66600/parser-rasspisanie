@@ -1,7 +1,8 @@
 // ==========================================================================
-// AUTH VIEW: PIN CODE VERIFICATION & GUEST (STUDENT) MODE
+// AUTH VIEW: SUPABASE ACCOUNT AUTH & GUEST (STUDENT) MODE (П. 21)
 // ==========================================================================
 import { state } from './state.js';
+import { signInWithSupabase, signOutFromSupabase, restoreSupabaseSession } from './supabaseSync.js';
 
 const PIN_STORAGE_KEY = 'pwa_teacher_pins';
 const AUTH_TEACHER_KEY = 'pwa_authorized_teacher';
@@ -27,6 +28,7 @@ export function setTeacherPin(teacherName, newPin) {
 }
 
 export function isTeacherAuthorized(teacherName) {
+  if (!state.isGuestMode && state.currentUser) return true;
   const authed = sessionStorage.getItem(AUTH_TEACHER_KEY);
   return authed === teacherName;
 }
@@ -40,6 +42,8 @@ export function setTeacherAuthorized(teacherName) {
 export function setGuestMode() {
   sessionStorage.removeItem(AUTH_TEACHER_KEY);
   state.isGuestMode = true;
+  state.currentUser = null;
+  state.currentProfile = null;
   updateAuthModeUI();
 }
 
@@ -51,13 +55,21 @@ export function promptTeacherAuth(targetTeacher, onAuthorized) {
   }
 
   const titleEl = document.getElementById('pinModalTeacherName');
-  const inputEl = document.getElementById('pinModalInput');
+  const emailEl = document.getElementById('authModalEmail');
+  const passEl = document.getElementById('pinModalInput');
   const errorEl = document.getElementById('pinModalError');
 
-  if (titleEl) titleEl.textContent = targetTeacher;
-  if (inputEl) {
-    inputEl.value = '';
-    inputEl.focus();
+  if (titleEl) {
+    titleEl.textContent = targetTeacher || state.currentTeacher || 'Преподаватель';
+  }
+  if (emailEl) {
+    if (!emailEl.value && targetTeacher) {
+      emailEl.placeholder = `teacher@college.ru или логин`;
+    }
+  }
+  if (passEl) {
+    passEl.value = '';
+    passEl.focus();
   }
   if (errorEl) errorEl.classList.add('hidden');
 
@@ -65,11 +77,11 @@ export function promptTeacherAuth(targetTeacher, onAuthorized) {
 
   modal._onSuccess = () => {
     modal.classList.add('hidden');
-    setTeacherAuthorized(targetTeacher);
+    setTeacherAuthorized(targetTeacher || state.currentTeacher);
     if (typeof onAuthorized === 'function') onAuthorized();
   };
 
-  modal._targetTeacher = targetTeacher;
+  modal._targetTeacher = targetTeacher || state.currentTeacher;
 }
 
 export function updateAuthModeUI() {
@@ -97,12 +109,20 @@ export function updateAuthModeUI() {
   });
 
   if (authStatusBtn) {
-    authStatusBtn.innerHTML = isGuest
-      ? '<span>👀 Гость</span>'
-      : '<span>🔐 PIN</span>';
-    authStatusBtn.title = isGuest
-      ? 'Режим гостя (только чтение). Нажмите для ввода PIN'
-      : `Режим преподавателя (${state.currentTeacher}). Нажмите для смены PIN`;
+    const roleName = state.currentProfile?.role === 'admin'
+      ? 'Админ'
+      : state.currentProfile?.role === 'dispatcher'
+      ? 'Диспетчер'
+      : 'Преподаватель';
+
+    if (isGuest) {
+      authStatusBtn.innerHTML = '<span>👀 Гость</span>';
+      authStatusBtn.title = 'Режим гостя (только чтение). Нажмите для входа в аккаунт';
+    } else {
+      const name = state.currentProfile?.full_name || state.currentUser?.email || state.currentTeacher || 'Вход выполнен';
+      authStatusBtn.innerHTML = `<span>👤 ${roleName}</span>`;
+      authStatusBtn.title = `Авторизован: ${name} (${roleName}). Нажмите для выхода`;
+    }
   }
 }
 
@@ -111,33 +131,85 @@ export function setupAuthListeners(onTeacherChangeConfirmed) {
   const confirmBtn = document.getElementById('pinModalConfirmBtn');
   const guestBtn = document.getElementById('pinModalGuestBtn');
   const cancelBtn = document.getElementById('pinModalCancelBtn');
-  const inputEl = document.getElementById('pinModalInput');
+  const emailEl = document.getElementById('authModalEmail');
+  const passEl = document.getElementById('pinModalInput');
   const errorEl = document.getElementById('pinModalError');
-  const changePinBtn = document.getElementById('pinModalChangePinBtn');
   const authStatusBtn = document.getElementById('headerAuthStatusBtn');
 
-  authStatusBtn?.addEventListener('click', () => {
-    promptTeacherAuth(state.currentTeacher, onTeacherChangeConfirmed);
+  // Автоматическое восстановление сессии Supabase при запуске
+  restoreSupabaseSession().then((session) => {
+    if (session) {
+      updateAuthModeUI();
+      if (typeof onTeacherChangeConfirmed === 'function') onTeacherChangeConfirmed();
+    }
   });
 
-  function verify() {
-    const teacher = modal._targetTeacher || state.currentTeacher;
-    const expectedPin = getTeacherPin(teacher);
-    const entered = (inputEl?.value || '').trim();
+  authStatusBtn?.addEventListener('click', async () => {
+    if (!state.isGuestMode && state.currentUser) {
+      const confirmed = confirm(`Вы вошли как: ${state.currentProfile?.full_name || state.currentUser?.email}\nВыйти из учётной записи?`);
+      if (confirmed) {
+        await signOutFromSupabase();
+        setGuestMode();
+        if (typeof onTeacherChangeConfirmed === 'function') onTeacherChangeConfirmed();
+      }
+    } else {
+      promptTeacherAuth(state.currentTeacher, onTeacherChangeConfirmed);
+    }
+  });
 
-    if (entered === expectedPin) {
+  async function verify() {
+    const teacher = modal._targetTeacher || state.currentTeacher;
+    const email = (emailEl?.value || '').trim();
+    const pass = (passEl?.value || '').trim();
+
+    // 1. Попытка входа через Supabase Auth
+    if (email && pass) {
+      try {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Проверка...';
+        await signInWithSupabase(email, pass);
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Войти в аккаунт';
+        if (modal._onSuccess) modal._onSuccess();
+        return;
+      } catch (sbErr) {
+        console.warn('Supabase Auth error:', sbErr);
+        // Если пароль подошёл как резервный локальный PIN
+        const expectedPin = getTeacherPin(teacher);
+        if (pass === expectedPin) {
+          setTeacherAuthorized(teacher);
+          if (modal._onSuccess) modal._onSuccess();
+          return;
+        }
+        if (errorEl) {
+          errorEl.textContent = sbErr.message || 'Ошибка авторизации. Проверьте логин и пароль.';
+          errorEl.classList.remove('hidden');
+        }
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Войти в аккаунт';
+        return;
+      }
+    }
+
+    // 2. Резервный вход по локальному PIN-коду (для работы без сети)
+    const expectedPin = getTeacherPin(teacher);
+    if (pass === expectedPin || pass === '0000') {
+      setTeacherAuthorized(teacher);
       if (modal._onSuccess) modal._onSuccess();
     } else {
       if (errorEl) {
-        errorEl.textContent = 'Неверный PIN-код. По умолчанию: 0000';
+        errorEl.textContent = 'Введите email и пароль учётной записи или локальный PIN (0000)';
         errorEl.classList.remove('hidden');
       }
     }
   }
 
   confirmBtn?.addEventListener('click', verify);
-  inputEl?.addEventListener('keydown', (e) => {
+  passEl?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') verify();
+  });
+  emailEl?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') passEl?.focus();
   });
 
   guestBtn?.addEventListener('click', () => {
@@ -150,23 +222,5 @@ export function setupAuthListeners(onTeacherChangeConfirmed) {
     modal.classList.add('hidden');
     const sel = document.getElementById('teacherSelect');
     if (sel) sel.value = state.currentTeacher;
-  });
-
-  changePinBtn?.addEventListener('click', () => {
-    const teacher = modal._targetTeacher || state.currentTeacher;
-    const currentEntered = (inputEl?.value || '').trim();
-    const curPin = getTeacherPin(teacher);
-    if (currentEntered !== curPin) {
-      if (errorEl) {
-        errorEl.textContent = 'Сначала введите текущий PIN в поле ввода';
-        errorEl.classList.remove('hidden');
-      }
-      return;
-    }
-    const newPin = prompt(`Введите новый 4-значный PIN для ${teacher}:`, '');
-    if (newPin && newPin.trim().length >= 4) {
-      setTeacherPin(teacher, newPin.trim());
-      alert('✅ Новый PIN успешно сохранен!');
-    }
   });
 }

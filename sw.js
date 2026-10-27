@@ -1,9 +1,11 @@
-const CACHE_NAME = 'schedule-pwa-v43';
+const CACHE_NAME = 'schedule-pwa-v44';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
+  './icon-192.png',
+  './icon-512.png',
   './styles.css',
   './css/base.css',
   './css/schedule.css',
@@ -105,8 +107,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Для всех остальных статических ресурсов (CSS, JS, JSON, SVG):
-  // Stale-While-Revalidate — моментальная отдача из кэша (0мс) + фоновое фоновое обновление
+  // 2. Для всех остальных статических ресурсов (CSS, JS, JSON, SVG, PNG):
+  // Stale-While-Revalidate — моментальная отдача из кэша (0мс) + фоновое обновление
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)

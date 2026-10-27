@@ -62,14 +62,14 @@ export async function loadAllSchedulesData() {
   // 3. Fallback на текущее расписание из state или localStorage
   if (!rawData) {
     if (state.schedule?.lessons?.length) {
-      rawData = { [state.currentTeacher || 'Трипольский']: state.schedule.lessons };
+      rawData = { [state.currentTeacher || 'Преподаватель']: state.schedule.lessons };
     } else {
       try {
         const custom = localStorage.getItem('pwa_custom_schedule');
         if (custom) {
           const parsed = JSON.parse(custom);
           if (parsed?.lessons?.length) {
-            rawData = { [state.currentTeacher || 'Трипольский']: parsed.lessons };
+            rawData = { [state.currentTeacher || 'Преподаватель']: parsed.lessons };
           }
         }
       } catch (e) {}

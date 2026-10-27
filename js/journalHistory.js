@@ -28,8 +28,7 @@ export function deleteJournalEntry(id) {
 
 export async function loadJournalHistory() {
   let local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
-  const currentTeacher = state.currentTeacher || 'Трипольский';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const currentTeacher = state.currentTeacher || '';
 
   // Корректируем записи до 14.09.2026 только для Трипольского
   let modified = false;
@@ -123,11 +122,10 @@ export function renderJournalHistory() {
   const container = document.getElementById('journalHistoryList');
   if (!container) return;
 
-  const currentTeacher = state.currentTeacher || 'Трипольский';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
+  const currentTeacher = state.currentTeacher || '';
 
   const teacherEntries = (state.journalEntries || []).filter((e) => {
-    if (!e.teacher) return isTripolsky;
+    if (!currentTeacher || !e.teacher) return true;
     return e.teacher === currentTeacher;
   });
 
