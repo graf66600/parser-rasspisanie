@@ -40,9 +40,7 @@ const STATIC_ASSETS = [
   './js/uploadView.js',
   './data/schedule.json',
   './data/schedules.json',
-  './data/students.json',
   './data/curriculum.json',
-  './data/journal.json',
   './data/teachers.json',
   './data/schedules_all.json',
 ];

@@ -14,3 +14,9 @@ yarn-error.log*
 Thumbs.db
 *.log
 ~$*
+
+# Персональные данные (152-ФЗ)
+data/students.json
+public/data/students.json
+data/journal.json
+public/data/journal.json

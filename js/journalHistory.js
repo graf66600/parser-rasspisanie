@@ -96,17 +96,6 @@ export async function loadJournalHistory() {
       } catch (e) {}
     }
 
-    if (!freshEntries && isTripolsky) {
-      try {
-        let res = await fetch(`./data/journal.json?v=${PWA_VERSION}`);
-        if (!res.ok) res = await fetch(`./public/data/journal.json?v=${PWA_VERSION}`);
-        if (res.ok) {
-          const list = await res.json();
-          if (Array.isArray(list)) freshEntries = list;
-        }
-      } catch (e) {}
-    }
-
     if (freshEntries) {
       const cleaned = freshEntries.filter((e) => {
         if (e.notes === 'Тестовая отметка проведения занятия') return false;

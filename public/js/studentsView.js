@@ -2,6 +2,7 @@
 // STUDENTS MANAGEMENT VIEW
 // ==========================================================================
 import { state } from './state.js';
+import { pushStudentToCloud, deleteStudentFromCloud, pushBulkStudentsToCloud } from './supabaseSync.js';
 
 async function ensureXLSX() {
   if (window.XLSX) return window.XLSX;
@@ -40,6 +41,7 @@ export function renderManageStudents(onStudentsChanged) {
       if (confirm(`Удалить студента ${student}?`)) {
         state.studentsByGroup[group] = state.studentsByGroup[group].filter((s) => s !== student);
         localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
+        deleteStudentFromCloud(group, student);
         renderManageStudents(onStudentsChanged);
         if (typeof onStudentsChanged === 'function') onStudentsChanged();
       }
@@ -65,6 +67,7 @@ export function setupStudentsListeners(onStudentsChanged) {
       state.studentsByGroup[group].push(name);
       state.studentsByGroup[group].sort((a, b) => a.localeCompare(b, 'ru'));
       localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
+      pushStudentToCloud(group, name);
     }
 
     input.value = '';
@@ -81,6 +84,7 @@ export function setupStudentsListeners(onStudentsChanged) {
     const lines = text.split(/\r?\n/).map((l) => l.trim().replace(/^[\d\s\.\,\-\)\(\]]+/, '').trim()).filter((l) => l.length > 0);
     state.studentsByGroup[group] = Array.from(new Set(lines));
     localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
+    pushBulkStudentsToCloud(group, state.studentsByGroup[group]);
 
     textarea.value = '';
     alert(`✅ Список студентов группы ${group} сохранен!`);
@@ -134,6 +138,7 @@ export function setupStudentsListeners(onStudentsChanged) {
         if (names.length > 0) {
           state.studentsByGroup[group] = Array.from(new Set(names));
           localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
+          pushBulkStudentsToCloud(group, state.studentsByGroup[group]);
           alert(`✅ Загружено ${names.length} студентов для группы ${group}!`);
           renderManageStudents(onStudentsChanged);
           if (typeof onStudentsChanged === 'function') onStudentsChanged();

@@ -179,3 +179,58 @@ function handleRealtimePayload(payload) {
     }
   }
 }
+
+export async function fetchRemoteStudents() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/students?select=group_name,full_name&order=group_name.asc,full_name.asc`, { headers: HEADERS });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    const map = {};
+    rows.forEach((r) => {
+      const g = r.group_name;
+      if (!map[g]) map[g] = [];
+      if (!map[g].includes(r.full_name)) map[g].push(r.full_name);
+    });
+    return map;
+  } catch (e) {
+    console.warn('⚠️ Supabase fetchRemoteStudents error:', e);
+    return null;
+  }
+}
+
+export async function pushStudentToCloud(group, studentName) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/students?on_conflict=group_name,full_name`, {
+      method: 'POST',
+      headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({ group_name: group, full_name: studentName }),
+    });
+  } catch (e) {
+    console.warn('⚠️ Supabase pushStudentToCloud error:', e);
+  }
+}
+
+export async function pushBulkStudentsToCloud(group, studentNames) {
+  try {
+    const rows = studentNames.map((name) => ({ group_name: group, full_name: name }));
+    await fetch(`${SUPABASE_URL}/rest/v1/students?on_conflict=group_name,full_name`, {
+      method: 'POST',
+      headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify(rows),
+    });
+  } catch (e) {
+    console.warn('⚠️ Supabase pushBulkStudentsToCloud error:', e);
+  }
+}
+
+export async function deleteStudentFromCloud(group, studentName) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/students?group_name=eq.${encodeURIComponent(group)}&full_name=eq.${encodeURIComponent(studentName)}`, {
+      method: 'DELETE',
+      headers: HEADERS,
+    });
+  } catch (e) {
+    console.warn('⚠️ Supabase deleteStudentFromCloud error:', e);
+  }
+}

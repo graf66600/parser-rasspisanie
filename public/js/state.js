@@ -2,49 +2,38 @@
 // STATE MANAGEMENT & DATA LOADERS
 // ==========================================================================
 import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames } from './cacheHelper.js';
+import { fetchRemoteStudents } from './supabaseSync.js';
 export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames };
 
 export const DAY_NAMES = {
-  1: 'Понедельник',
-  2: 'Вторник',
-  3: 'Среда',
-  4: 'Четверг',
-  5: 'Пятница',
-  6: 'Суббота',
-  7: 'Воскресенье',
+  1: 'Понедельник', 2: 'Вторник', 3: 'Среда', 4: 'Четверг',
+  5: 'Пятница', 6: 'Суббота', 7: 'Воскресенье',
 };
 
-if (typeof window !== 'undefined' && !window.__PWA_STATE__) {
-  window.__PWA_STATE__ = {
-    currentTeacher: 'Трипольский',
-    teachersList: ['Трипольский'],
-    schedule: null,
-    activeDay: 'today',
-    bells: [
-      { lessonNumber: 1, startTime: '08:00', endTime: '09:20' },
-      { lessonNumber: 2, startTime: '09:30', endTime: '10:50' },
-      { lessonNumber: 3, startTime: '11:00', endTime: '12:20' },
-      { lessonNumber: 4, startTime: '13:00', endTime: '14:20' },
-      { lessonNumber: 5, startTime: '14:30', endTime: '15:50' },
-      { lessonNumber: 6, startTime: '16:00', endTime: '17:20' },
-      { lessonNumber: 7, startTime: '17:30', endTime: '18:50' },
-    ],
-    studentsByGroup: {},
-    journalEntries: [],
-    curriculumPrograms: [],
-  };
-}
-
-export const state = typeof window !== 'undefined' ? window.__PWA_STATE__ : {
+const createDefaultState = () => ({
   currentTeacher: 'Трипольский',
   teachersList: ['Трипольский'],
   schedule: null,
   activeDay: 'today',
-  bells: [],
+  bells: [
+    { lessonNumber: 1, startTime: '08:00', endTime: '09:20' },
+    { lessonNumber: 2, startTime: '09:30', endTime: '10:50' },
+    { lessonNumber: 3, startTime: '11:00', endTime: '12:20' },
+    { lessonNumber: 4, startTime: '13:00', endTime: '14:20' },
+    { lessonNumber: 5, startTime: '14:30', endTime: '15:50' },
+    { lessonNumber: 6, startTime: '16:00', endTime: '17:20' },
+    { lessonNumber: 7, startTime: '17:30', endTime: '18:50' },
+  ],
   studentsByGroup: {},
   journalEntries: [],
   curriculumPrograms: [],
-};
+});
+
+if (typeof window !== 'undefined' && !window.__PWA_STATE__) {
+  window.__PWA_STATE__ = createDefaultState();
+}
+
+export const state = typeof window !== 'undefined' ? window.__PWA_STATE__ : createDefaultState();
 
 export function updateHeaderStatus() {
   const statusEl = document.getElementById('headerCurrentStatus');
@@ -245,22 +234,40 @@ export async function loadSchedule(onScheduleLoaded, targetTeacher = state.curre
 
 export async function loadStudents(onStudentsLoaded) {
   try {
-    let freshStudents = null;
+    let fresh = null;
     if (!isStaticHost) {
       const apiData = await safeFetchJson('./api/students', 1500);
-      if (apiData?.success && apiData.studentsByGroup) {
-        freshStudents = apiData.studentsByGroup;
+      if (apiData?.success && apiData.studentsByGroup) fresh = apiData.studentsByGroup;
+    }
+    const [base, remote] = await Promise.all([
+      Promise.resolve(null),
+      fetchRemoteStudents(),
+    ]);
+
+    const merged = { ...(base || {}) };
+    [remote, fresh, state.studentsByGroup].forEach((src) => {
+      if (src) {
+        Object.keys(src).forEach((g) => {
+          if (Array.isArray(src[g]) && src[g].length > 0) merged[g] = src[g];
+        });
       }
+    });
+
+    if (Array.isArray(state.journalEntries)) {
+      state.journalEntries.forEach((e) => {
+        if (e.group && e.attendance) {
+          if (!merged[e.group]) merged[e.group] = [];
+          Object.keys(e.attendance).forEach((n) => {
+            const clean = n.trim();
+            if (clean && !merged[e.group].includes(clean)) merged[e.group].push(clean);
+          });
+          merged[e.group].sort((a, b) => a.localeCompare(b, 'ru'));
+        }
+      });
     }
 
-    if (!freshStudents && (!state.studentsByGroup || Object.keys(state.studentsByGroup).length === 0)) {
-      freshStudents = await safeFetchJson(`./data/students.json?v=${PWA_VERSION}`, 3000);
-    }
-
-    if (freshStudents) {
-      state.studentsByGroup = freshStudents;
-      localStorage.setItem('pwa_custom_students', JSON.stringify(freshStudents));
-    }
+    state.studentsByGroup = merged;
+    localStorage.setItem('pwa_custom_students', JSON.stringify(merged));
   } catch (err) {
     console.warn('Использованы локальные студенты:', err);
   }
