@@ -153,7 +153,6 @@ export function renderSchedule(onOpenJournal) {
           <span class="classroom-icon">📍</span>
           <span class="classroom-text">${lesson.classroom || 'Кабинет не указан'}</span>
         </div>
-        ${isTripolsky ? `
         <button class="open-journal-btn"
           data-group="${lesson.group || ''}"
           data-lesson="${lesson.lessonNumber}"
@@ -161,9 +160,6 @@ export function renderSchedule(onOpenJournal) {
           title="Открыть эту пару в журнале">
           <span>📝 В журнал</span>
         </button>
-        ` : `
-        <span class="text-[11px] font-medium text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-md">${lesson.teacher || state.currentTeacher}</span>
-        `}
       </div>
     `;
 

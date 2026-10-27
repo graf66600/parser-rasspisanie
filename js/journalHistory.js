@@ -29,6 +29,7 @@ export function deleteJournalEntry(id) {
 export async function loadJournalHistory() {
   let local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
   const currentTeacher = state.currentTeacher || '';
+  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
 
   // Корректируем записи до 14.09.2026 только для Трипольского
   let modified = false;
