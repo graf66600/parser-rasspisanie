@@ -385,13 +385,17 @@ export async function signOutFromSupabase() {
 }
 
 export async function restoreSupabaseSession() {
+  const isAdmin = typeof localStorage !== 'undefined'
+    && localStorage.getItem('pwa_admin_authorized') === 'true'
+    && localStorage.getItem('pwa_auth_role') === 'admin';
   const isExplicitGuest = typeof localStorage !== 'undefined' && localStorage.getItem('pwa_is_guest') === 'true';
+
   const client = getSupabaseClient();
   if (!client) {
-    if (!isExplicitGuest) {
+    if (isAdmin && !isExplicitGuest) {
       state.isGuestMode = false;
-      state.currentProfile = state.currentProfile || { id: 'admin-local', full_name: state.currentTeacher || 'Администратор', role: 'admin' };
-      state.currentUser = state.currentUser || { id: 'admin-local', email: 'admin@college.local' };
+      state.currentProfile = state.currentProfile || { id: 'admin-master', full_name: state.currentTeacher || 'Администратор', role: 'admin' };
+      state.currentUser = state.currentUser || { id: 'admin-master', email: 'admin@college.local' };
     }
     return null;
   }
@@ -400,10 +404,10 @@ export async function restoreSupabaseSession() {
     const { data: sessionData } = await client.auth.getSession();
     const session = sessionData?.session;
     if (!session?.user) {
-      if (!isExplicitGuest) {
+      if (isAdmin && !isExplicitGuest) {
         state.isGuestMode = false;
-        state.currentProfile = state.currentProfile || { id: 'admin-local', full_name: state.currentTeacher || 'Администратор', role: 'admin' };
-        state.currentUser = state.currentUser || { id: 'admin-local', email: 'admin@college.local' };
+        state.currentProfile = state.currentProfile || { id: 'admin-master', full_name: state.currentTeacher || 'Администратор', role: 'admin' };
+        state.currentUser = state.currentUser || { id: 'admin-master', email: 'admin@college.local' };
       } else {
         state.isGuestMode = true;
       }
@@ -418,7 +422,7 @@ export async function restoreSupabaseSession() {
       .maybeSingle();
 
     state.currentUser = user;
-    state.currentProfile = profile || { id: user.id, full_name: user.email, role: 'admin' };
+    state.currentProfile = profile || { id: user.id, full_name: user.email, role: 'teacher' };
     state.isGuestMode = false;
 
     if (profile?.full_name) {
@@ -427,7 +431,11 @@ export async function restoreSupabaseSession() {
 
     return { user, profile: state.currentProfile };
   } catch (e) {
-    state.isGuestMode = isExplicitGuest;
+    if (isAdmin && !isExplicitGuest) {
+      state.isGuestMode = false;
+    } else {
+      state.isGuestMode = true;
+    }
     return null;
   }
 }

@@ -28,9 +28,9 @@ const createDefaultState = () => ({
   studentsByGroup: {},
   journalEntries: [],
   curriculumPrograms: [],
-  currentUser: { id: 'admin-local', email: 'admin@college.local' },
-  currentProfile: { id: 'admin-local', full_name: 'Администратор', role: 'admin' },
-  isGuestMode: false,
+  currentUser: null,
+  currentProfile: null,
+  isGuestMode: true,
 });
 
 if (typeof window !== 'undefined' && !window.__PWA_STATE__) {
@@ -203,22 +203,25 @@ export function initLocalState() {
   } catch (e) {}
 
   try {
+    const isAdmin = localStorage.getItem('pwa_admin_authorized') === 'true' && localStorage.getItem('pwa_auth_role') === 'admin';
     const isExplicitGuest = localStorage.getItem('pwa_is_guest') === 'true';
-    if (isExplicitGuest) {
+
+    if (isAdmin && !isExplicitGuest) {
+      state.isGuestMode = false;
+      state.currentUser = { id: 'admin-master', email: 'admin@college.local' };
+      state.currentProfile = {
+        id: 'admin-master',
+        full_name: state.currentTeacher || 'Администратор',
+        role: 'admin',
+      };
+    } else {
       state.isGuestMode = true;
       state.currentUser = null;
       state.currentProfile = null;
-    } else {
-      state.isGuestMode = false;
-      const savedRole = localStorage.getItem('pwa_auth_role') || 'admin';
-      state.currentUser = state.currentUser || { id: 'admin-local', email: 'admin@college.local' };
-      state.currentProfile = state.currentProfile || {
-        id: 'admin-local',
-        full_name: state.currentTeacher || 'Администратор',
-        role: savedRole,
-      };
     }
-  } catch (e) {}
+  } catch (e) {
+    state.isGuestMode = true;
+  }
 }
 
 export async function loadTeachers(onTeachersLoaded) {
