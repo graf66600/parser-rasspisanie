@@ -45,14 +45,59 @@
 }
 
 .schedule-notif-bar {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-  border: 1px solid rgba(51, 65, 85, 0.6);
-  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.92));
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 16px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.notif-toggle-pill {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
+.notif-toggle-on {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.notif-toggle-on:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.notif-toggle-off {
+  background: rgba(51, 65, 85, 0.6);
+  color: #cbd5e1;
+  border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.notif-toggle-off:hover {
+  background: rgba(71, 85, 105, 0.8);
+  color: #ffffff;
+}
+
+.notif-time-select {
+  background: rgba(15, 23, 42, 0.8);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
 }
 
 .notif-action-btn {
@@ -66,9 +111,111 @@
   cursor: pointer;
   transition: all 0.15s ease;
   touch-action: manipulation;
+  white-space: nowrap;
 }
 
 .notif-action-btn:hover {
   background: rgba(37, 99, 235, 0.35);
   color: #ffffff;
+}
+
+/* ==========================================================================
+   IN-APP TOAST NOTIFICATION BANNER
+   ========================================================================== */
+
+.pwa-toast-container {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.pwa-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.65), 0 0 18px rgba(59, 130, 246, 0.2);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.pwa-toast-enter {
+  transform: translateY(-24px);
+  opacity: 0;
+}
+
+.pwa-toast-leave {
+  transform: translateY(-24px);
+  opacity: 0;
+}
+
+.pwa-toast-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(99, 102, 241, 0.2));
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.pwa-toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-toast-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.pwa-toast-desc {
+  font-size: 11px;
+  font-weight: 500;
+  color: #cbd5e1;
+  margin-top: 2px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.pwa-toast-sub {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #60a5fa;
+  margin-top: 3px;
+  word-break: break-word;
+}
+
+.pwa-toast-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.pwa-toast-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
 }

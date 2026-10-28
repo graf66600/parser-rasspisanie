@@ -14,20 +14,20 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
-  <link rel="stylesheet" href="./styles.css?v=48">
-  <link rel="stylesheet" href="./css/base.css?v=48">
-  <link rel="stylesheet" href="./css/schedule.css?v=48">
-  <link rel="stylesheet" href="./css/notifications.css?v=48">
-  <link rel="stylesheet" href="./css/journal.css?v=48">
-  <link rel="stylesheet" href="./css/journalStats.css?v=48">
-  <link rel="stylesheet" href="./css/attendance.css?v=48">
-  <link rel="stylesheet" href="./css/history.css?v=48">
-  <link rel="stylesheet" href="./css/modals.css?v=48">
-  <link rel="stylesheet" href="./css/journalSummary.css?v=48">
-  <link rel="stylesheet" href="./css/kiosk.css?v=48">
-  <link rel="stylesheet" href="./css/kioskCards.css?v=48">
-  <link rel="stylesheet" href="./css/kioskSchedule.css?v=48">
-  <link rel="stylesheet" href="./css/ambientBackground.css?v=48">
+  <link rel="stylesheet" href="./styles.css?v=49">
+  <link rel="stylesheet" href="./css/base.css?v=49">
+  <link rel="stylesheet" href="./css/schedule.css?v=49">
+  <link rel="stylesheet" href="./css/notifications.css?v=49">
+  <link rel="stylesheet" href="./css/journal.css?v=49">
+  <link rel="stylesheet" href="./css/journalStats.css?v=49">
+  <link rel="stylesheet" href="./css/attendance.css?v=49">
+  <link rel="stylesheet" href="./css/history.css?v=49">
+  <link rel="stylesheet" href="./css/modals.css?v=49">
+  <link rel="stylesheet" href="./css/journalSummary.css?v=49">
+  <link rel="stylesheet" href="./css/kiosk.css?v=49">
+  <link rel="stylesheet" href="./css/kioskCards.css?v=49">
+  <link rel="stylesheet" href="./css/kioskSchedule.css?v=49">
+  <link rel="stylesheet" href="./css/ambientBackground.css?v=49">
   <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <script defer src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -124,20 +124,30 @@
 
       <!-- Панель уведомлений и напоминаний -->
       <div id="scheduleNotifBanner" class="schedule-notif-bar">
-        <div class="flex items-center gap-2.5 min-w-0">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1">
           <span class="text-base flex-shrink-0">🔔</span>
-          <div class="min-w-0">
-            <div class="text-xs font-bold text-white leading-tight">Уведомления о парах</div>
-            <p class="text-[11px] text-slate-400 truncate" id="notifStatusText">Напоминание за 10 мин до начала с темой пары</p>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-white leading-tight">Уведомления о парах</span>
+              <button type="button" id="bannerToggleNotifBtn" class="notif-toggle-pill notif-toggle-off" title="Включить или выключить напоминания">
+                Включить
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400 truncate mt-0.5" id="notifStatusText">Напоминание с темой пары и кабинетом</p>
           </div>
         </div>
         <div class="flex items-center gap-1.5 flex-shrink-0">
-          <button type="button" id="testNotificationBtn" class="notif-action-btn" title="Проверить показ уведомления">
+          <select id="notifLeadTimeSelect" class="notif-time-select" title="За сколько минут напоминать о паре">
+            <option value="5">за 5 мин</option>
+            <option value="10" selected>за 10 мин</option>
+            <option value="15">за 15 мин</option>
+            <option value="0">в момент звонка</option>
+          </select>
+          <button type="button" id="testNotificationBtn" class="notif-action-btn" title="Проверить звук и показ уведомления">
             🧪 Тест
           </button>
         </div>
       </div>
-
       <div class="flex items-center justify-between px-1">
         <h2 id="scheduleDayTitle" class="text-sm font-bold text-slate-200 uppercase tracking-wider">Сегодня</h2>
         <span id="scheduleTotalLessons" class="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">0 пар</span>
@@ -585,6 +595,6 @@
     </nav>
   </div>
 
-  <script type="module" src="./app.js?v=48"></script>
+  <script type="module" src="./app.js?v=49"></script>
 </body>
 </html>

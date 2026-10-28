@@ -14,11 +14,16 @@ import { setupKioskEventListeners } from './js/kioskView.js';
 
 // Инициализация PWA и Service Worker с безопасной фоновой регистрацией
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`./sw.js?v=${PWA_VERSION}`).then((reg) => {
+  const registerServiceWorker = () => {
+    navigator.serviceWorker.register(./sw.js?v=).then((reg) => {
       reg.update().catch(() => {});
     }).catch(() => {});
-  });
+  };
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    registerServiceWorker();
+  } else {
+    window.addEventListener('load', registerServiceWorker);
+  }
 
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     window.location.reload();

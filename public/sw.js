@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v48';
+const CACHE_NAME = 'schedule-pwa-v49';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -30,6 +30,8 @@ const STATIC_ASSETS = [
   './js/supabaseSync.js',
   './js/scheduleView.js',
   './js/notifications.js',
+  './js/notificationAudio.js',
+  './js/notificationToast.js',
   './js/journalView.js',
   './js/journalEdit.js',
   './js/journalCard.js',
@@ -128,14 +130,37 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || './';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if ('focus' in client) return client.focus();
+        if ('focus' in client) {
+          return client.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow('./');
+      if (clients.openWindow) return clients.openWindow(targetUrl);
     })
   );
+});
+
+self.addEventListener('push', (event) => {
+  let data = { title: '🔔 Расписание', body: 'Напоминание о занятии' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+  const options = {
+    body: data.body,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: data.tag || 'schedule-alert',
+    renotify: true,
+    data: data.data || { url: './' },
+  };
+  event.waitUntil(self.registration.showNotification(data.title || '🔔 Расписание', options));
 });
 
 self.addEventListener('message', (event) => {
