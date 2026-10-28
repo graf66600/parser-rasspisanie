@@ -303,6 +303,38 @@ function handleJournalRealtimePayload(payload) {
 // ==========================================================================
 // SUPABASE AUTH & РОЛИ ПОЛЬЗОВАТЕЛЕЙ (П. 21)
 // ==========================================================================
+export async function signUpWithSupabase(email, password, fullName) {
+  const client = getSupabaseClient();
+  if (!client) {
+    throw new Error('Supabase клиент недоступен');
+  }
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName || email,
+        role: 'admin',
+      },
+    },
+  });
+  if (error) throw error;
+  if (data?.user) {
+    state.currentUser = data.user;
+    state.currentProfile = {
+      id: data.user.id,
+      full_name: fullName || data.user.email,
+      role: 'admin',
+    };
+    state.isGuestMode = false;
+    try {
+      localStorage.setItem('pwa_auth_role', 'admin');
+      localStorage.removeItem('pwa_is_guest');
+    } catch (e) {}
+  }
+  return data;
+}
+
 export async function signInWithSupabase(email, password) {
   const client = getSupabaseClient();
   if (!client) {
@@ -353,14 +385,28 @@ export async function signOutFromSupabase() {
 }
 
 export async function restoreSupabaseSession() {
+  const isExplicitGuest = typeof localStorage !== 'undefined' && localStorage.getItem('pwa_is_guest') === 'true';
   const client = getSupabaseClient();
-  if (!client) return null;
+  if (!client) {
+    if (!isExplicitGuest) {
+      state.isGuestMode = false;
+      state.currentProfile = state.currentProfile || { id: 'admin-local', full_name: state.currentTeacher || 'Администратор', role: 'admin' };
+      state.currentUser = state.currentUser || { id: 'admin-local', email: 'admin@college.local' };
+    }
+    return null;
+  }
 
   try {
     const { data: sessionData } = await client.auth.getSession();
     const session = sessionData?.session;
     if (!session?.user) {
-      state.isGuestMode = true;
+      if (!isExplicitGuest) {
+        state.isGuestMode = false;
+        state.currentProfile = state.currentProfile || { id: 'admin-local', full_name: state.currentTeacher || 'Администратор', role: 'admin' };
+        state.currentUser = state.currentUser || { id: 'admin-local', email: 'admin@college.local' };
+      } else {
+        state.isGuestMode = true;
+      }
       return null;
     }
 
@@ -372,7 +418,7 @@ export async function restoreSupabaseSession() {
       .maybeSingle();
 
     state.currentUser = user;
-    state.currentProfile = profile || { id: user.id, full_name: user.email, role: 'teacher' };
+    state.currentProfile = profile || { id: user.id, full_name: user.email, role: 'admin' };
     state.isGuestMode = false;
 
     if (profile?.full_name) {
@@ -381,7 +427,7 @@ export async function restoreSupabaseSession() {
 
     return { user, profile: state.currentProfile };
   } catch (e) {
-    state.isGuestMode = true;
+    state.isGuestMode = isExplicitGuest;
     return null;
   }
 }

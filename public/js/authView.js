@@ -2,7 +2,7 @@
 // AUTH VIEW: SUPABASE ACCOUNT AUTH & GUEST (STUDENT) MODE (П. 21)
 // ==========================================================================
 import { state } from './state.js';
-import { signInWithSupabase, signOutFromSupabase, restoreSupabaseSession } from './supabaseSync.js';
+import { signInWithSupabase, signUpWithSupabase, signOutFromSupabase, restoreSupabaseSession } from './supabaseSync.js';
 
 const PIN_STORAGE_KEY = 'pwa_teacher_pins';
 const AUTH_TEACHER_KEY = 'pwa_authorized_teacher';
@@ -33,14 +33,57 @@ export function isTeacherAuthorized(teacherName) {
   return authed === teacherName;
 }
 
+export function setAdminAuthorized(name) {
+  const adminName = name || state.currentTeacher || 'Администратор';
+  state.isGuestMode = false;
+  state.currentUser = {
+    id: 'admin-master',
+    email: 'admin@college.local',
+  };
+  state.currentProfile = {
+    id: 'admin-master',
+    full_name: adminName,
+    role: 'admin',
+  };
+  sessionStorage.setItem(AUTH_TEACHER_KEY, adminName);
+  try {
+    localStorage.setItem('pwa_auth_role', 'admin');
+    localStorage.setItem('pwa_admin_authorized', 'true');
+    localStorage.removeItem('pwa_is_guest');
+  } catch (e) {}
+  updateAuthModeUI();
+  return true;
+}
+
+if (typeof window !== 'undefined') {
+  window.setAdminAuthorized = setAdminAuthorized;
+  window.giveAdminAccess = setAdminAuthorized;
+}
+
 export function setTeacherAuthorized(teacherName) {
   sessionStorage.setItem(AUTH_TEACHER_KEY, teacherName);
+  try {
+    localStorage.removeItem('pwa_is_guest');
+    localStorage.setItem('pwa_authorized_teacher', teacherName);
+  } catch (e) {}
   state.isGuestMode = false;
+  if (!state.currentProfile) {
+    state.currentProfile = {
+      id: 'teacher-local',
+      full_name: teacherName,
+      role: 'teacher',
+    };
+  }
   updateAuthModeUI();
 }
 
 export function setGuestMode() {
   sessionStorage.removeItem(AUTH_TEACHER_KEY);
+  try {
+    localStorage.setItem('pwa_is_guest', 'true');
+    localStorage.removeItem('pwa_auth_role');
+    localStorage.removeItem('pwa_admin_authorized');
+  } catch (e) {}
   state.isGuestMode = true;
   state.currentUser = null;
   state.currentProfile = null;
@@ -109,7 +152,8 @@ export function updateAuthModeUI() {
   });
 
   if (authStatusBtn) {
-    const roleName = state.currentProfile?.role === 'admin'
+    const isAdmin = state.currentProfile?.role === 'admin';
+    const roleName = isAdmin
       ? 'Админ'
       : state.currentProfile?.role === 'dispatcher'
       ? 'Диспетчер'
@@ -118,10 +162,16 @@ export function updateAuthModeUI() {
     if (isGuest) {
       authStatusBtn.innerHTML = '<span>👀 Гость</span>';
       authStatusBtn.title = 'Режим гостя (только чтение). Нажмите для входа в аккаунт';
+      authStatusBtn.classList.remove('is-admin');
+    } else if (isAdmin) {
+      authStatusBtn.innerHTML = '<span>👑 Админ</span>';
+      authStatusBtn.title = `Администратор: ${state.currentProfile?.full_name || state.currentTeacher} (полный доступ к журналу). Нажмите для смены роли`;
+      authStatusBtn.classList.add('is-admin');
     } else {
       const name = state.currentProfile?.full_name || state.currentUser?.email || state.currentTeacher || 'Вход выполнен';
       authStatusBtn.innerHTML = `<span>👤 ${roleName}</span>`;
       authStatusBtn.title = `Авторизован: ${name} (${roleName}). Нажмите для выхода`;
+      authStatusBtn.classList.remove('is-admin');
     }
   }
 }
@@ -145,9 +195,10 @@ export function setupAuthListeners(onTeacherChangeConfirmed) {
   });
 
   authStatusBtn?.addEventListener('click', async () => {
-    if (!state.isGuestMode && state.currentUser) {
-      const confirmed = confirm(`Вы вошли как: ${state.currentProfile?.full_name || state.currentUser?.email}\nВыйти из учётной записи?`);
-      if (confirmed) {
+    if (!state.isGuestMode) {
+      const role = state.currentProfile?.role === 'admin' ? 'Администратор' : 'Преподаватель';
+      const changeMode = confirm(`Вы авторизованы как: ${state.currentProfile?.full_name || state.currentTeacher} (${role}).\n\nНажмите OK, чтобы переключиться в режим гостя (только чтение).\nНажмите Отмена, чтобы остаться с полным доступом.`);
+      if (changeMode) {
         await signOutFromSupabase();
         setGuestMode();
         if (typeof onTeacherChangeConfirmed === 'function') onTeacherChangeConfirmed();
@@ -205,6 +256,48 @@ export function setupAuthListeners(onTeacherChangeConfirmed) {
   }
 
   confirmBtn?.addEventListener('click', verify);
+
+  const adminBtn = document.getElementById('pinModalAdminBtn');
+  adminBtn?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    setAdminAuthorized(modal._targetTeacher || state.currentTeacher);
+    if (typeof onTeacherChangeConfirmed === 'function') onTeacherChangeConfirmed();
+  });
+
+  const guestAdminBtn = document.getElementById('guestAdminUnlockBtn');
+  guestAdminBtn?.addEventListener('click', () => {
+    setAdminAuthorized(state.currentTeacher);
+    if (typeof onTeacherChangeConfirmed === 'function') onTeacherChangeConfirmed();
+  });
+
+  const signUpBtn = document.getElementById('pinModalSignUpBtn');
+  signUpBtn?.addEventListener('click', async () => {
+    const email = (emailEl?.value || '').trim();
+    const pass = (passEl?.value || '').trim();
+    if (!email || !pass || pass.length < 6) {
+      if (errorEl) {
+        errorEl.textContent = 'Для регистрации введите email и пароль (минимум 6 знаков)';
+        errorEl.classList.remove('hidden');
+      }
+      return;
+    }
+    try {
+      signUpBtn.disabled = true;
+      signUpBtn.textContent = 'Регистрация...';
+      await signUpWithSupabase(email, pass, modal._targetTeacher || state.currentTeacher);
+      signUpBtn.disabled = false;
+      signUpBtn.textContent = 'Регистрация';
+      alert('Учётная запись зарегистрирована! Вы вошли с правами администратора.');
+      if (modal._onSuccess) modal._onSuccess();
+    } catch (err) {
+      signUpBtn.disabled = false;
+      signUpBtn.textContent = 'Регистрация';
+      if (errorEl) {
+        errorEl.textContent = err.message || 'Ошибка регистрации в Supabase';
+        errorEl.classList.remove('hidden');
+      }
+    }
+  });
   passEl?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') verify();
   });

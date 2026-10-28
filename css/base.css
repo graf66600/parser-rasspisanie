@@ -284,3 +284,15 @@ main {
 .flex { display: flex; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+
+.auth-status-pill.is-admin {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25) !important;
+}
+.auth-status-pill.is-admin:hover {
+  background: rgba(245, 158, 11, 0.3) !important;
+  border-color: rgba(245, 158, 11, 0.6) !important;
+  color: #fef3c7 !important;
+}

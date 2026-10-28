@@ -28,9 +28,9 @@ const createDefaultState = () => ({
   studentsByGroup: {},
   journalEntries: [],
   curriculumPrograms: [],
-  currentUser: null,
-  currentProfile: null,
-  isGuestMode: true,
+  currentUser: { id: 'admin-local', email: 'admin@college.local' },
+  currentProfile: { id: 'admin-local', full_name: 'Администратор', role: 'admin' },
+  isGuestMode: false,
 });
 
 if (typeof window !== 'undefined' && !window.__PWA_STATE__) {
@@ -199,6 +199,24 @@ export function initLocalState() {
     if (cachedJournal) {
       const list = JSON.parse(cachedJournal);
       if (Array.isArray(list)) state.journalEntries = list;
+    }
+  } catch (e) {}
+
+  try {
+    const isExplicitGuest = localStorage.getItem('pwa_is_guest') === 'true';
+    if (isExplicitGuest) {
+      state.isGuestMode = true;
+      state.currentUser = null;
+      state.currentProfile = null;
+    } else {
+      state.isGuestMode = false;
+      const savedRole = localStorage.getItem('pwa_auth_role') || 'admin';
+      state.currentUser = state.currentUser || { id: 'admin-local', email: 'admin@college.local' };
+      state.currentProfile = state.currentProfile || {
+        id: 'admin-local',
+        full_name: state.currentTeacher || 'Администратор',
+        role: savedRole,
+      };
     }
   } catch (e) {}
 }
