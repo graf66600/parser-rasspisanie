@@ -15,7 +15,7 @@ import { setupKioskEventListeners } from './js/kioskView.js';
 // Инициализация PWA и Service Worker с безопасной фоновой регистрацией
 if ('serviceWorker' in navigator) {
   const registerServiceWorker = () => {
-    navigator.serviceWorker.register(./sw.js?v=).then((reg) => {
+    navigator.serviceWorker.register('./sw.js?v=' + PWA_VERSION).then((reg) => {
       reg.update().catch(() => {});
     }).catch(() => {});
   };

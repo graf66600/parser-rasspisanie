@@ -9,7 +9,8 @@
     "dev": "tsx watch src/index.ts",
     "test:parser": "tsx src/testParser.ts",
     "test:pdf": "tsx src/testPdfParser.ts",
-    "test": "npm run test:parser && npm run test:pdf",
+    "test": "npm run test:client && npm run test:parser && npm run test:pdf",
+    "test:client": "node --experimental-vm-modules --test tests/client-syntax.cjs tests/schedule-startup.cjs",
     "apply:schedule": "tsx src/scripts/applySchedule.ts"
   },
   "keywords": [

@@ -53,6 +53,7 @@ export async function showNotification(title, body, tag = 'general', customData 
     console.warn('SW notification fallback:', swErr);
   }
 
+  try {
     new Notification(title, options);
     return true;
   } catch (err) {
