@@ -137,6 +137,7 @@ export function initLocalState() {
     const ver = localStorage.getItem('pwa_version');
     if (ver !== PWA_VERSION) {
       localStorage.removeItem('pwa_custom_schedule');
+      localStorage.removeItem('pwa_teachers_list');
       localStorage.removeItem('pwa_kiosk_schedules_all');
       localStorage.removeItem('pwa_kiosk_groups_cache');
       localStorage.setItem('pwa_version', PWA_VERSION);

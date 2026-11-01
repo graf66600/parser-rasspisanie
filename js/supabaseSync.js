@@ -5,6 +5,7 @@ import { state, DAY_NAMES } from './state.js';
 import { renderJournalHistory } from './journalHistory.js';
 import { renderJournalStats } from './journalStats.js';
 import { notifyScheduleChanges } from './notifications.js';
+import { canUseRemoteSchedule } from './scheduleFreshness.js';
 
 export const SUPABASE_URL = (typeof localStorage !== 'undefined' && localStorage.getItem('raspisanie-supabase-url'))
   || 'https://qyfbteaaglcrglgsbbez.supabase.co';
@@ -113,6 +114,7 @@ export async function fetchRemoteScheduleData() {
     if (!Array.isArray(rows) || rows.length === 0 || !rows[0].data) return null;
 
     const row = rows[0];
+    if (!await canUseRemoteSchedule(row.updated_at)) return null;
     const converted = convertAppDataToPwa(row.data);
 
     if (converted.teachersList.length > 0) {
@@ -168,9 +170,9 @@ export function setupRealtimeSubscription(onScheduleUpdated) {
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'schedule_data', filter: 'id=eq.default' },
-          (payload) => {
+          async (payload) => {
             const row = payload.new;
-            if (row?.data) {
+            if (row?.data && await canUseRemoteSchedule(row.updated_at)) {
               handleScheduleRealtimePayload(row.data, onScheduleUpdated);
             }
           }
