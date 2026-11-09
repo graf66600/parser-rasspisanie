@@ -1,5 +1,5 @@
 // ==========================================================================
-// SCHEDULE UPLOAD VIEW (MULTI-FILE EXCEL & PDF SUPPORT)
+// SCHEDULE UPLOAD VIEW (MULTI-FILE EXCEL, PDF & CAMERA PHOTO SUPPORT)
 // ==========================================================================
 
 export async function ensureXLSX() {
@@ -42,7 +42,6 @@ export async function handleFiles(filesList, onUploadSuccess) {
   sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3); color: #60a5fa; font-size: 12px;';
   sStatus.textContent = `⏳ Обработка и слияние файлов (${files.length}): ${fileNames}...`;
 
-  // Отправляем все файлы через FormData на бэкенд
   try {
     const formData = new FormData();
     formData.append('mode', mode);
@@ -77,7 +76,6 @@ export async function handleFiles(filesList, onUploadSuccess) {
     console.warn('Серверный API загрузки недоступен:', e);
   }
 
-  // Если серверный API недоступен (GitHub Pages)
   sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 12px;';
   sStatus.innerHTML = `
     <div class="font-bold">ℹ️ Внимание: режим GitHub Pages</div>
@@ -87,6 +85,54 @@ export async function handleFiles(filesList, onUploadSuccess) {
       • Либо отправьте PDF-файлы в Telegram-бота колледжа.
     </div>
   `;
+}
+
+export function setupPhotoCaptureListeners() {
+  const cameraBtn = document.getElementById('openCameraBtn');
+  const cameraInput = document.getElementById('cameraPhotoInput');
+  const galleryBtn = document.getElementById('openGalleryBtn');
+  const galleryInput = document.getElementById('galleryPhotoInput');
+  const previewBox = document.getElementById('photoPreviewContainer');
+  const previewImg = document.getElementById('photoPreviewImg');
+  const previewInfo = document.getElementById('photoPreviewInfo');
+  const clearBtn = document.getElementById('clearPhotoBtn');
+
+  // Загружаем сохраненный снимок, если есть
+  const savedPhoto = localStorage.getItem('pwa_saved_timetable_photo');
+  if (savedPhoto && previewBox && previewImg) {
+    previewImg.src = savedPhoto;
+    previewBox.classList.remove('hidden');
+    if (previewInfo) previewInfo.textContent = 'Сохранённый снимок стенда';
+  }
+
+  cameraBtn?.addEventListener('click', () => cameraInput?.click());
+  galleryBtn?.addEventListener('click', () => galleryInput?.click());
+
+  function handlePhotoSelected(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      if (previewImg) previewImg.src = dataUrl;
+      if (previewBox) previewBox.classList.remove('hidden');
+      if (previewInfo) previewInfo.textContent = `Снимок: ${file.name || 'камера'} (${Math.round(file.size / 1024)} КБ)`;
+      try {
+        localStorage.setItem('pwa_saved_timetable_photo', dataUrl);
+      } catch (err) {}
+    };
+    reader.readAsDataURL(file);
+  }
+
+  cameraInput?.addEventListener('change', (e) => handlePhotoSelected(e.target.files?.[0]));
+  galleryInput?.addEventListener('change', (e) => handlePhotoSelected(e.target.files?.[0]));
+
+  clearBtn?.addEventListener('click', () => {
+    localStorage.removeItem('pwa_saved_timetable_photo');
+    if (previewBox) previewBox.classList.add('hidden');
+    if (previewImg) previewImg.src = '';
+    if (cameraInput) cameraInput.value = '';
+    if (galleryInput) galleryInput.value = '';
+  });
 }
 
 export function setupUploadListeners(onUploadSuccess) {
@@ -101,7 +147,6 @@ export function setupUploadListeners(onUploadSuccess) {
     }
   });
 
-  // Drag and Drop поддержка множественных файлов
   ['dragenter', 'dragover'].forEach((eventName) => {
     sDrop?.addEventListener(eventName, (e) => {
       e.preventDefault();
@@ -124,4 +169,6 @@ export function setupUploadListeners(onUploadSuccess) {
       handleFiles(dt.files, onUploadSuccess);
     }
   });
+
+  setupPhotoCaptureListeners();
 }

@@ -28,6 +28,12 @@ async function loadSubgroupsModule() {
         this.setExport('state', stateModule.state);
       }, { context });
     }
+    if (specifier === './supabaseSync.js') {
+      return new SyntheticModule(['SUPABASE_URL', 'SUPABASE_ANON_KEY'], function () {
+        this.setExport('SUPABASE_URL', 'https://example.supabase.co');
+        this.setExport('SUPABASE_ANON_KEY', 'anon-key');
+      }, { context });
+    }
     throw new Error(`Unexpected specifier: ${specifier}`);
   });
 
@@ -53,4 +59,25 @@ test('Student subgroup can be changed and persisted', async () => {
   setStudentSubgroup('31фм', 'Кипарис', 1);
   const subAfterChange = getStudentSubgroup('31фм', 'Кипарис', 0, 10);
   assert.equal(subAfterChange, 1, 'Manual override should allow moving Кипарис to 1');
+});
+
+test('Mass actions: split equally, invert and set all', async () => {
+  const {
+    getStudentSubgroup,
+    splitGroupSubgroupsEqually,
+    setAllToSubgroup,
+    invertGroupSubgroups,
+  } = await loadSubgroupsModule();
+
+  const students = ['Алексеев', 'Борисов', 'Васильев', 'Григорьев'];
+  splitGroupSubgroupsEqually('тест1', students);
+  assert.equal(getStudentSubgroup('тест1', 'Алексеев', 0, 4), 1);
+  assert.equal(getStudentSubgroup('тест1', 'Григорьев', 3, 4), 2);
+
+  invertGroupSubgroups('тест1', students);
+  assert.equal(getStudentSubgroup('тест1', 'Алексеев', 0, 4), 2);
+  assert.equal(getStudentSubgroup('тест1', 'Григорьев', 3, 4), 1);
+
+  setAllToSubgroup('тест1', students, 1);
+  assert.equal(getStudentSubgroup('тест1', 'Григорьев', 3, 4), 1);
 });

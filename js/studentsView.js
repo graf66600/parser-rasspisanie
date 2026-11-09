@@ -3,7 +3,13 @@
 // ==========================================================================
 import { state } from './state.js';
 import { pushStudentToCloud, deleteStudentFromCloud, pushBulkStudentsToCloud } from './supabaseSync.js';
-import { getStudentSubgroup, setStudentSubgroup } from './studentSubgroups.js';
+import {
+  getStudentSubgroup,
+  setStudentSubgroup,
+  splitGroupSubgroupsEqually,
+  setAllToSubgroup,
+  invertGroupSubgroups,
+} from './studentSubgroups.js';
 
 async function ensureXLSX() {
   if (window.XLSX) return window.XLSX;
@@ -42,6 +48,33 @@ export function renderManageStudents(onStudentsChanged) {
     <span class="text-purple-400">2-я п/г: <b class="text-white">${sub2Count}</b></span>
   `;
   listEl.appendChild(summary);
+
+  const massActions = document.createElement('div');
+  massActions.className = 'subgroup-mass-actions mb-3';
+  massActions.innerHTML = `
+    <button type="button" class="mass-action-btn" id="massSplitHalfBtn" title="Разделить студентов группы поровну (1 и 2 п/г)">⚖️ Пополам (1 и 2)</button>
+    <button type="button" class="mass-action-btn" id="massAllSub1Btn" title="Назначить всех студентов в 1-ю подгруппу">1️⃣ Все в 1 п/г</button>
+    <button type="button" class="mass-action-btn" id="massInvertBtn" title="Поменять подгруппы местами">🔄 Инвертировать (1 ⇄ 2)</button>
+  `;
+  listEl.appendChild(massActions);
+
+  massActions.querySelector('#massSplitHalfBtn')?.addEventListener('click', () => {
+    splitGroupSubgroupsEqually(group, students);
+    renderManageStudents(onStudentsChanged);
+    if (typeof onStudentsChanged === 'function') onStudentsChanged();
+  });
+
+  massActions.querySelector('#massAllSub1Btn')?.addEventListener('click', () => {
+    setAllToSubgroup(group, students, 1);
+    renderManageStudents(onStudentsChanged);
+    if (typeof onStudentsChanged === 'function') onStudentsChanged();
+  });
+
+  massActions.querySelector('#massInvertBtn')?.addEventListener('click', () => {
+    invertGroupSubgroups(group, students);
+    renderManageStudents(onStudentsChanged);
+    if (typeof onStudentsChanged === 'function') onStudentsChanged();
+  });
 
   students.forEach((student, idx) => {
     const sub = getStudentSubgroup(group, student, idx, students.length);

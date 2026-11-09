@@ -24,17 +24,27 @@ async function loadView(file, state, document, stored = []) {
     './journalStats.js': { renderJournalStats: noop },
     './journalView.js': { autoFillTopicForGroup: noop, loadEntryToForm: noop },
     './journalCard.js': { createHistoryCardElement: noop },
+    './bellsPresets.js': {
+      getLessonOverride: () => null,
+      setLessonOverride: noop,
+      renderBellsPresetSelector: noop,
+      initBellsPreset: noop,
+    },
     './supabaseSync.js': {
       fetchRemoteJournal: async () => null, deleteJournalEntryFromCloud: noop,
     },
   };
+  const linked = [];
   const module = new SourceTextModule(readFileSync(file, 'utf8'), { context });
+  module._linked = linked;
   await module.link(name => {
     const values = dependencies[name];
     assert.ok(values, `Unexpected dependency: ${name}`);
-    return new SyntheticModule(Object.keys(values), function () {
+    const sm = new SyntheticModule(Object.keys(values), function () {
       for (const [key, value] of Object.entries(values)) this.setExport(key, value);
     }, { context });
+    linked.push(sm);
+    return sm;
   });
   await module.evaluate();
   return module.namespace;

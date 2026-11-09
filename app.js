@@ -11,6 +11,9 @@ import { setupNotifications } from './js/notifications.js';
 import { setupAuthListeners, promptTeacherAuth, updateAuthModeUI } from './js/authView.js';
 import { setupRealtimeSubscription } from './js/supabaseSync.js';
 import { setupKioskEventListeners } from './js/kioskView.js';
+import { setupSyncQueueAutoFlush } from './js/syncQueue.js';
+import { setupFormGuard, checkCanSwitchTab } from './js/formGuard.js';
+import { fetchRemoteSubgroups } from './js/studentSubgroups.js';
 
 // Инициализация PWA и Service Worker с безопасной фоновой регистрацией
 if ('serviceWorker' in navigator) {
@@ -90,6 +93,8 @@ const tabs = {
 const navButtons = document.querySelectorAll('.tab-nav-btn');
 
 export function switchTab(tabId) {
+  const currentTab = Object.keys(tabs).find((id) => tabs[id] && !tabs[id].classList.contains('hidden'));
+  if (!checkCanSwitchTab(tabId, currentTab)) return;
   Object.keys(tabs).forEach((id) => {
     if (tabs[id]) tabs[id].classList.toggle('hidden', id !== tabId);
   });
@@ -183,6 +188,11 @@ async function initApp() {
     populateGroupSelects(updateJournalStudents);
   });
   setupKioskEventListeners();
+  setupSyncQueueAutoFlush();
+  setupFormGuard();
+  fetchRemoteSubgroups().then((subgroups) => {
+    if (subgroups) updateJournalStudents();
+  }).catch(() => {});
 
   document.getElementById('unlockTeacherBtn')?.addEventListener('click', () => {
     promptTeacherAuth(state.currentTeacher, () => updateAuthModeUI());

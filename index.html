@@ -148,6 +148,9 @@
           </button>
         </div>
       </div>
+      <!-- Режим звонков (Обычный / Сокращённый) -->
+      <div id="bellsPresetContainer" class="px-1 mb-1"></div>
+
       <div class="flex items-center justify-between px-1">
         <h2 id="scheduleDayTitle" class="text-sm font-bold text-slate-200 uppercase tracking-wider">Сегодня</h2>
         <span id="scheduleTotalLessons" class="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg">0 пар</span>
@@ -350,6 +353,31 @@
             <input type="checkbox" id="mergeScheduleCheckbox" checked class="rounded border-slate-700 text-blue-600 focus:ring-0">
             <span>Объединять с текущим расписанием (догрузка частей без стирания)</span>
           </label>
+        </div>
+
+        <!-- Съемка фото расписания со стенда -->
+        <div class="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-200">📸 Фото расписания со стенда</span>
+            <span class="text-[10px] text-slate-400">Быстрый снимок с камеры</span>
+          </div>
+          <div class="flex gap-2">
+            <input type="file" id="cameraPhotoInput" accept="image/*" capture="environment" class="hidden">
+            <button type="button" id="openCameraBtn" class="flex-1 py-2.5 px-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+              <span>📷</span> <span>Сфотографировать стенд</span>
+            </button>
+            <input type="file" id="galleryPhotoInput" accept="image/*" class="hidden">
+            <button type="button" id="openGalleryBtn" class="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl text-xs font-medium transition cursor-pointer">
+              <span>🖼️ Из галереи</span>
+            </button>
+          </div>
+          <div id="photoPreviewContainer" class="hidden space-y-2 pt-1">
+            <img id="photoPreviewImg" class="w-full max-h-64 object-contain rounded-lg border border-slate-700 bg-black/40" alt="Превью фото">
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <span id="photoPreviewInfo">Фото готово</span>
+              <button type="button" id="clearPhotoBtn" class="text-red-400 hover:underline cursor-pointer">Удалить</button>
+            </div>
+          </div>
         </div>
 
         <div id="uploadStatusBox" class="hidden p-3.5 rounded-xl border text-xs">

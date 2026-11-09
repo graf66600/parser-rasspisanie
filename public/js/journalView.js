@@ -16,6 +16,8 @@ import {
 } from './journalHistory.js';
 import { pushJournalEntryToCloud } from './supabaseSync.js';
 import { loadEntryToForm, findExistingJournalEntry } from './journalEdit.js';
+import { enqueueJournalEntry } from './syncQueue.js';
+import { markJournalClean } from './formGuard.js';
 
 export { updateJournalStudents, loadJournalHistory, renderJournalHistory, deleteJournalEntry };
 export { loadEntryToForm, findExistingJournalEntry };
@@ -212,14 +214,20 @@ export function setupJournalListeners() {
     localStorage.setItem('pwa_journal', JSON.stringify(saved));
     state.journalEntries = saved;
 
-    pushJournalEntryToCloud(entry);
+    markJournalClean();
+
+    pushJournalEntryToCloud(entry).catch(() => {
+      enqueueJournalEntry(entry);
+    });
 
     if (!isStaticHost) {
       fetch('./api/journal/mark', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(entry),
-      }).catch(() => {});
+      }).catch(() => {
+        enqueueJournalEntry(entry);
+      });
     }
 
     // Сохраняем форму в режиме редактирования с обновленными данными
