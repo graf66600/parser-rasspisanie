@@ -79,7 +79,7 @@ for (const root of ['', 'public/']) {
       await view.loadJournalHistory();
       assert.equal(state.journalEntries.length, 1);
       assert.equal(state.journalEntries[0].type,
-        teacher === 'Трипольский' ? 'theory' : 'practice');
+        'practice');
     });
   }
 }

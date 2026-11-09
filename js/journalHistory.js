@@ -29,48 +29,6 @@ export function deleteJournalEntry(id) {
 export async function loadJournalHistory() {
   let local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
   const currentTeacher = state.currentTeacher || '';
-  const isTripolsky = currentTeacher.toLowerCase().includes('трипольский');
-
-  // Корректируем записи до 14.09.2026 только для Трипольского
-  let modified = false;
-  if (isTripolsky) {
-    local = local.filter((e) => {
-      if (e.notes === 'Тестовая отметка проведения занятия') return false;
-      if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
-      return true;
-    });
-
-    local.forEach((e) => {
-      if (e.date && e.date < '2026-09-14' && e.type !== 'theory') {
-        e.type = 'theory';
-        modified = true;
-      }
-      const gClean = (e.group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      if (e.date === '2026-09-14' && gClean === '51ф') {
-        if (Number(e.lessonNumber) === 3) {
-          e.topic = 'Математический аппарат Calc: относительная/абсолютная адресация (), функции в клинической практике.';
-          e.courseLessonNumber = 6;
-          e.type = 'theory';
-          modified = true;
-        } else if (Number(e.lessonNumber) === 4) {
-          e.topic = 'Практическое занятие №1: АРМ фельдшера ФАП: первичный прием, идентификация пациента через ТФОМС, оформление прикрепления.';
-          e.courseLessonNumber = 1;
-          e.type = 'practice';
-          modified = true;
-        } else if (Number(e.lessonNumber) === 5) {
-          e.topic = 'Практическое занятие №2: Проведение диспансерного осмотра в МИС, формирование электронных направлений (форма № 057/у-04) в ЛИС и PACS.';
-          e.courseLessonNumber = 2;
-          e.type = 'practice';
-          modified = true;
-        }
-      }
-    });
-
-    if (modified || local.length !== JSON.parse(localStorage.getItem('pwa_journal') || '[]').length) {
-      localStorage.setItem('pwa_journal', JSON.stringify(local));
-    }
-  }
-
   state.journalEntries = local;
   renderJournalHistory();
   const g = document.getElementById('journalGroupSelect')?.value;
@@ -97,11 +55,7 @@ export async function loadJournalHistory() {
     }
 
     if (freshEntries) {
-      const cleaned = freshEntries.filter((e) => {
-        if (e.notes === 'Тестовая отметка проведения занятия') return false;
-        if (e.id === '51ф_2026-09-06_1' || e.id === '51ф_2026-09-07_1') return false;
-        return true;
-      });
+      const cleaned = freshEntries;
 
       const map = new Map();
       cleaned.forEach((e) => map.set(e.id, e));
@@ -126,7 +80,7 @@ export function renderJournalHistory() {
   const currentTeacher = state.currentTeacher || '';
 
   const teacherEntries = (state.journalEntries || []).filter((e) => {
-    if (!currentTeacher || !e.teacher) return true;
+    if (!currentTeacher || !e.teacher) return false;
     return e.teacher === currentTeacher;
   });
 
@@ -143,16 +97,13 @@ export function renderJournalHistory() {
     return Number(a.lessonNumber) - Number(b.lessonNumber);
   });
 
-  const groupCounters = {};
   const entriesWithCourseNum = sortedAll.map((entry) => {
-    const g = entry.group || 'unknown';
-    groupCounters[g] = (groupCounters[g] || 0) + 1;
     let courseNum = entry.courseLessonNumber;
     if (!courseNum && entry.topic) {
       const match = entry.topic.match(/№\s*(\d+)/i);
       if (match) courseNum = parseInt(match[1], 10);
     }
-    if (!courseNum) courseNum = groupCounters[g];
+
     return { ...entry, calculatedCourseNum: courseNum };
   });
 

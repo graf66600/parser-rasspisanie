@@ -224,3 +224,13 @@
   color: #6ee7b7;
   border: 1px solid rgba(16, 185, 129, 0.4);
 }
+
+/* Keep load explanations and course labels readable from 320px. */
+.stats-sub-title, .course-pair-pill {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+.stats-card + .stats-card { margin-top: 12px; }
+.stat-chip { min-width: 0; overflow-wrap: anywhere; }

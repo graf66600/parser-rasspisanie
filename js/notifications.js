@@ -194,7 +194,7 @@ export function checkUpcomingLessons() {
       const key = `notif_${todayStr}_${lesson.id || lesson.lessonNumber}_${lesson.startTime}`;
       if (!sentKeys.has(key)) {
         markKeyAsSentToday(todayStr, key);
-        const rec = lesson.group ? getRecommendedLesson(lesson.group, lesson.lessonNumber, todayStr) : null;
+        const rec = lesson.group ? getRecommendedLesson(lesson.group, lesson.lessonNumber, todayStr, lesson) : null;
         const topicStr = rec?.text ? `\nТема: #${rec.number} ${rec.text}` : '';
         const groupStr = lesson.group ? ` | Гр. ${lesson.group}` : '';
         const roomStr = lesson.classroom ? ` | Ауд. ${lesson.classroom}` : '';

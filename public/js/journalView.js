@@ -1,6 +1,7 @@
 // ==========================================================================
 // JOURNAL VIEW: LESSON ENTRY, TOPIC AUTOFILL & FORM LOGIC
 // ==========================================================================
+import { scheduleOnDate, findProgram } from './lessonProgress.js';
 import { state, isStaticHost } from './state.js';
 import {
   getRecommendedLesson,
@@ -36,32 +37,35 @@ export function autoFillTopicForGroup(group, lessonNum) {
   const notesInput = document.getElementById('journalNotesInput');
   const courseBadge = document.getElementById('coursePairBadge');
 
-  const rec = getRecommendedLesson(group, lessonNum, date);
+  updateTopicDatalist(group);
+  renderTopicSuggestions(group, (chosenTopic, chosenHw, chosenNum, chosenType) => {
+    if (topicInput) topicInput.value = chosenTopic;
+    if (notesInput && chosenHw) notesInput.value = chosenHw;
+    if (courseBadge && chosenNum) {
+      const typeLbl = chosenType === 'theory' ? 'Лекция' : 'Практика';
+      courseBadge.textContent = `${typeLbl} №${chosenNum} (по программе)`;
+    }
+  });
+  const rec = getRecommendedLesson(group, lessonNum, date, { subgroup: document.getElementById('journalSubgroupSelect')?.value });
   if (rec?.text) {
     if (topicInput && rec?.text) topicInput.value = rec.text;
-    if (notesInput && rec?.homework) notesInput.value = rec.homework;
+    if (notesInput) notesInput.value = rec.homework || '';
+    if (courseBadge) courseBadge.textContent = rec.number ? '' : 'Номер по программе не указан';
     if (courseBadge && rec?.number) {
       const typeLabel = rec.type === 'theory' ? 'Лекция' : 'Практика';
-      courseBadge.textContent = `${typeLabel} №${rec.number} (по программе)`;
+      courseBadge.textContent = `${typeLabel} №${rec.number} (${rec.estimated ? 'предварительно, по доступным записям' : 'по программе'})`;
     }
 
-    updateTopicDatalist(group);
-    renderTopicSuggestions(group, (chosenTopic, chosenHw, chosenNum, chosenType) => {
-      if (topicInput) topicInput.value = chosenTopic;
-      if (notesInput && chosenHw) notesInput.value = chosenHw;
-      if (courseBadge && chosenNum) {
-        const typeLbl = chosenType === 'theory' ? 'Лекция' : 'Практика';
-        courseBadge.textContent = `${typeLbl} №${chosenNum} (по программе)`;
-      }
-    });
+
   } else {
     const foundLesson = state.schedule?.lessons?.find(
       (l) => l.group === group && Number(l.lessonNumber) === Number(lessonNum)
     );
-    if (topicInput && (!topicInput.value || topicInput.value === 'Практическое занятие')) {
+    if (topicInput) {
       topicInput.value = foundLesson?.subject ? `Тема: ${foundLesson.subject}` : 'Тема занятия';
     }
-    if (courseBadge) courseBadge.textContent = `Пара №${lessonNum || 1}`;
+    if (notesInput) notesInput.value = '';
+    if (courseBadge) courseBadge.textContent = rec?.completed ? 'Список тем исчерпан — проверьте программу' : 'Уточните тип и тему занятия';
     const suggestionsBox = document.getElementById('topicSuggestions');
     if (suggestionsBox) suggestionsBox.classList.add('hidden');
   }
@@ -152,29 +156,19 @@ export function setupJournalListeners() {
     const notes = document.getElementById('journalNotesInput')?.value || '';
 
     const currentTeacher = state.currentTeacher || 'Преподаватель';
-    let currentSubject = state.schedule?.subject || 'Учебная дисциплина';
-    const foundLesson = state.schedule?.lessons?.find(
-      (l) => l.group === group && Number(l.lessonNumber) === lessonNumber
-    );
-    if (foundLesson?.subject) currentSubject = foundLesson.subject;
-
-    let courseLessonNumber = 1;
-    let entryType = 'theory';
-
-    const rec = getRecommendedLesson(group, lessonNumber, date);
-    if (rec?.text) {
-      courseLessonNumber = rec.number || 1;
-      entryType = rec.type || (topic.toLowerCase().includes('лекци') || topic.toLowerCase().includes('теори') ? 'theory' : 'practice');
-    } else {
-      const lower = topic.toLowerCase();
-      if (lower.includes('практик')) entryType = 'practice';
-      else if (lower.includes('зачет') || lower.includes('экзамен')) entryType = 'exam';
-      else entryType = 'theory';
-      const priorEntries = (state.journalEntries || []).filter(
-        (e) => e.group === group && (!e.teacher || e.teacher === currentTeacher)
-      );
-      courseLessonNumber = priorEntries.length + 1;
-    }
+    const subgroupSel = subgSel?.value;
+    const subgroupVal = (subgroupSel === '1' || subgroupSel === '2') ? Number(subgroupSel) : null;
+    const foundLesson = scheduleOnDate(state, date).find(l => l.group === group
+      && Number(l.lessonNumber) === lessonNumber
+      && (Number(l.subgroup) || null) === subgroupVal);
+    const existing = findExistingJournalEntry(group, lessonNumber, date, subgroupSel);
+    const currentSubject = foundLesson?.subject || existing?.subject || state.schedule?.subject || '';
+    const rec = getRecommendedLesson(group, lessonNumber, date, { subgroup: subgroupSel, subject: currentSubject });
+    const program = findProgram(state.curriculumPrograms, group);
+    const selectedLesson = program?.lessons?.find(l => (l.text || l.topic) === topic);
+    const entryType = selectedLesson?.type || (rec?.text === topic ? rec.type : null) || 'other';
+    const courseLessonNumber = rec?.text === topic ? rec.number : selectedLesson
+      ? program.lessons.filter(l => l.type === selectedLesson.type).indexOf(selectedLesson) + 1 : null;
 
     const attendance = {};
     document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
@@ -185,11 +179,9 @@ export function setupJournalListeners() {
       attendance[student] = { status, grade: grade || undefined };
     });
 
-    const subgroupSel = subgSel?.value;
-    const subgroupVal = (subgroupSel === '1' || subgroupSel === '2') ? Number(subgroupSel) : null;
     const subg = subgroupVal ? `_sub${subgroupVal}` : '';
 
-    let entryId = `${group}${subg}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
+    let entryId = existing?.id || `${group}${subg}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
 
     const entry = {
       id: entryId,

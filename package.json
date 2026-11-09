@@ -10,7 +10,7 @@
     "test:parser": "tsx src/testParser.ts",
     "test:pdf": "tsx src/testPdfParser.ts",
     "test": "npm run test:client && npm run test:parser && npm run test:pdf",
-    "test:client": "node --experimental-vm-modules --test tests/client-syntax.cjs tests/schedule-startup.cjs tests/schedule-freshness.cjs tests/student-subgroups.cjs",
+    "test:client": "node --experimental-vm-modules --test tests/client-syntax.cjs tests/schedule-startup.cjs tests/schedule-freshness.cjs tests/student-subgroups.cjs tests/lesson-progress.cjs tests/test-11fm-topic.cjs",
     "apply:schedule": "tsx src/scripts/applySchedule.ts"
   },
   "keywords": [

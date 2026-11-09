@@ -17,7 +17,7 @@ export function findExistingJournalEntry(group, lessonNum, date, subgroup, teach
       const matchGroup = e.group === group;
       const matchDate = e.date === targetDate;
       const matchLesson = Number(e.lessonNumber) === targetLesson;
-      const matchTeacher = !e.teacher || !currentTeacher || e.teacher === currentTeacher;
+      const matchTeacher = Boolean(currentTeacher) && e.teacher === currentTeacher;
       const matchSub = Number(e.subgroup) === targetSub;
       return matchGroup && matchDate && matchLesson && matchTeacher && matchSub;
     });
@@ -28,8 +28,8 @@ export function findExistingJournalEntry(group, lessonNum, date, subgroup, teach
     const matchGroup = e.group === group;
     const matchDate = e.date === targetDate;
     const matchLesson = Number(e.lessonNumber) === targetLesson;
-    const matchTeacher = !e.teacher || !currentTeacher || e.teacher === currentTeacher;
-    return matchGroup && matchDate && matchLesson && matchTeacher;
+    const matchTeacher = Boolean(currentTeacher) && e.teacher === currentTeacher;
+    return matchGroup && matchDate && matchLesson && matchTeacher && (Number(e.subgroup) || null) === targetSub;
   }) || null;
 }
 

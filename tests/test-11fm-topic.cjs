@@ -34,9 +34,11 @@ test('topicHelper: recommended lesson for 11fm (subgroup 2, Tripolsky)', async (
 
   const code = readFileSync('js/topicHelper.js', 'utf8');
   const mod = new SourceTextModule(code, { context });
+  const deps = new Map();
   await mod.link((specifier) => {
     if (specifier === './state.js') return stateModule;
-    throw new Error('Unknown specifier: ' + specifier);
+    if (!deps.has(specifier)) deps.set(specifier, new SourceTextModule(readFileSync('js/' + specifier.slice(2), 'utf8'), { context }));
+    return deps.get(specifier);
   });
   await mod.evaluate();
 

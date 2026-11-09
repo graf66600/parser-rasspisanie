@@ -11,6 +11,11 @@ import {
 } from './bellsPresets.js';
 
 function getDateForDayOfWeek(dayOfWeek) {
+  if (state.schedule?.weekStart) {
+    const date = new Date(`${state.schedule.weekStart}T12:00:00`);
+    date.setDate(date.getDate() + Number(dayOfWeek) - 1);
+    return formatLocalDate(date);
+  }
   const now = new Date();
   const currentJsDay = now.getDay();
   const currentDay = currentJsDay === 0 ? 7 : currentJsDay;
@@ -90,7 +95,7 @@ export function renderSchedule(onOpenJournal) {
       : '';
 
     const lessonDate = getDateForDayOfWeek(lesson.dayOfWeek);
-    const rec = getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate);
+    const rec = getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate, lesson);
 
     const bellSlot = (state.bells || []).find((b) => Number(b.lessonNumber) === Number(lesson.lessonNumber));
     const startTime = bellSlot ? bellSlot.startTime : lesson.startTime;
@@ -128,7 +133,7 @@ export function renderSchedule(onOpenJournal) {
 
     const topicPreview = rec?.text ? `
       <div class="lesson-topic-preview">
-        <span class="topic-label">${rec.type === 'theory' ? 'Лекция' : 'Практика'} №${rec.number}:</span>
+        <span class="topic-label">${rec.type === 'theory' ? 'Лекция' : 'Практика'}${rec.number ? ` №${rec.number}` : ''}${rec.estimated ? ' (предварительно)' : ''}${rec.topicUnverified ? ' • тема требует сверки с КТП' : ''}:</span>
         <span class="topic-text">${rec.text}</span>
       </div>
     ` : '';

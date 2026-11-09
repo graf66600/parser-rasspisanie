@@ -1,233 +1,24 @@
-// ==========================================================================
-// TOPIC HELPER: AUTO-FILL & SUGGESTIONS FROM CURRICULUM
-// ==========================================================================
+import { teacherLoad, semesterForDate } from './teachingLoad.js';
 import { state, formatLocalDate } from './state.js';
+import { recommendLesson, findProgram } from './lessonProgress.js';
 
 export function findProgramForGroup(group) {
-  if (!group || !state.curriculumPrograms) return null;
-  const clean = group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-
-  // 1. Точное совпадение (например, '21фм' должно найти именно '21фм', а не '21ф')
-  for (const prog of state.curriculumPrograms) {
-    for (const g of prog.groups || []) {
-      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      if (gClean === clean) return prog;
-    }
-  }
-
-  // 2. Нестрогое совпадение (например, '11м/с' -> '11мс')
-  for (const prog of state.curriculumPrograms) {
-    for (const g of prog.groups || []) {
-      const gClean = g.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      if (clean.includes(gClean) || gClean.includes(clean)) {
-        return prog;
-      }
-    }
-  }
-  return null;
+  return findProgram(state.curriculumPrograms, group);
 }
 
-export function getRecommendedLesson(group, bellLessonNum, date) {
+export function getRecommendedLesson(group, bellLessonNum, date, context = {}) {
+  let scheduleOverrides = {};
+  try { scheduleOverrides = JSON.parse(localStorage.getItem('pwa_schedule_overrides') || '{}'); } catch {}
+  return recommendLesson({ ...state, scheduleOverrides }, group, bellLessonNum, date || formatLocalDate(), context);
+}
+
+function suggestedLessons(group) {
   const prog = findProgramForGroup(group);
-  if (!prog || !prog.lessons || prog.lessons.length === 0) {
-    return { text: 'Практическое занятие', number: 1, type: 'practice' };
-  }
-
-  const targetDate = date || formatLocalDate();
-  const bellNum = Number(bellLessonNum || 1);
-  const cleanG = (group || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-
-  // Точный календарный план занятий для группы 51ф на неделю 14.09 - 19.09.2026:
-  // До 14.09 прошло 5 лекций (08.09 - 11.09).
-  // Лекции (вся группа): Пн пара 3 (№6), Вт пары 2 и 4 (№7, №8), Ср пары 1 и 2 (№9, №10).
-  // Практики (1 подгр): Пн пары 4 и 5 (№1, №2), Пт пары 5 и 6 (№3, №4).
-  // Практики (2 подгр): Вт пары 5 и 6 (№1, №2), Чт пары 5 и 6 (№3, №4).
-  // Точный календарный план для группы 11фм (2-я подгруппа, преподаватель Трипольский):
-  // Трипольский ведёт только практики у 2-й подгруппы (до 09.11 прошло 7 практик).
-  // 09.11 (Пн, пара 3) — Практика №8: «Настройка параметров страницы и базовое форматирование текста в LibreOffice Writer»
-  // 13.11 (Пт, пара 4) — Практика №9: «Оформление списков и алгоритмов доврачебной помощи в LibreOffice Writer»
-  if (cleanG === '11фм') {
-    const planMap = {
-      '2026-11-09_3': { type: 'practice', num: 8 },
-      '2026-11-13_4': { type: 'practice', num: 9 },
-    };
-    const key = `${targetDate}_${bellNum}`;
-    const plan = planMap[key];
-    if (plan) {
-      const collection = prog.lessons.filter((x) => x.type === plan.type);
-      const l = collection[plan.num - 1] || prog.lessons[0];
-      return {
-        text: l.text || l.topic,
-        number: plan.num,
-        lessonObj: l,
-        homework: l.homework || '',
-        type: plan.type,
-      };
-    }
-  }
-
-  if (cleanG === '51ф') {
-    const planMap = {
-      '2026-09-14_3': { type: 'theory', num: 6 },
-      '2026-09-14_4': { type: 'practice', num: 1 },
-      '2026-09-14_5': { type: 'practice', num: 2 },
-      '2026-09-15_2': { type: 'theory', num: 7 },
-      '2026-09-15_4': { type: 'theory', num: 8 },
-      '2026-09-15_5': { type: 'practice', num: 1 },
-      '2026-09-15_6': { type: 'practice', num: 2 },
-      '2026-09-16_1': { type: 'theory', num: 9 },
-      '2026-09-16_2': { type: 'theory', num: 10 },
-      '2026-09-17_5': { type: 'practice', num: 3 },
-      '2026-09-17_6': { type: 'practice', num: 4 },
-      '2026-09-18_5': { type: 'practice', num: 3 },
-      '2026-09-18_6': { type: 'practice', num: 4 },
-    };
-    const key = `${targetDate}_${bellNum}`;
-    const plan = planMap[key];
-    if (plan) {
-      const collection = prog.lessons.filter((x) => x.type === plan.type);
-      const l = collection[plan.num - 1] || prog.lessons[0];
-      return {
-        text: l.text || l.topic,
-        number: plan.num,
-        lessonObj: l,
-        homework: l.homework || '',
-        type: plan.type,
-      };
-    }
-  }
-
-  // 1. Если для этой пары уже сохранена запись в журнале — загружаем её тему
-  const existing = state.journalEntries?.find((e) => {
-    if (!e.group || !e.date || Number(e.lessonNumber) !== bellNum) return false;
-    const eg = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-    return eg === cleanG && e.date === targetDate;
-  });
-
-  if (existing && existing.topic) {
-    let existingType = existing.type;
-    if (targetDate < '2026-09-14') {
-      existingType = 'theory';
-    } else if (!existingType) {
-      const lower = existing.topic.toLowerCase();
-      existingType = lower.includes('лекци') || lower.includes('теори') ? 'theory' : 'practice';
-    }
-
-    let num = existing.courseLessonNumber;
-    if (!num) {
-      const pMatch = existing.topic.match(/№\s*(\d+)/i);
-      num = pMatch ? parseInt(pMatch[1], 10) : bellNum;
-    }
-
-    return {
-      text: existing.topic,
-      number: num,
-      homework: existing.notes || '',
-      type: existingType,
-    };
-  }
-
-  // 2. Ищем текущую пару в расписании для определения подгруппы и типа (лекция / практика)
-  const [y, m, d] = targetDate.split('-').map(Number);
-  const dateObj = new Date(y, m - 1, d);
-  const jsDay = dateObj.getDay();
-  const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-
-  const currentScheduleLesson = state.schedule?.lessons?.find((l) => {
-    if (!l.group) return false;
-    const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-    return lg === cleanG && l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) === bellNum;
-  });
-
-  const subgroup = currentScheduleLesson?.subgroup || (cleanG === '31фм' ? ((dayOfWeek === 2 || (dayOfWeek === 4 && bellNum >= 3)) ? '1' : '2') : (cleanG === '11фм' ? '2' : undefined));
-  const isBeforePractices = targetDate < '2026-09-14';
-  const isPractice = !isBeforePractices && (Boolean(subgroup) || cleanG === '31фм' || cleanG === '11фм');
-
-  const theories = prog.lessons.filter((x) => x.type === 'theory');
-  const practices = prog.lessons.filter((x) => x.type === 'practice');
-
-  if (!isPractice) {
-    // --- ЛЕКЦИЯ (вся группа) ---
-    const pastTheoriesInJournal = (state.journalEntries || []).filter((e) => {
-      if (!e.group) return false;
-      const eg = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      if (eg !== cleanG) return false;
-      if (e.date >= targetDate) return false;
-      return e.type === 'theory' || e.date < '2026-09-14' || (e.topic && !e.topic.toLowerCase().includes('практич'));
-    });
-    const pastTheoriesCount = new Set(pastTheoriesInJournal.map((e) => `${e.date}_${e.lessonNumber}`)).size;
-    const baseBeforeWeek3 = (cleanG === '51ф') ? 5 : (cleanG === '31фм' ? 3 : 0);
-
-    const priorDaysInSchedule = (state.schedule?.lessons || []).filter((l) => {
-      if (!l.group) return false;
-      const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      return lg === cleanG && l.dayOfWeek < dayOfWeek && !l.subgroup;
-    }).length;
-
-    const priorToday = (state.schedule?.lessons || []).filter((l) => {
-      if (!l.group) return false;
-      const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      return lg === cleanG && l.dayOfWeek === dayOfWeek && !l.subgroup && Number(l.lessonNumber) < bellNum;
-    }).length;
-
-    const totalPast = Math.max(pastTheoriesCount, (isBeforePractices ? pastTheoriesCount : baseBeforeWeek3) + priorDaysInSchedule) + priorToday;
-    const validIdx = theories.length > 0 ? totalPast % theories.length : 0;
-    const l = theories[validIdx] || prog.lessons[0];
-    return {
-      text: l.text || l.topic,
-      number: validIdx + 1,
-      lessonObj: l,
-      homework: l.homework || '',
-      type: 'theory',
-    };
-  } else {
-    // --- ПРАКТИКА (по подгруппе) ---
-    const pastPracticesInJournal = (state.journalEntries || []).filter((e) => {
-      if (!e.group) return false;
-      const eg = e.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      if (eg !== cleanG) return false;
-      if (e.date >= targetDate) return false;
-      const eSub = e.subgroup || (e.notes && e.notes.includes('1') ? '1' : (e.notes && e.notes.includes('2') ? '2' : undefined));
-      if (subgroup && eSub && eSub !== subgroup) return false;
-      return e.type === 'practice' || (e.topic && e.topic.toLowerCase().includes('практич'));
-    });
-    const weekStart = '2026-09-21';
-    const pastWeeksEntries = pastPracticesInJournal.filter((e) => e.date < weekStart);
-    const thisWeekEntries = pastPracticesInJournal.filter((e) => e.date >= weekStart);
-    const pastWeeksPracticesCount = new Set(pastWeeksEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
-    const thisWeekPracticesCount = new Set(thisWeekEntries.map((e) => `${e.date}_${e.lessonNumber}`)).size;
-
-    const priorDaysInSchedule = (state.schedule?.lessons || []).filter((l) => {
-      if (!l.group) return false;
-      const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      const lSub = l.subgroup || (cleanG === '31фм' ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : (cleanG === '11фм' ? '2' : undefined));
-      return lg === cleanG && l.dayOfWeek < dayOfWeek && lSub === subgroup;
-    }).length;
-
-    const priorToday = (state.schedule?.lessons || []).filter((l) => {
-      if (!l.group) return false;
-      const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      const lSub = l.subgroup || (cleanG === '31фм' ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : (cleanG === '11фм' ? '2' : undefined));
-      return lg === cleanG && l.dayOfWeek === dayOfWeek && lSub === subgroup && Number(l.lessonNumber) < bellNum;
-    }).length;
-
-    const basePracticesBeforeWeek11 = cleanG === '11фм' ? 7 : 0;
-    const totalPast = basePracticesBeforeWeek11 + pastWeeksPracticesCount + Math.max(thisWeekPracticesCount, priorDaysInSchedule) + priorToday;
-    const validIdx = practices.length > 0 ? totalPast % practices.length : 0;
-    const l = practices[validIdx] || prog.lessons[0];
-    let pNum = validIdx + 1;
-    if (l.text) {
-      const pMatch = l.text.match(/(?:Практическое занятие|Практика)\s*№\s*(\d+)/i);
-      if (pMatch) pNum = parseInt(pMatch[1], 10);
-    }
-    return {
-      text: l.text || l.topic,
-      number: pNum,
-      lessonObj: l,
-      homework: l.homework || '',
-      type: 'practice',
-    };
-  }
+  const date = document.getElementById('journalDateInput')?.value || formatLocalDate();
+  const load = teacherLoad(state.currentTeacher, group, semesterForDate(date));
+  const counters = {};
+  return (prog?.lessons || []).map(l => ({ ...l, number: (counters[l.type] = (counters[l.type] || 0) + 1) }))
+    .filter(l => !load || (l.type === 'theory' ? load.theoryHours > 0 : l.type === 'practice' && load.practiceHours > 0));
 }
 
 export function updateTopicDatalist(group) {
@@ -247,7 +38,7 @@ export function updateTopicDatalist(group) {
   const prog = findProgramForGroup(group);
   if (!prog || !prog.lessons) return;
 
-  prog.lessons.forEach((l, idx) => {
+  suggestedLessons(group).forEach((l, idx) => {
     const opt = document.createElement('option');
     opt.value = l.text || l.topic;
     opt.label = `#${l.number || idx + 1} (${l.type === 'theory' ? 'Лекция' : 'Практика'})`;
@@ -269,7 +60,7 @@ export function renderTopicSuggestions(group, onSelect) {
   container.innerHTML = '';
   const title = document.createElement('div');
   title.className = 'topic-suggestions-header';
-  title.innerHTML = `<span>📚 Темы рабочей программы (${prog.lessons.length} занятий):</span>`;
+  title.innerHTML = `<span>📚 ${prog.topicsVerified ? 'Темы из рабочей программы' : 'Список тем (нужна сверка порядка с КТП)'}:</span>`;
   container.appendChild(title);
 
   const scrollBox = document.createElement('div');

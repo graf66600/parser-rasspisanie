@@ -14,7 +14,7 @@ export function createHistoryCardElement(entry, { onDelete, onEdit }) {
   card.className = 'history-card';
 
   const isTheory = entry.type === 'theory' || (entry.topic && (entry.topic.toLowerCase().includes('лекци') || entry.topic.toLowerCase().includes('теори')));
-  const typeLabel = isTheory ? 'Лекция' : 'Практика';
+  const typeLabel = isTheory ? 'Лекция' : entry.type === 'practice' ? 'Практика' : 'Тип не указан';
   const typeClass = isTheory ? 'badge-theory' : 'badge-practice';
 
   const attendance = entry.attendance || {};
@@ -38,7 +38,7 @@ export function createHistoryCardElement(entry, { onDelete, onEdit }) {
   card.innerHTML = `
     <div class="history-card-top">
       <div class="history-card-date">
-        <span class="history-badge-num">Пара №${entry.calculatedCourseNum || 1}</span>
+        <span class="history-badge-num">${entry.calculatedCourseNum ? `По программе №${entry.calculatedCourseNum}` : 'Номер по программе не указан'}</span>
         <span class="history-type-badge ${typeClass}">${typeLabel}</span>
         <span class="history-date-text">${entry.dateFormatted || entry.date} (${entry.lessonNumber} пара)</span>
       </div>

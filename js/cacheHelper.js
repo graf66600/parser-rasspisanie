@@ -2,7 +2,7 @@
 // PWA CACHE AND NETWORK HELPERS
 // ==========================================================================
 
-export const PWA_VERSION = 'v55';
+export const PWA_VERSION = 'v56';
 
 export const isStaticHost = typeof window !== 'undefined' && (
   window.location.hostname.includes('github.io') ||
