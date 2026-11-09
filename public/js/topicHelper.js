@@ -42,6 +42,30 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
   // Лекции (вся группа): Пн пара 3 (№6), Вт пары 2 и 4 (№7, №8), Ср пары 1 и 2 (№9, №10).
   // Практики (1 подгр): Пн пары 4 и 5 (№1, №2), Пт пары 5 и 6 (№3, №4).
   // Практики (2 подгр): Вт пары 5 и 6 (№1, №2), Чт пары 5 и 6 (№3, №4).
+  // Точный календарный план для группы 11фм (2-я подгруппа, преподаватель Трипольский):
+  // Трипольский ведёт только практики у 2-й подгруппы (до 09.11 прошло 7 практик).
+  // 09.11 (Пн, пара 3) — Практика №8: «Настройка параметров страницы и базовое форматирование текста в LibreOffice Writer»
+  // 13.11 (Пт, пара 4) — Практика №9: «Оформление списков и алгоритмов доврачебной помощи в LibreOffice Writer»
+  if (cleanG === '11фм') {
+    const planMap = {
+      '2026-11-09_3': { type: 'practice', num: 8 },
+      '2026-11-13_4': { type: 'practice', num: 9 },
+    };
+    const key = `${targetDate}_${bellNum}`;
+    const plan = planMap[key];
+    if (plan) {
+      const collection = prog.lessons.filter((x) => x.type === plan.type);
+      const l = collection[plan.num - 1] || prog.lessons[0];
+      return {
+        text: l.text || l.topic,
+        number: plan.num,
+        lessonObj: l,
+        homework: l.homework || '',
+        type: plan.type,
+      };
+    }
+  }
+
   if (cleanG === '51ф') {
     const planMap = {
       '2026-09-14_3': { type: 'theory', num: 6 },
@@ -115,9 +139,9 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     return lg === cleanG && l.dayOfWeek === dayOfWeek && Number(l.lessonNumber) === bellNum;
   });
 
-  const subgroup = currentScheduleLesson?.subgroup || (cleanG === '31фм' ? ((dayOfWeek === 2 || (dayOfWeek === 4 && bellNum >= 3)) ? '1' : '2') : undefined);
+  const subgroup = currentScheduleLesson?.subgroup || (cleanG === '31фм' ? ((dayOfWeek === 2 || (dayOfWeek === 4 && bellNum >= 3)) ? '1' : '2') : (cleanG === '11фм' ? '2' : undefined));
   const isBeforePractices = targetDate < '2026-09-14';
-  const isPractice = !isBeforePractices && (Boolean(subgroup) || cleanG === '31фм');
+  const isPractice = !isBeforePractices && (Boolean(subgroup) || cleanG === '31фм' || cleanG === '11фм');
 
   const theories = prog.lessons.filter((x) => x.type === 'theory');
   const practices = prog.lessons.filter((x) => x.type === 'practice');
@@ -176,18 +200,19 @@ export function getRecommendedLesson(group, bellLessonNum, date) {
     const priorDaysInSchedule = (state.schedule?.lessons || []).filter((l) => {
       if (!l.group) return false;
       const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      const lSub = l.subgroup || (cleanG === '31фм' ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : undefined);
+      const lSub = l.subgroup || (cleanG === '31фм' ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : (cleanG === '11фм' ? '2' : undefined));
       return lg === cleanG && l.dayOfWeek < dayOfWeek && lSub === subgroup;
     }).length;
 
     const priorToday = (state.schedule?.lessons || []).filter((l) => {
       if (!l.group) return false;
       const lg = l.group.toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
-      const lSub = l.subgroup || (cleanG === '31фм' ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : undefined);
+      const lSub = l.subgroup || (cleanG === '31фм' ? ((l.dayOfWeek === 2 || (l.dayOfWeek === 4 && Number(l.lessonNumber) >= 3)) ? '1' : '2') : (cleanG === '11фм' ? '2' : undefined));
       return lg === cleanG && l.dayOfWeek === dayOfWeek && lSub === subgroup && Number(l.lessonNumber) < bellNum;
     }).length;
 
-    const totalPast = pastWeeksPracticesCount + Math.max(thisWeekPracticesCount, priorDaysInSchedule) + priorToday;
+    const basePracticesBeforeWeek11 = cleanG === '11фм' ? 7 : 0;
+    const totalPast = basePracticesBeforeWeek11 + pastWeeksPracticesCount + Math.max(thisWeekPracticesCount, priorDaysInSchedule) + priorToday;
     const validIdx = practices.length > 0 ? totalPast % practices.length : 0;
     const l = practices[validIdx] || prog.lessons[0];
     let pNum = validIdx + 1;
