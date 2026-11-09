@@ -3,6 +3,7 @@
 // ==========================================================================
 import { state } from './state.js';
 import { pushStudentToCloud, deleteStudentFromCloud, pushBulkStudentsToCloud } from './supabaseSync.js';
+import { getStudentSubgroup, setStudentSubgroup } from './studentSubgroups.js';
 
 async function ensureXLSX() {
   if (window.XLSX) return window.XLSX;
@@ -29,13 +30,40 @@ export function renderManageStudents(onStudentsChanged) {
   }
 
   listEl.innerHTML = '';
+
+  const sub1Count = students.filter((s, i) => getStudentSubgroup(group, s, i, students.length) === 1).length;
+  const sub2Count = students.length - sub1Count;
+
+  const summary = document.createElement('div');
+  summary.className = 'flex items-center justify-between text-xs text-slate-400 bg-slate-950/40 border border-slate-800/80 rounded-xl px-3 py-2 mb-2';
+  summary.innerHTML = `
+    <span>Всего: <b class="text-white">${students.length}</b></span>
+    <span class="text-blue-400">1-я п/г: <b class="text-white">${sub1Count}</b></span>
+    <span class="text-purple-400">2-я п/г: <b class="text-white">${sub2Count}</b></span>
+  `;
+  listEl.appendChild(summary);
+
   students.forEach((student, idx) => {
+    const sub = getStudentSubgroup(group, student, idx, students.length);
     const item = document.createElement('div');
     item.className = 'student-manage-item';
     item.innerHTML = `
       <span class="student-manage-name"><b style="color: #64748b; margin-right: 6px;">${idx + 1}.</b>${student}</span>
+      <div class="student-subgroup-controls">
+        <button type="button" class="subgroup-pill-btn ${sub === 1 ? 'active-sub1' : ''}" data-sub="1" title="Назначить в 1-ю подгруппу">1 п/г</button>
+        <button type="button" class="subgroup-pill-btn ${sub === 2 ? 'active-sub2' : ''}" data-sub="2" title="Назначить во 2-ю подгруппу">2 п/г</button>
+      </div>
       <button class="student-del-btn" title="Удалить студента">✕</button>
     `;
+
+    item.querySelectorAll('.subgroup-pill-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetSub = Number(btn.getAttribute('data-sub'));
+        setStudentSubgroup(group, student, targetSub);
+        renderManageStudents(onStudentsChanged);
+        if (typeof onStudentsChanged === 'function') onStudentsChanged();
+      });
+    });
 
     item.querySelector('.student-del-btn')?.addEventListener('click', () => {
       if (confirm(`Удалить студента ${student}?`)) {

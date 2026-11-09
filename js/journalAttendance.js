@@ -2,6 +2,7 @@
 // JOURNAL ATTENDANCE: STUDENT LIST & ATTENDANCE CONTROLS
 // ==========================================================================
 import { state } from './state.js';
+import { getStudentSubgroup, setStudentSubgroup } from './studentSubgroups.js';
 
 export function updateJournalStudents() {
   const groupSel = document.getElementById('journalGroupSelect');
@@ -12,6 +13,15 @@ export function updateJournalStudents() {
   const subgSel = document.getElementById('journalSubgroupSelect');
   const chosenSubgroup = subgSel?.value || 'all';
   if (!listEl) return;
+
+  // Сохраняем текущие выставленные оценки/статусы в форме, чтобы не сбрасывать их при смене фильтра подгрупп
+  const currentMarks = {};
+  listEl.querySelectorAll('.student-row').forEach((r) => {
+    const name = r.getAttribute('data-student');
+    const active = r.querySelector('.status-btn.active')?.getAttribute('data-val') || 'present';
+    const gr = r.querySelector('.grade-select')?.value || '';
+    if (name) currentMarks[name] = { status: active, grade: gr };
+  });
 
   let allStudents = state.studentsByGroup[group] || [];
   if (allStudents.length === 0 && Array.isArray(state.journalEntries)) {
@@ -29,11 +39,10 @@ export function updateJournalStudents() {
       } catch (err) {}
     }
   }
-  const mid = Math.ceil(allStudents.length / 2);
 
   let filteredStudents = allStudents.map((s, idx) => {
-    const defaultSub = idx < mid ? 1 : 2;
-    return { name: s, subgroup: defaultSub, originalIndex: idx };
+    const sub = getStudentSubgroup(group, s, idx, allStudents.length);
+    return { name: s, subgroup: sub, originalIndex: idx };
   });
 
   if (chosenSubgroup === '1') {
@@ -51,7 +60,7 @@ export function updateJournalStudents() {
     listEl.innerHTML = `
       <div style="text-align: center; color: #64748b; padding: 16px 12px; font-size: 12px; background: rgba(15,23,42,0.4); border-radius: 12px; border: 1px dashed #334155;">
         В выбранной подгруппе группы ${group} пока нет студентов.<br>
-        <span style="color: #94a3b8; font-size: 11px;">Перейдите во вкладку «Студенты», чтобы добавить.</span>
+        <span style="color: #94a3b8; font-size: 11px;">Перейдите во вкладку «Студенты», чтобы настроить список и распределение по подгруппам.</span>
       </div>`;
     return;
   }
@@ -59,30 +68,48 @@ export function updateJournalStudents() {
   listEl.innerHTML = '';
   filteredStudents.forEach((item, idx) => {
     const student = item.name;
+    const initialStatus = currentMarks[student]?.status || 'present';
+    const initialGrade = currentMarks[student]?.grade || '';
+
     const row = document.createElement('div');
     row.className = 'student-row';
     row.setAttribute('data-student', student);
     row.setAttribute('data-subgroup', String(item.subgroup));
+
+    const isSub1 = item.subgroup === 1;
+    const badgeClass = isSub1
+      ? 'bg-blue-950/80 text-blue-300 border-blue-700/60 hover:bg-blue-900'
+      : 'bg-purple-950/80 text-purple-300 border-purple-700/60 hover:bg-purple-900';
+
+    let initialBadgeText = 'Был';
+    let initialBadgeClass = 'student-badge badge-present';
+    if (initialStatus === 'absent') {
+      initialBadgeText = '✕ Не был';
+      initialBadgeClass = 'student-badge badge-absent';
+    } else if (initialStatus === 'excused') {
+      initialBadgeText = '📋 Уважит.';
+      initialBadgeClass = 'student-badge badge-excused';
+    }
 
     row.innerHTML = `
       <div class="student-header">
         <div class="student-info">
           <span class="student-num">${idx + 1}</span>
           <span class="student-name">${student}</span>
-          <span class="text-[10px] text-slate-400 bg-slate-800 px-1 py-0.5 rounded border border-slate-700">${item.subgroup} п/г</span>
+          <button type="button" class="subgroup-toggle-badge text-[10px] font-semibold px-2 py-0.5 rounded border transition cursor-pointer ${badgeClass}" title="Подгруппа ${item.subgroup}. Нажмите, чтобы переключить в ${isSub1 ? '2-ю' : '1-ю'}">${item.subgroup} п/г ⇄</button>
         </div>
-        <span class="student-badge badge-present" data-badge>Был</span>
+        <span class="${initialBadgeClass}" data-badge>${initialBadgeText}</span>
       </div>
 
       <div class="student-controls">
         <div class="attendance-toggle" role="group">
-          <button type="button" data-val="present" class="status-btn active status-present" title="Присутствовал">
+          <button type="button" data-val="present" class="status-btn ${initialStatus === 'present' ? 'active' : ''} status-present" title="Присутствовал">
             <span class="status-icon">✓</span> <span>Был</span>
           </button>
-          <button type="button" data-val="absent" class="status-btn status-absent" title="Отсутствовал">
+          <button type="button" data-val="absent" class="status-btn ${initialStatus === 'absent' ? 'active' : ''} status-absent" title="Отсутствовал">
             <span class="status-icon">✕</span> <span>Н</span>
           </button>
-          <button type="button" data-val="excused" class="status-btn status-excused" title="Уважительная причина (справка)">
+          <button type="button" data-val="excused" class="status-btn ${initialStatus === 'excused' ? 'active' : ''} status-excused" title="Уважительная причина (справка)">
             <span class="status-icon">📋</span> <span>У</span>
           </button>
         </div>
@@ -90,15 +117,23 @@ export function updateJournalStudents() {
         <div class="grade-wrapper">
           <label class="grade-label">Оценка:</label>
           <select class="grade-select" title="Оценка за занятие">
-            <option value="">—</option>
-            <option value="5">5</option>
-            <option value="4">4</option>
-            <option value="3">3</option>
-            <option value="2">2</option>
+            <option value="" ${initialGrade === '' ? 'selected' : ''}>—</option>
+            <option value="5" ${initialGrade === '5' ? 'selected' : ''}>5</option>
+            <option value="4" ${initialGrade === '4' ? 'selected' : ''}>4</option>
+            <option value="3" ${initialGrade === '3' ? 'selected' : ''}>3</option>
+            <option value="2" ${initialGrade === '2' ? 'selected' : ''}>2</option>
           </select>
         </div>
       </div>
     `;
+
+    row.querySelector('.subgroup-toggle-badge')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const nextSub = item.subgroup === 1 ? 2 : 1;
+      setStudentSubgroup(group, student, nextSub);
+      updateJournalStudents();
+    });
 
     const badge = row.querySelector('[data-badge]');
     const btns = row.querySelectorAll('.status-btn');

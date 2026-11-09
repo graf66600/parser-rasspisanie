@@ -1,8 +1,37 @@
 // ==========================================================================
 // JOURNAL EDIT: REHYDRATE LESSON ENTRY INTO EDITING FORM
 // ==========================================================================
+import { state } from './state.js';
 import { updateJournalStudents } from './journalAttendance.js';
 import { autoFillTopicForGroup } from './journalView.js';
+
+export function findExistingJournalEntry(group, lessonNum, date, subgroup, teacher) {
+  if (!state.journalEntries || !Array.isArray(state.journalEntries)) return null;
+  const currentTeacher = teacher || state.currentTeacher || '';
+  const targetDate = date || new Date().toISOString().split('T')[0];
+  const targetLesson = Number(lessonNum);
+  const targetSub = subgroup && subgroup !== 'all' ? Number(subgroup) : null;
+
+  if (targetSub) {
+    const exact = state.journalEntries.find((e) => {
+      const matchGroup = e.group === group;
+      const matchDate = e.date === targetDate;
+      const matchLesson = Number(e.lessonNumber) === targetLesson;
+      const matchTeacher = !e.teacher || !currentTeacher || e.teacher === currentTeacher;
+      const matchSub = Number(e.subgroup) === targetSub;
+      return matchGroup && matchDate && matchLesson && matchTeacher && matchSub;
+    });
+    if (exact) return exact;
+  }
+
+  return state.journalEntries.find((e) => {
+    const matchGroup = e.group === group;
+    const matchDate = e.date === targetDate;
+    const matchLesson = Number(e.lessonNumber) === targetLesson;
+    const matchTeacher = !e.teacher || !currentTeacher || e.teacher === currentTeacher;
+    return matchGroup && matchDate && matchLesson && matchTeacher;
+  }) || null;
+}
 
 export function loadEntryToForm(entry) {
   if (!entry) return;
@@ -83,7 +112,7 @@ function showEditModeNotice(entry) {
       <span class="text-base">✏️</span>
       <div>
         <div class="font-bold text-white">Редактирование занятия</div>
-        <div class="text-[11px] text-amber-200/80">${entry.dateFormatted || entry.date} • Гр. ${entry.group} • ${entry.lessonNumber} пара</div>
+        <div class="text-[11px] text-amber-200/80">${entry.dateFormatted || entry.date} • Гр. ${entry.group} • ${entry.lessonNumber} пара${entry.subgroup ? ` (${entry.subgroup} п/г)` : ''}</div>
       </div>
     </div>
     <button type="button" id="cancelEditNoticeBtn" class="px-2.5 py-1 bg-amber-500/30 hover:bg-amber-500/50 text-white rounded-lg text-[11px] font-semibold transition">Отмена</button>
@@ -94,6 +123,7 @@ function showEditModeNotice(entry) {
     notice.classList.add('hidden');
     const g = document.getElementById('journalGroupSelect')?.value;
     const l = document.getElementById('journalLessonNumSelect')?.value;
+    updateJournalStudents();
     autoFillTopicForGroup(g, l);
   });
 }

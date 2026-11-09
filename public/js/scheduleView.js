@@ -156,6 +156,7 @@ export function renderSchedule(onOpenJournal) {
         <button class="open-journal-btn"
           data-group="${lesson.group || ''}"
           data-lesson="${lesson.lessonNumber}"
+          data-subgroup="${lesson.subgroup || ''}"
           data-date="${lessonDate}"
           title="Открыть эту пару в журнале">
           <span>📝 В журнал</span>
@@ -171,8 +172,9 @@ export function renderSchedule(onOpenJournal) {
       const group = btn.getAttribute('data-group');
       const lessonNum = btn.getAttribute('data-lesson');
       const date = btn.getAttribute('data-date');
+      const subgroup = btn.getAttribute('data-subgroup');
       if (typeof onOpenJournal === 'function') {
-        onOpenJournal(group, lessonNum, date);
+        onOpenJournal(group, lessonNum, date, subgroup);
       }
     });
   });

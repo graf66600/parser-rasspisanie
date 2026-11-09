@@ -15,8 +15,10 @@ import {
   deleteJournalEntry,
 } from './journalHistory.js';
 import { pushJournalEntryToCloud } from './supabaseSync.js';
+import { loadEntryToForm, findExistingJournalEntry } from './journalEdit.js';
 
 export { updateJournalStudents, loadJournalHistory, renderJournalHistory, deleteJournalEntry };
+export { loadEntryToForm, findExistingJournalEntry };
 
 export function autoFillTopicForGroup(group, lessonNum) {
   if (!group) {
@@ -65,42 +67,45 @@ export function autoFillTopicForGroup(group, lessonNum) {
   renderJournalStats(group);
 }
 
-export { loadEntryToForm } from './journalEdit.js';
-
-
 export function setupJournalListeners() {
   const groupSel = document.getElementById('journalGroupSelect');
   const lessonSel = document.getElementById('journalLessonNumSelect');
   const topicInput = document.getElementById('journalTopicInput');
   const suggestionsBox = document.getElementById('topicSuggestions');
+  const subgSel = document.getElementById('journalSubgroupSelect');
+  const dateInput = document.getElementById('journalDateInput');
 
-  groupSel?.addEventListener('change', () => {
-    updateJournalStudents();
-    autoFillTopicForGroup(groupSel.value, lessonSel?.value);
-    renderJournalStats(groupSel.value);
-  });
+  function handleFormSelectionChange() {
+    const group = groupSel?.value;
+    const lesson = lessonSel?.value;
+    const date = dateInput?.value;
+    const sub = subgSel?.value;
+    if (!group) return;
 
-  document.getElementById('journalSubgroupSelect')?.addEventListener('change', () => {
-    updateJournalStudents();
-  });
+    const existing = findExistingJournalEntry(group, lesson, date, sub);
+    if (existing) {
+      loadEntryToForm(existing);
+    } else {
+      document.getElementById('journalEditNotice')?.classList.add('hidden');
+      updateJournalStudents();
+      autoFillTopicForGroup(group, lesson);
+    }
+    renderJournalStats(group);
+  }
 
-  lessonSel?.addEventListener('change', () => {
-    autoFillTopicForGroup(groupSel?.value, lessonSel.value);
-  });
-
-  document.getElementById('journalDateInput')?.addEventListener('change', () => {
-    autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
-  });
+  groupSel?.addEventListener('change', handleFormSelectionChange);
+  lessonSel?.addEventListener('change', handleFormSelectionChange);
+  subgSel?.addEventListener('change', handleFormSelectionChange);
+  dateInput?.addEventListener('change', handleFormSelectionChange);
 
   topicInput?.addEventListener('click', () => {
     if (suggestionsBox) suggestionsBox.classList.toggle('hidden');
   });
 
   document.getElementById('todayDateBtn')?.addEventListener('click', () => {
-    const dateInput = document.getElementById('journalDateInput');
     if (dateInput) {
       dateInput.value = new Date().toISOString().split('T')[0];
-      autoFillTopicForGroup(groupSel?.value, lessonSel?.value);
+      handleFormSelectionChange();
     }
   });
 
@@ -140,7 +145,7 @@ export function setupJournalListeners() {
   document.getElementById('saveJournalBtn')?.addEventListener('click', async () => {
     const group = groupSel?.value;
     const lessonNumber = Number(lessonSel?.value || 1);
-    const date = document.getElementById('journalDateInput')?.value || new Date().toISOString().split('T')[0];
+    const date = dateInput?.value || new Date().toISOString().split('T')[0];
     const topic = topicInput?.value || 'Практическое занятие';
     const notes = document.getElementById('journalNotesInput')?.value || '';
 
@@ -178,12 +183,11 @@ export function setupJournalListeners() {
       attendance[student] = { status, grade: grade || undefined };
     });
 
-    const subgroupSel = document.getElementById('journalSubgroupSelect')?.value;
+    const subgroupSel = subgSel?.value;
     const subgroupVal = (subgroupSel === '1' || subgroupSel === '2') ? Number(subgroupSel) : null;
     const subg = subgroupVal ? `_sub${subgroupVal}` : '';
 
     let entryId = `${group}${subg}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
-    
 
     const entry = {
       id: entryId,
@@ -218,12 +222,11 @@ export function setupJournalListeners() {
       }).catch(() => {});
     }
 
-    // Скрываем плашку редактирования после сохранения
-    document.getElementById('journalEditNotice')?.classList.add('hidden');
+    // Сохраняем форму в режиме редактирования с обновленными данными
+    loadEntryToForm(entry);
 
     alert(`✅ Занятие (${currentTeacher}) успешно сохранено в журнал!`);
     renderJournalHistory();
     renderJournalStats(group);
-    autoFillTopicForGroup(group, lessonNumber);
   });
 }

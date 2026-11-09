@@ -3,7 +3,7 @@
 // ==========================================================================
 import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION, clearPwaCacheAndReload } from './js/state.js';
 import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js';
-import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners } from './js/journalView.js';
+import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners, loadEntryToForm, findExistingJournalEntry } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
 import { setupUploadListeners } from './js/uploadView.js';
 import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js';
@@ -122,20 +122,34 @@ navButtons.forEach((btn) => {
 });
 
 // Переход в журнал из расписания
-function onOpenLessonInJournal(group, lessonNum, date) {
+function onOpenLessonInJournal(group, lessonNum, date, subgroup) {
   const gSel = document.getElementById('journalGroupSelect');
   const lSel = document.getElementById('journalLessonNumSelect');
+  const subgSel = document.getElementById('journalSubgroupSelect');
+  const dateInput = document.getElementById('journalDateInput');
+
+  const targetDate = date || formatLocalDate();
   if (gSel && group) gSel.value = group;
   if (lSel && lessonNum) lSel.value = String(lessonNum);
+  if (dateInput) dateInput.value = targetDate;
+  if (subgSel) {
+    if (subgroup) subgSel.value = String(subgroup);
+    else subgSel.value = 'all';
+  }
 
-  const dateInput = document.getElementById('journalDateInput');
-  if (dateInput) dateInput.value = date || formatLocalDate();
+  // Проверяем, существует ли уже сохраненная запись для этого занятия
+  const existing = findExistingJournalEntry(group, lessonNum, targetDate, subgroup);
+  if (existing) {
+    loadEntryToForm(existing);
+  } else {
+    document.getElementById('journalEditNotice')?.classList.add('hidden');
+    updateJournalStudents();
+    autoFillTopicForGroup(group, lessonNum);
+  }
 
-  updateJournalStudents();
-  autoFillTopicForGroup(group, lessonNum);
   switchTab('tabJournal');
-}
 
+}
 // Запуск приложения
 async function initApp() {
   const dateInput = document.getElementById('journalDateInput');

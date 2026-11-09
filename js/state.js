@@ -26,6 +26,7 @@ const createDefaultState = () => ({
     { lessonNumber: 7, startTime: '17:30', endTime: '18:50' },
   ],
   studentsByGroup: {},
+  studentSubgroups: {},
   journalEntries: [],
   curriculumPrograms: [],
   currentUser: null,
@@ -188,6 +189,8 @@ export function initLocalState() {
   try {
     const cached = localStorage.getItem('pwa_custom_students');
     if (cached) state.studentsByGroup = JSON.parse(cached);
+    const cachedSub = localStorage.getItem('pwa_student_subgroups');
+    if (cachedSub) state.studentSubgroups = JSON.parse(cachedSub);
   } catch (e) {}
 
   try {
