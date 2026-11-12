@@ -4,10 +4,13 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { SourceTextModule, SyntheticModule, createContext } = require('node:vm');
 
-async function loadView(file, state, document, stored = []) {
+async function loadView(file, state, document, stored = [], { now, remote } = {}) {
   const storage = new Map([['pwa_journal', JSON.stringify(stored)]]);
   const context = createContext({
     console, document,
+    Date: now ? class extends Date {
+      constructor(...args) { super(...(args.length ? args : [now])); }
+    } : Date,
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
@@ -17,10 +20,12 @@ async function loadView(file, state, document, stored = []) {
   const dependencies = {
     './state.js': {
       state, PWA_VERSION: 'test', isStaticHost: true,
-      DAY_NAMES: { 1: 'Понедельник' },
+      DAY_NAMES: { 1: 'Понедельник', 4: 'Четверг', 5: 'Пятница' },
       formatLocalDate: () => '2026-10-26',
     },
     './topicHelper.js': { getRecommendedLesson: () => null },
+    './lessonProgress.js': { matchesJournalTeacher: (entry, teacher) => entry.teacher === teacher },
+    './journalSummaryView.js': { refreshOpenJournalSummary: noop },
     './journalStats.js': { renderJournalStats: noop },
     './journalView.js': { autoFillTopicForGroup: noop, loadEntryToForm: noop },
     './journalCard.js': { createHistoryCardElement: noop },
@@ -31,13 +36,16 @@ async function loadView(file, state, document, stored = []) {
       initBellsPreset: noop,
     },
     './supabaseSync.js': {
-      fetchRemoteJournal: async () => null, deleteJournalEntryFromCloud: noop,
+      fetchRemoteJournal: remote || (async () => null), deleteJournalEntryFromCloud: noop,
     },
   };
   const linked = [];
   const module = new SourceTextModule(readFileSync(file, 'utf8'), { context });
   module._linked = linked;
   await module.link(name => {
+    if (name === './scheduleDates.js') {
+      return new SourceTextModule(readFileSync('js/scheduleDates.js', 'utf8'), { context });
+    }
     const values = dependencies[name];
     assert.ok(values, `Unexpected dependency: ${name}`);
     const sm = new SyntheticModule(Object.keys(values), function () {
@@ -47,7 +55,7 @@ async function loadView(file, state, document, stored = []) {
     return sm;
   });
   await module.evaluate();
-  return module.namespace;
+  return { ...module.namespace, storage };
 }
 
 for (const root of ['', 'public/']) {
@@ -83,3 +91,45 @@ for (const root of ['', 'public/']) {
     });
   }
 }
+
+test('November 12 and 13 render published Thursday and Friday in Moscow time', async () => {
+  const cards = [];
+  const list = { set innerHTML(value) { cards.length = 0; this.html = value; },
+    appendChild: card => cards.push(card) };
+  const title = {};
+  const count = {};
+  const state = { activeDay: 'today', currentTeacher: 'Трипольский',
+    schedule: JSON.parse(readFileSync('data/schedule.json', 'utf8')) };
+  const document = { getElementById: id => ({ scheduleLessonsList: list,
+    scheduleDayTitle: title, scheduleTotalLessons: count })[id],
+    createElement: () => ({}), querySelectorAll: () => [] };
+  const view = await loadView('js/scheduleView.js', state, document, [], { now: '2026-11-11T21:01:00Z' });
+  for (const [activeDay, day, date] of [['today', 'Четверг', '12'], ['tomorrow', 'Пятница', '13']]) {
+    state.activeDay = activeDay;
+    view.renderSchedule();
+    assert.equal(title.textContent, day);
+    assert.equal(count.textContent, '3 пары');
+    assert.equal(cards.length, 3);
+    for (const card of cards) assert.match(card.innerHTML, new RegExp('data-date="2026-11-' + date + '"'));
+  }
+  state.schedule.weekEnd = '2026-11-12';
+  view.renderSchedule();
+  assert.match(list.html, /Расписание на эту дату не опубликовано/);
+  assert.equal(count.textContent, '');
+});
+
+test('a journal refresh keeps grades saved while the cloud request was in flight', async () => {
+  const state = { currentTeacher: 'Трипольский' };
+  const original = { id: '1', attendance: { student: { grade: '3' } } };
+  const removed = { id: '2' };
+  let finish;
+  const remote = () => new Promise(resolve => { finish = resolve; });
+  const view = await loadView('js/journalHistory.js', state, { getElementById: () => null },
+    [original, removed], { remote });
+  const pending = view.loadJournalHistory();
+  const updated = { ...original, attendance: { student: { grade: '5' } } };
+  view.storage.set('pwa_journal', JSON.stringify([updated]));
+  finish([original, removed, { id: '3' }]);
+  await pending;
+  assert.deepEqual(JSON.parse(view.storage.get('pwa_journal')), [updated, { id: '3' }]);
+});

@@ -10,8 +10,11 @@ export function isRemoteScheduleCurrent(remoteUpdatedAt, publishedUpdatedAt) {
   return Number.isFinite(remoteTime) && remoteTime >= publishedTime;
 }
 
+export function loadPublishedScheduleMetadata() {
+  return publishedMetadata ||= safeFetchJson(`./data/schedule-source.json?v=${PWA_VERSION}`, 2000);
+}
+
 export async function canUseRemoteSchedule(remoteUpdatedAt) {
-  publishedMetadata ||= safeFetchJson(`./data/schedule-source.json?v=${PWA_VERSION}`, 2000);
-  const metadata = await publishedMetadata;
+  const metadata = await loadPublishedScheduleMetadata();
   return isRemoteScheduleCurrent(remoteUpdatedAt, metadata?.updatedAt);
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v56';
+const CACHE_NAME = 'schedule-pwa-v57';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -30,6 +30,7 @@ const STATIC_ASSETS = [
   './js/authView.js',
   './js/supabaseSync.js',
   './js/scheduleView.js',
+  './js/scheduleDates.js',
   './js/notifications.js',
   './js/notificationAudio.js',
   './js/notificationToast.js',
@@ -50,6 +51,7 @@ const STATIC_ASSETS = [
   './js/formGuard.js',
   './js/bellsPresets.js',
   './data/schedule.json',
+  './data/schedule-source.json',
   './data/schedules.json',
   './data/curriculum.json',
   './data/teachers.json',

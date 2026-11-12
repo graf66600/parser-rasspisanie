@@ -2,7 +2,7 @@ import { teacherLoad, semesterForDate } from './teachingLoad.js';
 import { state } from './state.js';
 import { findProgramForGroup } from './topicHelper.js';
 import { normalizeGroup, normalizeSubgroup, scopedEntries, uniqueEntries,
-  lessonType, programMatchesSubject } from './lessonProgress.js';
+  lessonType, programMatchesSubject, journalGroupEntries, countJournalTypes } from './lessonProgress.js';
 
 export function calculateGroupStats(group, subgroup = '', date = new Date().toLocaleDateString('sv-SE')) {
   const semester = semesterForDate(date);
@@ -53,7 +53,11 @@ export function renderJournalStats(group) {
     ...scopedEntries(state, group).map(e => normalizeSubgroup(e.subgroup)),
   ].filter(Boolean));
   const scopes = selected && selected !== 'all' ? [selected] : subgroups.size ? [...subgroups].sort() : [''];
-  container.innerHTML = scopes.map(sub => renderStatsContent(group, sub)).join('');
+  const entries = journalGroupEntries(state, group);
+  const counts = countJournalTypes(entries, findProgramForGroup(group));
+  const other = counts.other ? ` · Другие записи: ${counts.other}` : '';
+  container.innerHTML = `<div class="stats-card">Сводная по группе · Записей: ${entries.length} · Лекций: ${counts.theory} · Практик: ${counts.practice}${other}</div>`
+    + scopes.map(sub => renderStatsContent(group, sub)).join('');
 }
 
 function renderStatsContent(group, subgroup) {

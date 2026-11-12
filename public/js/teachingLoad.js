@@ -17,7 +17,7 @@ export const teachingLoads = rows.map(([group, semester, theoryHours, practiceHo
   teacherHours: theoryHours + practiceHours * practiceMultiplier,
 }));
 
-const groupKey = value => String(value || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
+const groupKey = value => String(value || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф').replace(/m/g, 'м').replace(/c/g, 'с');
 export function teacherLoad(teacher, group, semester) {
   if (String(teacher || '').trim().toLowerCase().split(/\s+/)[0] !== 'трипольский') return null;
   const key = groupKey(group) === '11м' ? '11мс' : groupKey(group);

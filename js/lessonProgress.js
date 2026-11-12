@@ -1,7 +1,7 @@
 import { teacherLoad, semesterForDate, annualTypePairs } from './teachingLoad.js';
 // Pure accounting: a course stream is teacher + subject + group + type + subgroup.
 export const normalizeGroup = value => String(value || '').toLowerCase()
-  .replace(/^группа\s*/i, '').replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф');
+  .replace(/^группа\s*/i, '').replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф').replace(/m/g, 'м').replace(/c/g, 'с');
 export const normalizeTeacher = value => String(value || '').trim().toLowerCase();
 export const normalizeSubgroup = value => value && value !== 'all' ? String(value) : '';
 export const normalizeSubject = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -31,6 +31,30 @@ export function scopedEntries(state, group, subject) {
   return (state.journalEntries || []).filter(e => normalizeGroup(e.group) === normalizeGroup(group)
     && teacher && normalizeTeacher(e.teacher) === teacher
     && (!subject || normalizeSubject(e.subject) === normalizeSubject(subject)));
+}
+
+export function matchesJournalTeacher(entry, teacher) {
+  const selected = normalizeTeacher(teacher);
+  const recorded = normalizeTeacher(entry.teacher);
+  if (!selected) return false;
+  return recorded ? recorded === selected : selected.split(/\s+/)[0] === 'трипольский';
+}
+
+export function journalGroupEntries(state, group) {
+  const key = normalizeGroup(group);
+  if (!key) return [];
+  return (state.journalEntries || []).filter(entry => normalizeGroup(entry.group) === key
+    && matchesJournalTeacher(entry, state.currentTeacher));
+}
+
+export function countJournalTypes(entries, program) {
+  const counts = { theory: 0, practice: 0, other: 0 };
+  for (const entry of entries) {
+    const type = lessonType(entry, program);
+    if (type === 'theory' || type === 'practice') counts[type]++;
+    else counts.other++;
+  }
+  return counts;
 }
 
 export function uniqueEntries(entries) {

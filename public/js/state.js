@@ -2,6 +2,8 @@
 // STATE MANAGEMENT & DATA LOADERS
 // ==========================================================================
 import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames } from './cacheHelper.js';
+import { scheduleDate, scheduleWeekday, scheduleCoversDate } from './scheduleDates.js';
+import { loadPublishedScheduleMetadata } from './scheduleFreshness.js';
 import { fetchRemoteStudents, fetchRemoteScheduleData } from './supabaseSync.js';
 export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames };
 
@@ -64,9 +66,13 @@ export function updateHeaderStatus() {
     return;
   }
 
-  const now = new Date();
-  const day = now.getDay() === 0 ? 7 : now.getDay();
-  const todayLessons = state.schedule.lessons.filter((l) => l.dayOfWeek === day);
+  const today = scheduleDate();
+  if (!scheduleCoversDate(state.schedule, today)) {
+    statusEl.textContent = 'Расписание на сегодня не опубликовано';
+    return;
+  }
+  const day = scheduleWeekday(today);
+  const todayLessons = state.schedule.lessons.filter((l) => Number(l.dayOfWeek) === day);
   const tName = state.currentTeacher;
 
   statusEl.textContent = todayLessons.length === 0
@@ -326,20 +332,23 @@ export async function loadSchedule(onScheduleLoaded, targetTeacher = state.curre
 
     // 4. Fallback на локальные JSON-файлы
     if (!freshData) {
-      const allByTeacher = await safeFetchJson(`./data/schedules_all.json?v=${PWA_VERSION}`, 3000);
-      if (allByTeacher && allByTeacher[targetTeacher]) {
+      const [allByTeacher, metadata, singleSchedule] = await Promise.all([
+        safeFetchJson(`./data/schedules_all.json?v=${PWA_VERSION}`, 3000),
+        loadPublishedScheduleMetadata(),
+        safeFetchJson(`./data/schedule.json?v=${PWA_VERSION}`, 2000),
+      ]);
+      if (singleSchedule?.teacher === targetTeacher && singleSchedule.lessons) {
+        freshData = singleSchedule;
+      } else if (allByTeacher?.[targetTeacher]) {
         freshData = {
           success: true,
           teacher: targetTeacher,
           lessons: allByTeacher[targetTeacher],
+          weekStart: metadata?.weekStart,
+          weekEnd: metadata?.weekEnd,
           bells: state.bells,
           hasCurriculum: false,
         };
-      } else {
-        const singleSchedule = await safeFetchJson(`./data/schedule.json?v=${PWA_VERSION}`, 2000);
-        if (singleSchedule?.lessons) {
-          freshData = singleSchedule;
-        }
       }
     }
 

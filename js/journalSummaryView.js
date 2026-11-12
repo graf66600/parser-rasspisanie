@@ -3,38 +3,27 @@
 // ==========================================================================
 import { state } from './state.js';
 
-function normalizeGroup(g) {
-  return (g || '').toLowerCase().replace(/[^0-9а-яёa-z]/gi, '').trim();
-}
+import { countJournalTypes, findProgram, journalGroupEntries, lessonType,
+  matchesJournalTeacher, normalizeGroup } from './lessonProgress.js';
+
+const shortTypes = { theory: 'Л', practice: 'П', exam: 'Экз.' };
 
 function getGroupEntries(group) {
-  const clean = normalizeGroup(group);
-  const currentTeacher = state.currentTeacher || '';
-
-  return (state.journalEntries || [])
-    .filter((e) => {
-      const matchTeacher = !currentTeacher || !e.teacher || (e.teacher === currentTeacher);
-      const matchGroup = normalizeGroup(e.group) === clean || clean.includes(normalizeGroup(e.group));
-      return matchTeacher && matchGroup;
-    })
-    .sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      return Number(a.lessonNumber) - Number(b.lessonNumber);
-    });
+  return journalGroupEntries(state, group)
+    .sort((a, b) => a.date.localeCompare(b.date) || Number(a.lessonNumber) - Number(b.lessonNumber));
 }
 
-
 function getGroupStudents(group) {
-  const list = state.studentsByGroup[group] || [];
-  if (list.length > 0) return [...list];
-
-  // Если список не задан, соберем уникальных студентов из записей
-  const entries = getGroupEntries(group);
+  const key = normalizeGroup(group);
   const found = new Set();
+  for (const [name, students] of Object.entries(state.studentsByGroup)) {
+    if (normalizeGroup(name) === key) students.forEach(student => found.add(student));
+  }
+  const entries = getGroupEntries(group);
   entries.forEach((e) => {
     Object.keys(e.attendance || {}).forEach((s) => found.add(s));
   });
-  return Array.from(found).sort();
+  return Array.from(found);
 }
 
 export function calculateStudentStats(student, entries) {
@@ -126,10 +115,13 @@ export function renderSummaryTable(group) {
     `;
   }).join('');
 
+  const program = findProgram(state.curriculumPrograms, group);
+  const counts = countJournalTypes(entries, program);
+
   // Заголовки дат занятий
   const dateHeaders = entries.map((e, idx) => {
     const d = e.date ? e.date.slice(5).replace('-', '.') : `Урок ${idx + 1}`;
-    const typeShort = (e.type === 'practice' || (e.topic || '').toLowerCase().includes('практик')) ? 'П' : 'Л';
+    const typeShort = shortTypes[lessonType(e, program)] || '—';
     const subgLbl = e.subgroup ? ` (${e.subgroup})` : '';
     return `<th class="header-lesson" title="Пара №${idx + 1}${e.subgroup ? ` (подгр. ${e.subgroup})` : ''} (${e.dateFormatted || e.date}): ${e.topic || 'Без темы'}">
       <div class="h-date">${d}</div>
@@ -151,6 +143,8 @@ export function renderSummaryTable(group) {
   container.innerHTML = `
     <div class="summary-meta-bar">
       <div class="meta-item"><span>Занятий:</span> <b>${entries.length}</b></div>
+      <div class="meta-item"><span>Лекций:</span> <b>${counts.theory}</b></div>
+      <div class="meta-item"><span>Практик:</span> <b>${counts.practice}</b></div>
       <div class="meta-item"><span>Студентов:</span> <b>${students.length}</b></div>
       <div class="meta-item"><span>Всего пропусков:</span> <b>${totalAbsences}</b></div>
       <div class="meta-item"><span>Ср. балл группы:</span> <b class="text-blue-400">${groupAvg}</b></div>
@@ -203,8 +197,7 @@ export function openJournalSummary(group) {
       });
     }
     (state.journalEntries || []).forEach((e) => {
-      const matchTeacher = !currentTeacher || !e.teacher || (e.teacher === currentTeacher);
-      if (matchTeacher && e.group) groups.add(e.group);
+      if (matchesJournalTeacher(e, currentTeacher) && e.group) groups.add(e.group);
     });
     if (groups.size === 0) {
       Object.keys(state.studentsByGroup || {}).forEach((g) => groups.add(g));
@@ -217,12 +210,20 @@ export function openJournalSummary(group) {
       if (g === group) opt.selected = true;
       sel.appendChild(opt);
     });
-    if (group && groups.has(group)) sel.value = group;
+    const selectedGroup = groups.has(group) ? group
+      : [...groups].find(name => normalizeGroup(name) === normalizeGroup(group));
+    if (selectedGroup) sel.value = selectedGroup;
   }
 
   const currentGroup = sel?.value || group || '51ф';
   renderSummaryTable(currentGroup);
   modal.classList.remove('hidden');
+}
+
+export function refreshOpenJournalSummary() {
+  const modal = document.getElementById('journalSummaryModal');
+  const group = document.getElementById('summaryGroupSelect')?.value;
+  if (modal && !modal.classList.contains('hidden') && group) renderSummaryTable(group);
 }
 
 export function closeJournalSummary() {
@@ -241,9 +242,10 @@ export function exportSummaryToCsv(group) {
     return;
   }
 
+  const program = findProgram(state.curriculumPrograms, group);
   const header = ['№', 'ФИО Студента'];
   entries.forEach((e, idx) => {
-    header.push(`${e.date || `Урок_${idx + 1}`} (${e.type === 'practice' ? 'Пр' : 'Лек'})`);
+    header.push(`${e.date || `Урок_${idx + 1}`} (${shortTypes[lessonType(e, program)] || '—'})`);
   });
   header.push('Пропусков (Н)', 'Уважительных (У)', 'Все оценки', 'Семестровая (Ср.балл)');
 

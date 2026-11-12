@@ -14,7 +14,7 @@ async function load(state, document = { getElementById: () => null }) {
     if (!modules.has(name)) modules.set(name, new SourceTextModule(readFileSync(`js/${name.slice(2)}`, 'utf8'), { context }));
     return modules.get(name);
   };
-  for (const name of ['./lessonProgress.js', './topicHelper.js', './journalStats.js']) {
+  for (const name of ['./lessonProgress.js', './topicHelper.js', './journalStats.js', './journalSummaryView.js']) {
     const module = get(name);
     if (module.status === 'unlinked') await module.link(get);
     if (module.status === 'linked') await module.evaluate();
@@ -126,4 +126,31 @@ test('31фм source document has 3 lectures and 12 practices, with assessment in
   assert.match(practice[11].text, /Дифференцированный зачет/);
   assert.match(practice[7].text, /ГРЛС/);
   assert.equal(program.topicsVerified, true);
+});
+
+
+test('31 FM: widget and grade sheet count the same 15 records and preserve attendance', async () => {
+  const state = fixture();
+  state.studentsByGroup = { '31фм': ['Студент'] };
+  state.journalEntries = Array.from({ length: 15 }, (_, index) => entry({
+    id: String(index), group: index % 2 ? '31 FM' : '31фм',
+    type: index < 3 ? 'theory' : 'practice',
+    teacher: index < 3 ? undefined : 'Трипольский',
+    subgroup: index < 3 ? null : (index % 2) + 1,
+    date: '2026-10-' + String(index + 1).padStart(2, '0'),
+    attendance: { Студент: { status: 'present', grade: '5' } },
+  }));
+  state.journalEntries.push(entry({ group: '31ф' }), entry({ group: '31фм', teacher: 'Иванова' }));
+  const original = JSON.stringify(state.journalEntries);
+  const widget = {};
+  const summary = {};
+  const api = await load(state, { getElementById: id => ({
+    journalStatsWidget: widget, summaryTableContainer: summary, journalDateInput: { value: '2026-11-12' },
+  })[id] });
+  api.renderJournalStats('31 FM');
+  api.renderSummaryTable('31фм');
+  assert.match(widget.innerHTML, /Записей: 15 · Лекций: 3 · Практик: 12/);
+  assert.match(summary.innerHTML, /Занятий:<\/span> <b>15<\/b>/);
+  assert.equal((summary.innerHTML.match(/class="cell-mark cell-grade /g) || []).length, 15);
+  assert.equal(JSON.stringify(state.journalEntries), original);
 });

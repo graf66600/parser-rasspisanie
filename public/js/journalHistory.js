@@ -4,6 +4,8 @@
 import { state, PWA_VERSION, isStaticHost } from './state.js';
 import { renderJournalStats } from './journalStats.js';
 import { autoFillTopicForGroup, loadEntryToForm } from './journalView.js';
+import { matchesJournalTeacher } from './lessonProgress.js';
+import { refreshOpenJournalSummary } from './journalSummaryView.js';
 import { createHistoryCardElement } from './journalCard.js';
 import { fetchRemoteJournal, deleteJournalEntryFromCloud } from './supabaseSync.js';
 
@@ -27,7 +29,7 @@ export function deleteJournalEntry(id) {
 }
 
 export async function loadJournalHistory() {
-  let local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
+  const local = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
   const currentTeacher = state.currentTeacher || '';
   state.journalEntries = local;
   renderJournalHistory();
@@ -55,11 +57,14 @@ export async function loadJournalHistory() {
     }
 
     if (freshEntries) {
-      const cleaned = freshEntries;
-
+      const latest = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
+      const latestIds = new Set(latest.map(entry => entry.id));
+      const removedIds = new Set(local.filter(entry => !latestIds.has(entry.id)).map(entry => entry.id));
       const map = new Map();
-      cleaned.forEach((e) => map.set(e.id, e));
-      local.forEach((e) => map.set(e.id, e));
+      freshEntries.forEach(entry => {
+        if (!removedIds.has(entry.id)) map.set(entry.id, entry);
+      });
+      latest.forEach(entry => map.set(entry.id, entry));
 
       const merged = Array.from(map.values());
       state.journalEntries = merged;
@@ -74,15 +79,13 @@ export async function loadJournalHistory() {
 
 
 export function renderJournalHistory() {
+  refreshOpenJournalSummary();
   const container = document.getElementById('journalHistoryList');
   if (!container) return;
 
   const currentTeacher = state.currentTeacher || '';
 
-  const teacherEntries = (state.journalEntries || []).filter((e) => {
-    if (!currentTeacher || !e.teacher) return false;
-    return e.teacher === currentTeacher;
-  });
+  const teacherEntries = (state.journalEntries || []).filter(entry => matchesJournalTeacher(entry, currentTeacher));
 
   if (teacherEntries.length === 0) {
     container.innerHTML = `

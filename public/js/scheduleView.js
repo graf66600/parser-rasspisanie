@@ -1,7 +1,8 @@
 // ==========================================================================
 // SCHEDULE VIEW & BELLS RENDERING
 // ==========================================================================
-import { DAY_NAMES, state, formatLocalDate } from './state.js';
+import { DAY_NAMES, state } from './state.js';
+import { scheduleDate, scheduleWeekday, scheduleCoversDate, shiftScheduleDate } from './scheduleDates.js';
 import { getRecommendedLesson } from './topicHelper.js';
 import {
   getLessonOverride,
@@ -10,19 +11,7 @@ import {
   initBellsPreset,
 } from './bellsPresets.js';
 
-function getDateForDayOfWeek(dayOfWeek) {
-  if (state.schedule?.weekStart) {
-    const date = new Date(`${state.schedule.weekStart}T12:00:00`);
-    date.setDate(date.getDate() + Number(dayOfWeek) - 1);
-    return formatLocalDate(date);
-  }
-  const now = new Date();
-  const currentJsDay = now.getDay();
-  const currentDay = currentJsDay === 0 ? 7 : currentJsDay;
-  const diff = dayOfWeek - currentDay;
-  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
-  return formatLocalDate(d);
-}
+
 
 function formatLessonsCount(count) {
   if (count === 0) return '0 пар';
@@ -60,16 +49,22 @@ export function renderSchedule(onOpenJournal) {
   }
 
   const activeDay = state.activeDay || 'all';
-  let filtered = state.schedule.lessons;
-  if (activeDay !== 'all') {
-    filtered = filtered.filter((l) => Number(l.dayOfWeek) === Number(activeDay));
-  }
-
+  const relative = activeDay === 'today' || activeDay === 'tomorrow';
+  const date = scheduleDate(activeDay === 'tomorrow' ? 1 : 0);
+  const day = relative ? scheduleWeekday(date) : Number(activeDay);
   const titleEl = document.getElementById('scheduleDayTitle');
   const countEl = document.getElementById('scheduleTotalLessons');
-  if (titleEl) {
-    titleEl.textContent = activeDay === 'all' ? 'Вся неделя' : (DAY_NAMES[activeDay] || 'День');
+  if (titleEl) titleEl.textContent = activeDay === 'all' ? 'Вся неделя' : (DAY_NAMES[day] || 'День');
+
+  if (relative && !scheduleCoversDate(state.schedule, date)) {
+    if (countEl) countEl.textContent = '';
+    container.innerHTML = '<div class="empty-state"><div class="empty-title">Расписание на эту дату не опубликовано</div></div>';
+    return;
   }
+
+  const filtered = activeDay === 'all' ? state.schedule.lessons
+    : state.schedule.lessons.filter((lesson) => Number(lesson.dayOfWeek) === day);
+  const weekStart = state.schedule.weekStart || shiftScheduleDate(date, 1 - scheduleWeekday(date));
   if (countEl) {
     countEl.textContent = formatLessonsCount(filtered.length);
   }
@@ -94,7 +89,7 @@ export function renderSchedule(onOpenJournal) {
       ? `<span class="lesson-day-badge">${DAY_NAMES[lesson.dayOfWeek]?.slice(0, 2) || ''}</span>`
       : '';
 
-    const lessonDate = getDateForDayOfWeek(lesson.dayOfWeek);
+    const lessonDate = shiftScheduleDate(weekStart, Number(lesson.dayOfWeek) - 1);
     const rec = getRecommendedLesson(lesson.group, lesson.lessonNumber, lessonDate, lesson);
 
     const bellSlot = (state.bells || []).find((b) => Number(b.lessonNumber) === Number(lesson.lessonNumber));
