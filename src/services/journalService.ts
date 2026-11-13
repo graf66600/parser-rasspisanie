@@ -1,11 +1,14 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import { JournalEntry, JournalEntrySchema } from '../types/journal.js';
+import { readJournalFile, writeJournalFile } from './journalPersistence.js';
 import { CONFIG, DAYS_OF_WEEK } from '../config/config.js';
 
 export class JournalService {
   private static instance: JournalService;
   private entries: JournalEntry[] = [];
+  private loadFailed = false;
+  // Preserve legacy/unrecognized rows verbatim when another entry is saved.
+  private unrecognizedEntries: unknown[] = [];
   private readonly journalFile: string;
 
   private constructor() {
@@ -22,36 +25,20 @@ export class JournalService {
 
   private loadJournal(): void {
     try {
-      if (fs.existsSync(this.journalFile)) {
-        const raw = fs.readFileSync(this.journalFile, 'utf8');
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          this.entries = parsed
-            .map((item) => {
-              const res = JournalEntrySchema.safeParse(item);
-              return res.success ? res.data : null;
-            })
-            .filter((item): item is JournalEntry => item !== null);
-          console.log(`📖 Загружено ${this.entries.length} записей журнала из ${this.journalFile}`);
-        }
-      } else {
-        this.entries = [];
+      for (const item of readJournalFile(this.journalFile)) {
+        const validated = JournalEntrySchema.safeParse(item);
+        if (validated.success) this.entries.push({ ...validated.data, ...(item as JournalEntry) });
+        else this.unrecognizedEntries.push(item);
       }
-    } catch (err) {
-      console.error('Ошибка загрузки журнала занятий:', err);
-      this.entries = [];
+    } catch (error) {
+      this.loadFailed = true;
+      console.error('Запись журнала заблокирована: не удалось прочитать исходный файл:', error);
     }
   }
 
   private saveJournal(): void {
-    try {
-      if (!fs.existsSync(CONFIG.DATA_DIR)) {
-        fs.mkdirSync(CONFIG.DATA_DIR, { recursive: true });
-      }
-      fs.writeFileSync(this.journalFile, JSON.stringify(this.entries, null, 2), 'utf8');
-    } catch (err) {
-      console.error('Ошибка сохранения журнала занятий:', err);
-    }
+    if (this.loadFailed) throw new Error('Исходный журнал не прочитан. Перезапись запрещена до восстановления данных.');
+    writeJournalFile(this.journalFile, [...this.entries, ...this.unrecognizedEntries]);
   }
 
   private normalizeGroup(group: string): string {
@@ -85,6 +72,8 @@ export class JournalService {
    * Добавить запись о проведенном занятии
    */
   public recordLesson(params: {
+    id?: string;
+    syncCloud?: boolean;
     date?: string; // YYYY-MM-DD (если не указано, берется текущая дата)
     group: string;
     subject: string;
@@ -99,7 +88,7 @@ export class JournalService {
     courseLessonNumber?: number;
     type?: 'theory' | 'practice' | 'exam' | 'other';
     notes?: string;
-    attendance?: Record<string, import('../types/journal.js').StudentAttendance>;
+    attendance?: Record<string, Partial<import('../types/journal.js').StudentAttendance>>;
   }): JournalEntry {
     const cleanGroup = params.group.trim();
     const effectiveDate = params.date || new Date().toISOString().split('T')[0];
@@ -113,6 +102,12 @@ export class JournalService {
         id = legacyId;
       }
     }
+    const existingById = params.id ? this.entries.find((entry) => entry.id === params.id) : undefined;
+    if (existingById && (existingById.group !== cleanGroup || existingById.date !== effectiveDate || existingById.lessonNumber !== params.lessonNumber)) {
+      throw new Error('ID записи не соответствует занятию');
+    }
+    if (params.id) id = params.id;
+    const existing = existingById || this.entries.find((entry) => entry.id === id);
     const dateFormatted = this.formatDateReadable(effectiveDate);
 
     // Определяем тип занятия (теория/практика/зачет), если не передан
@@ -128,7 +123,12 @@ export class JournalService {
       }
     }
 
+    const attendance = { ...(existing?.attendance || {}) };
+    for (const [student, mark] of Object.entries(params.attendance || {})) {
+      attendance[student] = { ...attendance[student], ...mark, status: mark.status ?? attendance[student]?.status ?? 'present' };
+    }
     const newEntry: JournalEntry = {
+      ...existing,
       id,
       date: effectiveDate,
       dateFormatted,
@@ -139,17 +139,18 @@ export class JournalService {
       lessonNumber: params.lessonNumber,
       startTime: params.startTime,
       endTime: params.endTime,
-      classroom: params.classroom || '',
+      classroom: params.classroom ?? existing?.classroom ?? '',
       topic: params.topic,
-      topicIndex: params.topicIndex,
-      courseLessonNumber: params.courseLessonNumber,
+      topicIndex: params.topicIndex ?? existing?.topicIndex,
+      courseLessonNumber: params.courseLessonNumber ?? existing?.courseLessonNumber,
       type: entryType,
       status: 'completed',
       completedAt: new Date().toISOString(),
-      notes: params.notes,
-      attendance: params.attendance || {},
+      notes: params.notes ?? existing?.notes,
+      attendance,
     };
 
+    const beforeSave = structuredClone(this.entries);
     // Проверяем, нет ли уже такой записи
     const existingIdx = this.entries.findIndex((e) => e.id === id);
     if (existingIdx !== -1) {
@@ -158,19 +159,18 @@ export class JournalService {
       this.entries.push(newEntry);
     }
 
-    this.saveJournal();
+    try {
+      this.refreshCourseLessonNumbers(cleanGroup, teacherName);
+      this.saveJournal();
+    } catch (error) { this.entries = beforeSave; throw error; }
 
     // Синхронизация с Supabase
-    try {
+    if (params.syncCloud !== false) try {
       import('./supabaseService.js').then(({ SupabaseService }) => {
         SupabaseService.getInstance().saveJournalEntry(newEntry).catch(() => {});
       }).catch(() => {});
     } catch (_) {}
 
-    // Пересчитываем сквозные номера пар по курсу для этой группы и преподавателя
-    this.refreshCourseLessonNumbers(cleanGroup, teacherName);
-
-    this.saveJournal();
     return newEntry;
   }
 

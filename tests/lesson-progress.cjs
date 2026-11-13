@@ -154,3 +154,43 @@ test('31 FM: widget and grade sheet count the same 15 records and preserve atten
   assert.equal((summary.innerHTML.match(/class="cell-mark cell-grade /g) || []).length, 15);
   assert.equal(JSON.stringify(state.journalEntries), original);
 });
+
+
+test('duplicate ID variants combine attendance without double counting or rewriting raw records', async () => {
+  const state = fixture();
+  const base = entry({ date: '2026-11-09', lessonNumber: 3 });
+  state.journalEntries = [
+    { ...base, id: 'old-id', attendance: { A: { grade: '5', status: 'present' } } },
+    { ...base, id: 'new-id', attendance: { B: { status: 'absent', comment: 'note' } } },
+  ];
+  const original = JSON.stringify(state.journalEntries);
+  const api = await load(state);
+  const grouped = api.uniqueEntries(state.journalEntries);
+  assert.equal(grouped.length, 1);
+  assert.equal(grouped[0].attendance.A.grade, '5');
+  assert.equal(grouped[0].attendance.B.status, 'absent');
+  assert.equal(api.calculateStudentStats('A', grouped).grades.length, 1);
+  assert.equal(JSON.stringify(api.uniqueEntries([...state.journalEntries].reverse())), JSON.stringify(grouped));
+  assert.equal(JSON.stringify(state.journalEntries), original);
+});
+
+test('conflicting duplicate marks are visible and excluded from a misleading average', async () => {
+  const state = fixture(); const api = await load(state);
+  const base = entry({ date: '2026-11-09', lessonNumber: 3 });
+  const grouped = api.uniqueEntries([
+    { ...base, id: 'a', attendance: { A: { grade: '5' } } },
+    { ...base, id: 'b', attendance: { A: { grade: '3' } } },
+  ]);
+  assert.deepEqual([...grouped[0].attendance.A._alternatives.grade], ['3', '5']);
+  assert.match(api.attendanceText(grouped[0].attendance.A), /3 \/ 5/);
+  assert.equal(api.calculateStudentStats('A', grouped).avgGrade, null);
+});
+
+test('summary uses the same full-name spacing resolver and shows grade alongside absence', async () => {
+  const state = fixture(); const api = await load(state);
+  const record = { attendance: { ' Иванов  Иван ': { status: 'absent', grade: '3', comment: 'note' } } };
+  const stats = api.calculateStudentStats('Иванов Иван', [record]);
+  assert.equal(stats.absentCount, 1);
+  assert.equal(stats.grades[0], 3);
+  assert.equal(api.attendanceText(api.studentAttendance(record, 'Иванов Иван')), 'Н · 3');
+});

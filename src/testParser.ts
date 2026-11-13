@@ -1,308 +1,89 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import * as xlsx from 'xlsx';
-import { ExcelParser } from './services/excelParser.js';
-import { StorageService } from './services/storageService.js';
-import { DEFAULT_BELLS } from './config/config.js';
-import { findLatestScheduleFile } from './services/scheduleFileHelper.js';
 
-console.log('🧪 Запуск тестов парсера расписания и сервисов...\n');
+async function runTests(): Promise<void> {
+  // Set this before importing config or any singleton service. Running this file
+  // directly must be just as safe as running through the test bootstrap.
+  const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'schedule-parser-unit-'));
+  process.env.DATA_DIR = temporaryDir;
+  const previousFetch = globalThis.fetch;
+  const requests: Array<{ url: string; method: string }> = [];
+  let teachers: string[] = [];
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method || 'GET';
+    requests.push({ url, method });
+    if (url.includes('/teachers') && method === 'POST') {
+      teachers = JSON.parse(String(init?.body)).map((row: { name: string }) => row.name);
+    }
+    return new Response(JSON.stringify(url.includes('/teachers') ? teachers.map((name) => ({ name })) : []), { status: 200 });
+  }) as typeof fetch;
 
-// 1. Создаем тестовую рабочую книгу Excel с расписанием колледжа
-const wb = xlsx.utils.book_new();
+  try {
+    const { CONFIG, DEFAULT_BELLS } = await import('./config/config.js');
+    const { ExcelParser } = await import('./services/excelParser.js');
+    const { StorageService } = await import('./services/storageService.js');
+    const { JournalService } = await import('./services/journalService.js');
+    const { CurriculumService } = await import('./services/curriculumService.js');
+    const { SupabaseService } = await import('./services/supabaseService.js');
+    assert.equal(CONFIG.DATA_DIR, temporaryDir);
+    assert.equal(CONFIG.SCHEDULES_FILE, path.join(temporaryDir, 'schedules.json'));
 
-// Тест 1: Сетка расписания (Дни недели в колонках, уроки в строках)
-const sheet1Data = [
-  ['Урок', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница'],
-  [
-    '1 пара (08:30-10:00)',
-    'Алгебра (Иванов И.И., каб. 101)',
-    'Информатика (Трипольский Б.А., каб. 305)',
-    'Физика (Сидорова А.В., каб. 204)',
-    'История (Петров В.Г., каб. 110)',
-    'Информатика (Трипольский, каб. 305)',
-  ],
-  [
-    '2 пара (10:10-11:40)',
-    'Информатика (Трипольский Б.А., каб. 305)',
-    'Биология (Козлов Д.А., каб. 201)',
-    'Информатика (Трипольский Б.А., каб. 305)',
-    'Литература (Смирнов С.С., каб. 105)',
-    'Английский яз. (Григорьев Г.Г., каб. 402)',
-  ],
-  [
-    '3 пара (12:10-13:40)',
-    'Химия (Васильева О.О., каб. 301)',
-    'Физкультура (Спортзал)',
-    'История (Петров В.Г., каб. 110)',
-    'Информатика (Трипольский, каб. 305)',
-    'Классный час',
-  ],
-];
+    const workbook = xlsx.utils.book_new();
+    const rows = [
+      ['День недели', 'Пара', 'Группа', 'Предмет', 'Преподаватель', 'Аудитория'],
+      ['Понедельник', '1', '11фм', 'Информатика', 'Трипольский Б.А.', '305'],
+      ['Вторник', '2', '11фм', 'Информатика', 'Трипольский Б.А.', '305'],
+      ['Среда', '3', '11фм', 'Математика', 'Иванов И.И.', '101'],
+    ];
+    xlsx.utils.book_append_sheet(workbook, xlsx.utils.aoa_to_sheet(rows), 'Расписание');
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const parsed = ExcelParser.parseBuffer(buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
+    assert.equal(parsed.totalFound, 2);
+    assert.equal(parsed.lessons[0].group, '11фм');
+    assert.deepEqual(parsed.lessons.map((lesson) => lesson.lessonNumber), [1, 2]);
+    const all = ExcelParser.parseAllTeachers(buffer, DEFAULT_BELLS);
+    assert.deepEqual(all.lessonsByTeacher['Трипольский'], parsed.lessons);
+    assert.ok(all.teachers.includes('Трипольский'));
 
-const ws1 = xlsx.utils.aoa_to_sheet(sheet1Data);
-xlsx.utils.book_append_sheet(wb, ws1, 'Группа_1КСК');
+    const storage = StorageService.getInstance();
+    storage.saveUserSchedule(999999999, 999999999, parsed.lessons);
+    assert.equal(storage.getUserSchedule(999999999)?.lessons.length, 2);
+    assert.equal(JSON.parse(fs.readFileSync(CONFIG.SCHEDULES_FILE, 'utf8')).length, 1);
 
-// Тест 2: Табличный список (День | Пара | Группа | Предмет | Преподаватель | Аудитория)
-const sheet2Data = [
-  ['День недели', 'Пара', 'Группа', 'Предмет', 'Преподаватель', 'Аудитория'],
-  ['Суббота', '1', '2зПИм', 'Информатика и программирование', 'Трипольский Б.А.', 'каб. 305'],
-  ['Суббота', '2', '2зПИм', 'Базы данных', 'Трипольский Б.А.', 'каб. 305'],
-  ['Суббота', '3', '1КСК', 'Математика', 'Иванов И.И.', 'каб. 101'],
-];
+    const curriculumFixture = path.resolve(__dirname, '../data/curriculum.json');
+    fs.copyFileSync(curriculumFixture, path.join(temporaryDir, 'curriculum.json'));
+    const curriculum = CurriculumService.getInstance();
+    assert.ok(curriculum.getAllPrograms().length >= 9);
+    assert.ok(curriculum.findProgramForGroup('51ф')?.title.includes('Информационное обеспечение'));
+    assert.ok(curriculum.findProgramForGroup('31фм')?.title.includes('Информационные технологии'));
 
-const ws2 = xlsx.utils.aoa_to_sheet(sheet2Data);
-xlsx.utils.book_append_sheet(wb, ws2, 'Суббота_Спец');
+    const journal = JournalService.getInstance();
+    const entry = journal.recordLesson({
+      group: 'тест99ф', subject: 'Информатика', lessonNumber: 1,
+      startTime: '08:00', endTime: '09:20', topic: 'Лекция №1', date: '2026-10-01',
+    });
+    assert.equal(journal.getGroupHistory('тест99ф').length, 1);
+    assert.equal(journal.getEntriesByDate('2026-10-01')[0].id, entry.id);
+    assert.equal(journal.deleteEntry(entry.id), true);
 
-// Конвертируем в буфер
-const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-console.log('📄 Тестовый Excel файл сгенерирован в памяти.');
-
-// 2. Тестируем парсер
-const parseResult = ExcelParser.parseBuffer(buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
-
-console.log(`\n🔍 Результаты парсинга:`);
-console.log(`- Проанализировано листов: ${parseResult.sheetsParsed.join(', ')}`);
-console.log(`- Всего найдено пар Трипольского: ${parseResult.totalFound}`);
-
-console.log('\n📋 Найденные пары:');
-for (const lesson of parseResult.lessons) {
-  console.log(
-    `  • [${lesson.dayName}] Пара #${lesson.lessonNumber} (${lesson.startTime}-${lesson.endTime}): ` +
-    `"${lesson.subject}" | Группа: "${lesson.group || '—'}" | Кабинет: "${lesson.classroom || '—'}"`
-  );
-}
-
-if (parseResult.totalFound >= 5) {
-  console.log('\n✅ ПАРСИНГ УСПЕШЕН: Все пары преподавателя Трипольского корректно найдены и извлечены!');
-} else {
-  console.error('\n❌ ОШИБКА: Найдено меньше пар, чем ожидалось.');
-  process.exit(1);
-}
-
-// 3. Тестируем StorageService
-console.log('\n💾 Тестирование StorageService...');
-const storage = StorageService.getInstance();
-const testUserId = 999999999;
-const testChatId = 999999999;
-
-const saved = storage.saveUserSchedule(testUserId, testChatId, parseResult.lessons);
-console.log(`- Сохранено расписание для userId=${saved.userId}, количество пар: ${saved.lessons.length}`);
-
-const retrieved = storage.getUserSchedule(testUserId);
-if (retrieved && retrieved.lessons.length === parseResult.totalFound) {
-  console.log('✅ ХРАНИЛИЩЕ РАБОТАЕТ: Расписание успешно сохранено и прочитано с диска.');
-} else {
-  console.error('❌ ОШИБКА ХРАНИЛИЩА: Данные не совпадают.');
-  process.exit(1);
-}
-
-// 4. Тестирование расчета времени напоминаний
-console.log('\n⏰ Тестирование расчета времени напоминания:');
-const testStartTime = '10:10';
-const minutesBefore = 15;
-const [hStr, mStr] = testStartTime.split(':');
-const totalMinutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10) - minutesBefore;
-const reminderH = Math.floor(totalMinutes / 60);
-const reminderM = totalMinutes % 60;
-const reminderTime = `${String(reminderH).padStart(2, '0')}:${String(reminderM).padStart(2, '0')}`;
-
-console.log(`- Начало пары: ${testStartTime}, напоминание за ${minutesBefore} мин: расчетное время = ${reminderTime}`);
-if (reminderTime === '09:55') {
-  console.log('✅ РАСЧЕТ ВРЕМЕНИ НАПОМИНАНИЯ ТОЧЕН (10:10 - 15 мин = 09:55).');
-} else {
-  console.error('❌ ОШИБКА РАСЧЕТА ВРЕМЕНИ.');
-  process.exit(1);
-}
-
-console.log('\n======================================================');
-console.log('📂 Тестирование парсинга реального файла "на стенд2_1нед — копия.xlsx"...');
-import * as fs from 'fs';
-import * as path from 'path';
-
-const realFileName = 'на стенд2_1нед — копия.xlsx';
-const realFilePath = path.resolve(realFileName);
-
-if (fs.existsSync(realFilePath)) {
-  const realBuffer = fs.readFileSync(realFilePath);
-  const realResult = ExcelParser.parseBuffer(realBuffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
-
-  console.log(`\n🔍 Результаты парсинга реального файла:`);
-  console.log(`- Листы: ${realResult.sheetsParsed.join(', ')}`);
-  console.log(`- Всего найдено пар Трипольского: ${realResult.totalFound}`);
-
-  console.log('\n📋 Найденные пары:');
-  for (const lesson of realResult.lessons) {
-    console.log(
-      `  • [${lesson.dayName}] Пара #${lesson.lessonNumber} (${lesson.startTime}-${lesson.endTime}): ` +
-      `"${lesson.subject}" | Группа: "${lesson.group}" | Кабинет: "${lesson.classroom}"`
-    );
-  }
-
-  if (realResult.totalFound === 8) {
-    console.log('\n✅ ТЕСТ РЕАЛЬНОГО ФАЙЛА УСПЕШЕН: Все 8 пар преподавателя Трипольского найдены с точным временем и аудиториями!');
-  } else {
-    console.error(`\n❌ ОШИБКА: Ожидалось 8 пар, найдено ${realResult.totalFound}`);
-    process.exit(1);
-  }
-} else {
-  console.warn(`\n⚠️ Файл ${realFileName} не найден по пути ${realFilePath}`);
-}
-
-const ch2File = path.resolve('на стенд 12.10-17.10 ЧИСТ Ч2.xlsx');
-const latestFile = fs.existsSync(ch2File)
-  ? ch2File
-  : (findLatestScheduleFile('excel') || path.resolve('на стенд 14_09__19_09 с изменениями.xlsx'));
-
-if (fs.existsSync(latestFile)) {
-  const newBuffer = fs.readFileSync(latestFile);
-  const newResult = ExcelParser.parseBuffer(newBuffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
-
-  console.log(`\n🔍 Результаты парсинга актуального файла "${path.basename(latestFile)}":`);
-  console.log(`- Всего найдено пар Трипольского: ${newResult.totalFound}`);
-  if (newResult.totalFound > 0) {
-    console.log(`✅ ТЕСТ ФАЙЛА УСПЕШЕН: Найдено ${newResult.totalFound} пар!`);
-  } else {
-    console.error(`❌ ОШИБКА: Не найдено пар в файле ${latestFile}`);
-    process.exit(1);
+    const cloud = SupabaseService.getInstance();
+    assert.equal(await cloud.saveTeachers(['Трипольский', 'Иванов']), true);
+    assert.deepEqual(await cloud.getTeachers(), ['Трипольский', 'Иванов']);
+    assert.ok(requests.length >= 2);
+    // Allow JournalService's dynamic import/sync to finish before cleanup.
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    console.log('Parser, local services and mocked Supabase tests passed.');
+  } finally {
+    globalThis.fetch = previousFetch;
+    fs.rmSync(temporaryDir, { recursive: true, force: true });
   }
 }
 
-console.log('\n======================================================');
-console.log('📚 Тестирование CurriculumService (интеграция с порталом рабочих программ)...');
-import { CurriculumService } from './services/curriculumService.js';
-
-const curriculum = CurriculumService.getInstance();
-const programs = curriculum.getAllPrograms();
-console.log(`- Загружено программ в базу: ${programs.length}`);
-
-if (programs.length < 9) {
-  console.error('❌ ОШИБКА: Загружено меньше 9 программ');
-  process.exit(1);
-}
-
-// Тест 1: Поиск для группы 51ф
-const prog51 = curriculum.findProgramForGroup('51ф');
-console.log(`- Программа для группы 51ф: "${prog51?.title}" (${prog51?.lessons.length} тем)`);
-if (!prog51 || !prog51.title.includes('Информационное обеспечение')) {
-  console.error('❌ ОШИБКА: Не найдена корректная программа для 51ф');
-  process.exit(1);
-}
-
-// Тест 2: Поиск для группы 31фм
-const prog31 = curriculum.findProgramForGroup('31фм');
-console.log(`- Программа для группы 31фм: "${prog31?.title}" (${prog31?.lessons.length} тем)`);
-if (!prog31 || !prog31.title.includes('Информационные технологии')) {
-  console.error('❌ ОШИБКА: Не найдена корректная программа для 31фм');
-  process.exit(1);
-}
-
-// Тест 3: Получение текущей темы
-const topic51 = curriculum.getCurrentTopic('51ф');
-console.log(`- Текущая тема 51ф (#${topic51?.index}): "${topic51?.topic}"`);
-if (!topic51 || !topic51.topic) {
-  console.error('❌ ОШИБКА: Не удалось получить тему для 51ф');
-  process.exit(1);
-}
-
-const topic31 = curriculum.getCurrentTopic('31фм');
-console.log(`- Текущая тема 31фм (#${topic31?.index}): "${topic31?.topic}"`);
-if (!topic31 || !topic31.topic) {
-  console.error('❌ ОШИБКА: Не удалось получить тему для 31фм');
-  process.exit(1);
-}
-
-console.log('✅ ИНТЕГРАЦИЯ С РАБОЧИМИ ПРОГРАММАМИ УСПЕШНА!');
-
-console.log('\n======================================================');
-console.log('📊 Тестирование JournalService (электронный журнал пар по датам)...');
-import { JournalService } from './services/journalService.js';
-
-const journal = JournalService.getInstance();
-const testDate = new Date().toISOString().split('T')[0];
-
-const newEntry = journal.recordLesson({
-  group: 'тест99ф',
-  subject: 'МДК.06.01 Информационное обеспечение профессиональной деятельности',
-  lessonNumber: 1,
-  startTime: '08:30',
-  endTime: '10:00',
-  classroom: '305',
-  topic: topic51.topic,
-  topicIndex: topic51.index,
-  notes: 'Тестовая отметка проведения занятия',
-  date: testDate,
+runTests().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
 });
-
-console.log(`- Создана запись в журнале: ID=${newEntry.id}, Дата=${newEntry.dateFormatted}, Группа=${newEntry.group}`);
-if (!newEntry.id || newEntry.group !== 'тест99ф' || !newEntry.dateFormatted) {
-  console.error('❌ ОШИБКА: Запись в журнал создана некорректно');
-  process.exit(1);
-}
-
-const historyTest = journal.getGroupHistory('тест99ф');
-console.log(`- Количество проведенных пар для тестовой группы: ${historyTest.length}`);
-const found = historyTest.find((e) => e.id === newEntry.id);
-if (!found) {
-  console.error('❌ ОШИБКА: Запись не найдена в истории тестовой группы');
-  process.exit(1);
-}
-
-const byDate = journal.getEntriesByDate(testDate);
-console.log(`- Количество пар за дату ${testDate}: ${byDate.length}`);
-if (!byDate.find((e) => e.id === newEntry.id)) {
-  console.error('❌ ОШИБКА: Запись не найдена по дате');
-  process.exit(1);
-}
-
-// Очистка тестовой записи, чтобы не загрязнять данные журнала
-journal.deleteEntry(newEntry.id);
-
-console.log('✅ ЭЛЕКТРОННЫЙ ЖУРНАЛ РАБОТАЕТ ИСПРАВНО!');
-
-console.log('\n======================================================');
-console.log('🌐 Тестирование Мульти-парсера для других преподавателей...');
-
-const multiBuffer = fs.readFileSync(latestFile);
-const multiResult = ExcelParser.parseAllTeachers(multiBuffer, DEFAULT_BELLS);
-console.log(`- Всего обнаружено преподавателей: ${multiResult.teachers.length}`);
-console.log(`- Всего пар по всем преподавателям: ${multiResult.allLessons.length}`);
-
-if (multiResult.teachers.length >= 20 && multiResult.allLessons.length >= 200) {
-  console.log('✅ МУЛЬТИ-ПАРСЕР УСПЕШНО ИЗВЛЕК ВСЕХ ПРЕПОДАВАТЕЛЕЙ И ПАРЫ!');
-} else {
-  console.error('❌ ОШИБКА МУЛЬТИ-ПАРСЕРА: Слишком мало преподавателей или пар найдено.');
-  process.exit(1);
-}
-
-// Тестирование парсинга для преподавателя без тем КТП
-const odinetzLessons = ExcelParser.parseForTeacher(multiBuffer, 'Одинец', DEFAULT_BELLS);
-console.log(`- Пар преподавателя Одинец: ${odinetzLessons.totalFound}`);
-if (odinetzLessons.totalFound > 0) {
-  console.log(
-    `  Пример пары: [${odinetzLessons.lessons[0].dayName}] ${odinetzLessons.lessons[0].startTime}-${odinetzLessons.lessons[0].endTime} "${odinetzLessons.lessons[0].subject}" (${odinetzLessons.lessons[0].classroom})`
-  );
-  console.log('✅ РАСПИСАНИЕ СТОРОННЕГО ПРЕПОДАВАТЕЛЯ СФОРМИРОВАНО (БЕЗ ТЕМ КТП)!');
-} else {
-  console.error('❌ ОШИБКА: Не найдены пары для преподавателя Одинец');
-  process.exit(1);
-}
-
-console.log('\n======================================================');
-console.log('☁️ Тестирование интеграции с базой данных Supabase (PostgreSQL)...');
-import { SupabaseService } from './services/supabaseService.js';
-
-(async () => {
-  const supabase = SupabaseService.getInstance();
-  const teachersSaved = await supabase.saveTeachers(multiResult.teachers);
-  console.log(`- Сохранение преподавателей в Supabase: ${teachersSaved ? 'УСПЕШНО' : 'ОШИБКА'}`);
-
-  const cloudTeachers = await supabase.getTeachers();
-  console.log(`- Получено преподавателей из облака Supabase: ${cloudTeachers?.length || 0}`);
-  if (!cloudTeachers || cloudTeachers.length === 0) {
-    console.warn('⚠️ ПРЕДУПРЕЖДЕНИЕ: Облако Supabase временно недоступно по сети. Используется локальный режим.');
-  } else {
-    console.log('✅ БАЗА ДАННЫХ SUPABASE ПОЛНОСТЬЮ РАБОТОСПОСОБНА!');
-  }
-
-  console.log('\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!\n');
-})();

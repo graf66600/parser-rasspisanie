@@ -10,7 +10,7 @@ import { PdfParser } from './pdfParser.js';
  */
 export function isPdfBuffer(buffer: Buffer): boolean {
   if (!buffer || buffer.length < 5) return false;
-  return buffer.subarray(0, 5).toString('latin1').startsWith('%PDF');
+  return buffer.subarray(0, 5).toString('latin1') === '%PDF-';
 }
 
 /**

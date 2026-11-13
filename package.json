@@ -7,10 +7,11 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "test:parser": "tsx src/testParser.ts",
-    "test:pdf": "tsx src/testPdfParser.ts",
-    "test": "npm run test:client && npm run test:parser && npm run test:pdf",
-    "test:client": "node --experimental-vm-modules --test tests/client-syntax.cjs tests/schedule-startup.cjs tests/schedule-freshness.cjs tests/student-subgroups.cjs tests/lesson-progress.cjs tests/test-11fm-topic.cjs",
+    "test:parser": "node --require ./tests/test-bootstrap.cjs --import tsx src/testParser.ts",
+    "test:pdf": "node --require ./tests/test-bootstrap.cjs --import tsx src/testPdfParser.ts",
+    "test": "npm run test:client && npm run test:server && npm run test:parser && npm run test:pdf",
+    "test:server": "node --require ./tests/test-bootstrap.cjs --import tsx --test tests/server-api.ts tests/server-journal-storage.ts",
+    "test:client": "node --experimental-vm-modules --test tests/client-syntax.cjs tests/schedule-startup.cjs tests/schedule-freshness.cjs tests/student-subgroups.cjs tests/lesson-progress.cjs tests/test-11fm-topic.cjs tests/sync-queue.cjs tests/journal-merge.cjs tests/journal-editor.cjs tests/journal-recovery.cjs",
     "apply:schedule": "tsx src/scripts/applySchedule.ts"
   },
   "keywords": [

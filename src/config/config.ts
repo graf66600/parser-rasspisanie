@@ -57,8 +57,8 @@ export const DAY_NAME_TO_NUMBER: Record<string, number> = {
 
 export const CONFIG = {
   BOT_TOKEN: process.env.BOT_TOKEN || '',
-  DATA_DIR: path.resolve(process.cwd(), 'data'),
-  SCHEDULES_FILE: path.resolve(process.cwd(), 'data', 'schedules.json'),
+  DATA_DIR: path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data')),
+  SCHEDULES_FILE: path.resolve(process.env.DATA_DIR || path.join(process.cwd(), 'data'), 'schedules.json'),
   DEFAULT_TEACHER: 'Трипольский',
   DEFAULT_SUBJECT: 'Информатика',
 };

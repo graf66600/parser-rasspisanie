@@ -1,41 +1,51 @@
-﻿export interface MultipartResult {
+﻿import { HttpError } from './httpUtils.js';
+
+export interface MultipartResult {
   fields: Record<string, string>;
   files: Array<{ filename: string; data: Buffer }>;
 }
 
-export function parseMultipart(body: Buffer, boundary: string): MultipartResult {
-  const fields: Record<string, string> = {};
-  const files: Array<{ filename: string; data: Buffer }> = [];
-  const boundaryBuffer = Buffer.from(`--${boundary}`);
-
-  let start = 0;
-  while (start < body.length) {
-    const boundaryIndex = body.indexOf(boundaryBuffer, start);
-    if (boundaryIndex === -1) break;
-
-    const nextBoundaryIndex = body.indexOf(boundaryBuffer, boundaryIndex + boundaryBuffer.length);
-    if (nextBoundaryIndex === -1) break;
-
-    const partBuffer = body.subarray(boundaryIndex + boundaryBuffer.length, nextBoundaryIndex);
-    const headerEndIndex = partBuffer.indexOf(Buffer.from('\r\n\r\n'));
-    if (headerEndIndex !== -1) {
-      const headerStr = partBuffer.subarray(0, headerEndIndex).toString('utf8');
-      let data = partBuffer.subarray(headerEndIndex + 4);
-      if (data.subarray(data.length - 2).toString() === '\r\n') {
-        data = data.subarray(0, data.length - 2);
-      }
-
-      const nameMatch = headerStr.match(/name="([^"]+)"/);
-      const filenameMatch = headerStr.match(/filename="([^"]+)"/);
-
-      if (filenameMatch && filenameMatch[1]) {
-        files.push({ filename: filenameMatch[1], data });
-      } else if (nameMatch && nameMatch[1]) {
-        fields[nameMatch[1]] = data.toString('utf8');
-      }
-    }
-    start = nextBoundaryIndex;
+export function multipartBoundary(contentType: string): string {
+  const match = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+  const boundary = (match?.[1] || match?.[2] || '').trim();
+  if (!boundary || boundary.length > 200 || /[\r\n]/.test(boundary)) {
+    throw new HttpError(400, 'Некорректный multipart boundary');
   }
+  return boundary;
+}
 
-  return { fields, files };
+export function parseMultipart(body: Buffer, boundary: string): MultipartResult {
+  if (!boundary || boundary.length > 200 || /[\r\n]/.test(boundary)) {
+    throw new HttpError(400, 'Некорректный multipart boundary');
+  }
+  const fields: Record<string, string> = Object.create(null);
+  const files: MultipartResult['files'] = [];
+  const delimiter = Buffer.from(`\r\n--${boundary}`);
+  const opening = Buffer.from(`--${boundary}\r\n`);
+  if (!body.subarray(0, opening.length).equals(opening)) throw new HttpError(400, 'Некорректный multipart запрос');
+  let start = opening.length;
+  let parts = 0;
+  while (start < body.length) {
+    const end = body.indexOf(delimiter, start);
+    if (end < 0) throw new HttpError(400, 'Multipart запрос не завершён');
+    if (++parts > 30) throw new HttpError(413, 'Слишком много частей multipart');
+    const part = body.subarray(start, end);
+    const headerEnd = part.indexOf('\r\n\r\n');
+    if (headerEnd < 0 || headerEnd > 8192) throw new HttpError(400, 'Некорректные заголовки multipart');
+    const header = part.subarray(0, headerEnd).toString('utf8');
+    const data = part.subarray(headerEnd + 4);
+    const name = header.match(/\bname="([^"]+)"/i)?.[1];
+    const filename = header.match(/\bfilename="([^"]*)"/i)?.[1];
+    if (!name) throw new HttpError(400, 'Не указано имя части multipart');
+    if (filename !== undefined) files.push({ filename, data });
+    else {
+      if (data.length > 8192) throw new HttpError(413, 'Слишком большое поле multipart');
+      fields[name] = data.toString('utf8');
+    }
+    start = end + delimiter.length;
+    if (body.subarray(start, start + 2).toString() === '--') return { fields, files };
+    if (body.subarray(start, start + 2).toString() !== '\r\n') throw new HttpError(400, 'Некорректный разделитель multipart');
+    start += 2;
+  }
+  throw new HttpError(400, 'Multipart запрос не завершён');
 }

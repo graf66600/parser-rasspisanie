@@ -4,10 +4,10 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { SourceTextModule, SyntheticModule, createContext } = require('node:vm');
 
-async function loadView(file, state, document, stored = [], { now, remote } = {}) {
+async function loadView(file, state, document, stored = [], { now, remote, staticHost = true, fetch: fetchMock, isPending = () => false } = {}) {
   const storage = new Map([['pwa_journal', JSON.stringify(stored)]]);
   const context = createContext({
-    console, document,
+    console, document, fetch: fetchMock,
     Date: now ? class extends Date {
       constructor(...args) { super(...(args.length ? args : [now])); }
     } : Date,
@@ -19,7 +19,7 @@ async function loadView(file, state, document, stored = [], { now, remote } = {}
   const noop = () => {};
   const dependencies = {
     './state.js': {
-      state, PWA_VERSION: 'test', isStaticHost: true,
+      state, PWA_VERSION: 'test', isStaticHost: staticHost,
       DAY_NAMES: { 1: 'Понедельник', 4: 'Четверг', 5: 'Пятница' },
       formatLocalDate: () => '2026-10-26',
     },
@@ -35,6 +35,8 @@ async function loadView(file, state, document, stored = [], { now, remote } = {}
       renderBellsPresetSelector: noop,
       initBellsPreset: noop,
     },
+    './syncQueue.js': { enqueueJournalDeletion: noop, flushSyncQueue: noop },
+    './syncStorage.js': { getJournalTombstones: () => ({}), hasPendingJournalMutation: isPending, markJournalTombstone: noop },
     './supabaseSync.js': {
       fetchRemoteJournal: remote || (async () => null), deleteJournalEntryFromCloud: noop,
     },
@@ -43,8 +45,8 @@ async function loadView(file, state, document, stored = [], { now, remote } = {}
   const module = new SourceTextModule(readFileSync(file, 'utf8'), { context });
   module._linked = linked;
   await module.link(name => {
-    if (name === './scheduleDates.js') {
-      return new SourceTextModule(readFileSync('js/scheduleDates.js', 'utf8'), { context });
+    if (['./scheduleDates.js', './journalMerge.js', './journalRecovery.js'].includes(name)) {
+      return new SourceTextModule(readFileSync('js/' + name.slice(2), 'utf8'), { context });
     }
     const values = dependencies[name];
     assert.ok(values, `Unexpected dependency: ${name}`);
@@ -132,4 +134,54 @@ test('a journal refresh keeps grades saved while the cloud request was in flight
   finish([original, removed, { id: '3' }]);
   await pending;
   assert.deepEqual(JSON.parse(view.storage.get('pwa_journal')), [updated, { id: '3' }]);
+});
+
+test('a clean cached row accepts an edit from another device', async () => {
+  const state = { currentTeacher: 'Трипольский' };
+  const original = { id: 'remote-edit', topic: 'old' };
+  const updated = { ...original, topic: 'new' };
+  const view = await loadView('js/journalHistory.js', state, { getElementById: () => null },
+    [original], { remote: async () => [updated] });
+  await view.loadJournalHistory();
+  assert.deepEqual(JSON.parse(view.storage.get('pwa_journal')), [updated]);
+});
+
+
+test('an empty API result does not hide cloud-only phone records', async () => {
+  const state = { currentTeacher: 'Трипольский' };
+  const phone = { id: 'phone-only', attendance: { A: { grade: '5', status: 'absent' } } };
+  const view = await loadView('js/journalHistory.js', state, { getElementById: () => null }, [], {
+    staticHost: false, fetch: async () => ({ ok: true, json: async () => ({ success: true, entries: [] }) }),
+    remote: async () => [phone],
+  });
+  await view.loadJournalHistory();
+  assert.deepEqual(JSON.parse(view.storage.get('pwa_journal')), [phone]);
+});
+
+test('API, cloud and device-only entries are combined instead of source fallback', async () => {
+  const state = { currentTeacher: 'Трипольский' };
+  const view = await loadView('js/journalHistory.js', state, { getElementById: () => null }, [{ id: 'local' }], {
+    staticHost: false, fetch: async () => ({ ok: true, json: async () => ({ success: true, entries: [{ id: 'api' }] }) }),
+    remote: async () => [{ id: 'cloud' }],
+  });
+  await view.loadJournalHistory();
+  assert.deepEqual(JSON.parse(view.storage.get('pwa_journal')).map(x => x.id).sort(), ['api', 'cloud', 'local']);
+});
+
+test('a late stale read cannot erase marks after the pending save was acknowledged', async () => {
+  let finish;
+  let pending = true;
+  const state = { currentTeacher: 'Трипольский' };
+  const current = { id: 'a', attendance: { A: { grade: '5' } } };
+  const stale = { id: 'a', attendance: { A: { grade: '3' } } };
+  const view = await loadView('js/journalHistory.js', state, { getElementById: () => null }, [current], {
+    isPending: () => pending, remote: () => new Promise(resolve => { finish = resolve; }),
+  });
+  const loading = view.loadJournalHistory();
+  pending = false;
+  view.storage.set('pwa_journal_cloud_baseline', JSON.stringify({ a: current }));
+  finish([stale]); await loading;
+  assert.equal(JSON.parse(view.storage.get('pwa_journal'))[0].attendance.A.grade, '5');
+  const conflicts = JSON.parse(view.storage.get('pwa_journal_conflicts'));
+  assert.equal(conflicts[0].remote.attendance.A.grade, '3');
 });

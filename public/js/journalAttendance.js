@@ -3,6 +3,7 @@
 // ==========================================================================
 import { state } from './state.js';
 import { getStudentSubgroup, setStudentSubgroup } from './studentSubgroups.js';
+import { captureJournalMarks, getJournalDraft, journalStudents, attendanceKey } from './journalDraft.js';
 
 export function updateJournalStudents() {
   const groupSel = document.getElementById('journalGroupSelect');
@@ -14,14 +15,8 @@ export function updateJournalStudents() {
   const chosenSubgroup = subgSel?.value || 'all';
   if (!listEl) return;
 
-  // Сохраняем текущие выставленные оценки/статусы в форме, чтобы не сбрасывать их при смене фильтра подгрупп
-  const currentMarks = {};
-  listEl.querySelectorAll('.student-row').forEach((r) => {
-    const name = r.getAttribute('data-student');
-    const active = r.querySelector('.status-btn.active')?.getAttribute('data-val') || 'present';
-    const gr = r.querySelector('.grade-select')?.value || '';
-    if (name) currentMarks[name] = { status: active, grade: gr };
-  });
+  const currentMarks = captureJournalMarks();
+  const draft = getJournalDraft();
 
   let allStudents = state.studentsByGroup[group] || [];
   if (allStudents.length === 0 && Array.isArray(state.journalEntries)) {
@@ -40,6 +35,7 @@ export function updateJournalStudents() {
     }
   }
 
+  allStudents = journalStudents(group, allStudents);
   let filteredStudents = allStudents.map((s, idx) => {
     const sub = getStudentSubgroup(group, s, idx, allStudents.length);
     return { name: s, subgroup: sub, originalIndex: idx };
@@ -68,12 +64,14 @@ export function updateJournalStudents() {
   listEl.innerHTML = '';
   filteredStudents.forEach((item, idx) => {
     const student = item.name;
-    const initialStatus = currentMarks[student]?.status || 'present';
-    const initialGrade = currentMarks[student]?.grade || '';
+    const cell = currentMarks[attendanceKey(currentMarks, student)];
+    const initialStatus = cell?.status || 'present';
+    const initialGrade = String(cell?.grade || '');
 
     const row = document.createElement('div');
     row.className = 'student-row';
     row.setAttribute('data-student', student);
+    row.setAttribute('data-draft-key', draft.key);
     row.setAttribute('data-subgroup', String(item.subgroup));
 
     const isSub1 = item.subgroup === 1;
@@ -95,7 +93,7 @@ export function updateJournalStudents() {
       <div class="student-header">
         <div class="student-info">
           <span class="student-num">${idx + 1}</span>
-          <span class="student-name">${student}</span>
+          <span class="student-name"></span>
           <button type="button" class="subgroup-toggle-badge text-[10px] font-semibold px-2 py-0.5 rounded border transition cursor-pointer ${badgeClass}" title="Подгруппа ${item.subgroup}. Нажмите, чтобы переключить в ${isSub1 ? '2-ю' : '1-ю'}">${item.subgroup} п/г ⇄</button>
         </div>
         <span class="${initialBadgeClass}" data-badge>${initialBadgeText}</span>
@@ -126,6 +124,12 @@ export function updateJournalStudents() {
         </div>
       </div>
     `;
+
+    row.querySelector('.student-name').textContent = student;
+    if (initialGrade && !['2', '3', '4', '5'].includes(initialGrade)) {
+      const option = document.createElement('option'); option.value = initialGrade; option.textContent = initialGrade;
+      row.querySelector('.grade-select').appendChild(option); row.querySelector('.grade-select').value = initialGrade;
+    }
 
     row.querySelector('.subgroup-toggle-badge')?.addEventListener('click', (e) => {
       e.preventDefault();

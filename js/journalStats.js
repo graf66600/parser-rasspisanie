@@ -53,7 +53,7 @@ export function renderJournalStats(group) {
     ...scopedEntries(state, group).map(e => normalizeSubgroup(e.subgroup)),
   ].filter(Boolean));
   const scopes = selected && selected !== 'all' ? [selected] : subgroups.size ? [...subgroups].sort() : [''];
-  const entries = journalGroupEntries(state, group);
+  const entries = uniqueEntries(journalGroupEntries(state, group));
   const counts = countJournalTypes(entries, findProgramForGroup(group));
   const other = counts.other ? ` · Другие записи: ${counts.other}` : '';
   container.innerHTML = `<div class="stats-card">Сводная по группе · Записей: ${entries.length} · Лекций: ${counts.theory} · Практик: ${counts.practice}${other}</div>`

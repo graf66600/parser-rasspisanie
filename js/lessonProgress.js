@@ -1,8 +1,9 @@
 import { teacherLoad, semesterForDate, annualTypePairs } from './teachingLoad.js';
+import { combineLessonCopies } from './attendanceUtils.js';
 // Pure accounting: a course stream is teacher + subject + group + type + subgroup.
 export const normalizeGroup = value => String(value || '').toLowerCase()
   .replace(/^группа\s*/i, '').replace(/[^0-9а-яёa-z]/gi, '').replace(/f/g, 'ф').replace(/m/g, 'м').replace(/c/g, 'с');
-export const normalizeTeacher = value => String(value || '').trim().toLowerCase();
+export const normalizeTeacher = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 export const normalizeSubgroup = value => value && value !== 'all' ? String(value) : '';
 export const normalizeSubject = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 
@@ -58,10 +59,12 @@ export function countJournalTypes(entries, program) {
 }
 
 export function uniqueEntries(entries) {
-  return [...new Map(entries.map(e => [
-    [e.date, Number(e.lessonNumber), normalizeTeacher(e.teacher), normalizeSubject(e.subject),
-      normalizeGroup(e.group), normalizeSubgroup(e.subgroup)].join('|'), e,
-  ])).values()];
+  return combineLessonCopies(entries, entry => {
+    // An unknown subject/teacher is not enough evidence to merge distinct records.
+    if (!entry.subject || !entry.teacher || !entry.date || !entry.group || !entry.lessonNumber) return `id:${entry.id}`;
+    return [entry.date, Number(entry.lessonNumber), normalizeTeacher(entry.teacher), normalizeSubject(entry.subject),
+      normalizeGroup(entry.group), normalizeSubgroup(entry.subgroup)].join('|');
+  });
 }
 
 // Confirmed by the teacher: practice 8 on Nov 9, subgroup 2. This is a

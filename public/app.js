@@ -3,7 +3,7 @@
 // ==========================================================================
 import { state, initLocalState, loadSchedule, loadTeachers, loadStudents, loadCurriculum, populateGroupSelects, updateHeaderStatus, formatLocalDate, PWA_VERSION, clearPwaCacheAndReload } from './js/state.js';
 import { renderSchedule, setupDayFilterButtons, renderBells } from './js/scheduleView.js';
-import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners, loadEntryToForm, findExistingJournalEntry } from './js/journalView.js';
+import { updateJournalStudents, autoFillTopicForGroup, loadJournalHistory, setupJournalListeners, loadEntryToForm, findExistingJournalEntry, renderJournalHistory } from './js/journalView.js';
 import { renderManageStudents, setupStudentsListeners } from './js/studentsView.js';
 import { setupUploadListeners } from './js/uploadView.js';
 import { openJournalSummary, setupSummaryListeners } from './js/journalSummaryView.js';
@@ -14,6 +14,8 @@ import { setupKioskEventListeners } from './js/kioskView.js';
 import { setupSyncQueueAutoFlush } from './js/syncQueue.js';
 import { setupFormGuard, checkCanSwitchTab } from './js/formGuard.js';
 import { fetchRemoteSubgroups } from './js/studentSubgroups.js';
+import { setupJournalSafety } from './js/journalSafetyView.js';
+import { flushSyncQueue } from './js/syncQueue.js';
 
 // Инициализация PWA и Service Worker с безопасной фоновой регистрацией
 if ('serviceWorker' in navigator) {
@@ -188,7 +190,15 @@ async function initApp() {
     populateGroupSelects(updateJournalStudents);
   });
   setupKioskEventListeners();
+  setupJournalSafety();
   setupSyncQueueAutoFlush();
+  window.addEventListener('pwa_sync_updated', renderJournalHistory);
+  window.addEventListener('pwa_journal_updated', renderJournalHistory);
+  window.addEventListener('pwa_journal_refresh', async () => {
+    await loadJournalHistory();
+    await flushSyncQueue();
+    await loadJournalHistory();
+  });
   setupFormGuard();
   fetchRemoteSubgroups().then((subgroups) => {
     if (subgroups) updateJournalStudents();

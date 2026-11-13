@@ -1,90 +1,87 @@
-// ==========================================================================
-// OFFLINE SYNC QUEUE: QUEUE & BACKGROUND SYNC FOR JOURNAL ENTRIES
-// ==========================================================================
-import { pushJournalEntryToCloud } from './supabaseSync.js';
-import { isStaticHost } from './state.js';
-
-const QUEUE_STORAGE_KEY = 'pwa_sync_queue';
+// Durable outbox for journal saves/deletions and student changes.
+import { pushJournalEntryToCloud, deleteJournalEntryFromCloud,
+  pushStudentToCloud, deleteStudentFromCloud } from './cloudRecords.js';
+import { isStaticHost } from './cacheHelper.js';
+import { checkedFetch } from './syncTransport.js';
+import { getSyncQueue, enqueueMutation, acknowledgeMutation, sameMutation } from './syncStorage.js';
+export { getSyncQueue } from './syncStorage.js';
 let isFlushing = false;
 
-export function getSyncQueue() {
-  try {
-    const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function saveSyncQueue(queue) {
-  try {
-    localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-  } catch (e) {}
-  renderSyncBadge();
-}
-
 export function enqueueJournalEntry(entry) {
-  const queue = getSyncQueue();
-  const idx = queue.findIndex((item) => item.id === entry.id);
-  const queueItem = {
-    id: entry.id,
-    type: 'journal',
-    entry,
-    queuedAt: new Date().toISOString(),
-  };
-
-  if (idx !== -1) queue[idx] = queueItem;
-  else queue.push(queueItem);
-
-  saveSyncQueue(queue);
-  return queue.length;
+  const count = enqueueMutation({ id: entry.id, type: 'journal', action: 'save', entry });
+  renderSyncBadge();
+  return count;
 }
 
-export function dequeueJournalEntry(entryId) {
-  const queue = getSyncQueue().filter((item) => item.id !== entryId);
-  saveSyncQueue(queue);
-  return queue.length;
+export function enqueueJournalDeletion(id) {
+  const count = enqueueMutation({ id, type: 'journal', action: 'delete' });
+  renderSyncBadge();
+  return count;
+}
+
+export function enqueueStudentMutation(group, names, action = 'save') {
+  const list = Array.isArray(names) ? names : [names];
+  for (const name of list) enqueueMutation({ id: JSON.stringify([group, name]),
+    type: 'student', action, group, name });
+  renderSyncBadge();
+  void flushSyncQueue();
+}
+
+async function sendCloud(item) {
+  if (item.type === 'journal') {
+    return item.action === 'delete' ? deleteJournalEntryFromCloud(item.id) : pushJournalEntryToCloud(item.entry, () => getSyncQueue().some(current => sameMutation(current, item)));
+  }
+  if (item.type === 'student') return item.action === 'delete'
+    ? deleteStudentFromCloud(item.group, item.name) : pushStudentToCloud(item.group, item.name);
+  throw new Error('Неизвестный тип операции очереди');
+}
+
+async function sendApi(item) {
+  if (item.type === 'journal') return item.action === 'delete'
+    ? checkedFetch(`./api/journal/${encodeURIComponent(item.id)}`, { method: 'DELETE' })
+    : checkedFetch('./api/journal/mark', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item.entry) });
+  if (item.type === 'student') return item.action === 'delete'
+    ? checkedFetch(`./api/students?group=${encodeURIComponent(item.group)}&student=${encodeURIComponent(item.name)}`, { method: 'DELETE' })
+    : checkedFetch('./api/students', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ group: item.group, student: item.name }) });
 }
 
 export async function flushSyncQueue() {
-  if (isFlushing || !navigator.onLine) {
-    renderSyncBadge();
-    return;
-  }
-
-  const queue = getSyncQueue();
-  if (queue.length === 0) {
-    renderSyncBadge();
-    return;
-  }
-
+  if (isFlushing || !navigator.onLine) { renderSyncBadge(); return; }
   isFlushing = true;
   renderSyncBadge(true);
-
-  const remaining = [];
-  for (const item of queue) {
-    if (item.type === 'journal' && item.entry) {
-      try {
-        await pushJournalEntryToCloud(item.entry);
-        if (!isStaticHost) {
-          await fetch('./api/journal/mark', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item.entry),
-          }).catch(() => {});
+  try {
+    for (const item of getSyncQueue()) {
+      // Check the live queue: this snapshot may already have been replaced/deleted.
+      if (!getSyncQueue().some(current => sameMutation(current, item))) continue;
+      let apiItem = item;
+      if (!item.confirmed?.cloud) {
+        try {
+          const sentEntry = await sendCloud(item);
+          if (sentEntry?.id && item.type === 'journal') apiItem = { ...item, entry: sentEntry };
+          acknowledgeMutation(item, isStaticHost ? null : 'cloud');
+        } catch (error) {
+          console.warn('Облако не подтвердило запись; она остаётся в очереди:', error);
+          if (error.code === 'JOURNAL_CONFLICT') continue;
         }
-      } catch (err) {
-        remaining.push(item);
+      }
+      if (!getSyncQueue().some(current => sameMutation(current, item))) continue;
+      if (!isStaticHost && !item.confirmed?.api) {
+        try {
+          await sendApi(apiItem);
+          acknowledgeMutation(item, 'api');
+        } catch (error) { console.warn('API не подтвердил запись; она остаётся в очереди:', error); }
       }
     }
-  }
-
-  isFlushing = false;
-  saveSyncQueue(remaining);
+  } catch (error) {
+    console.warn('Синхронизация остановлена; сохранённые данные не перезаписаны:', error);
+  } finally { isFlushing = false; renderSyncBadge(); }
 }
 
 export function renderSyncBadge(syncingNow = false) {
   if (typeof document === 'undefined') return;
+  window.dispatchEvent(new Event('pwa_sync_updated'));
   let badge = document.getElementById('pwaSyncStatusBadge');
 
   if (!badge) {
@@ -95,7 +92,13 @@ export function renderSyncBadge(syncingNow = false) {
   }
 
   const isOnline = navigator.onLine;
-  const count = getSyncQueue().length;
+  let count;
+  try { count = getSyncQueue().length; } catch { count = -1; }
+  if (count < 0) {
+    badge.classList.remove('hidden');
+    badge.textContent = 'Хранилище требует проверки. Сначала скачайте копию журнала.';
+    return;
+  }
 
   if (isOnline && count === 0 && !syncingNow) {
     badge.innerHTML = '';
@@ -152,10 +155,10 @@ export function setupSyncQueueAutoFlush() {
 
   // Периодическая проверка раз в 30 секунд
   setInterval(() => {
-    if (navigator.onLine && getSyncQueue().length > 0) {
-      flushSyncQueue();
-    }
+    try { if (navigator.onLine && getSyncQueue().length > 0) void flushSyncQueue(); }
+    catch { renderSyncBadge(); }
   }, 30000);
 
   renderSyncBadge();
+  void flushSyncQueue();
 }

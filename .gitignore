@@ -20,3 +20,9 @@ data/students.json
 public/data/students.json
 data/journal.json
 public/data/journal.json
+
+# Локальные резервные копии персональных данных
+.local-backups/
+
+# Изолированные рабочие деревья инструментов
+.claude/worktrees/

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v57';
+const CACHE_NAME = 'schedule-pwa-v58';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   './css/schedule.css',
   './css/notifications.css',
   './css/journal.css',
+  './css/journalWorkspace.css',
   './css/journalStats.css',
   './css/attendance.css',
   './css/history.css',
@@ -48,6 +49,16 @@ const STATIC_ASSETS = [
   './js/studentSubgroups.js',
   './js/uploadView.js',
   './js/syncQueue.js',
+  './js/syncStorage.js',
+  './js/syncTransport.js',
+  './js/supabaseClient.js',
+  './js/supabaseAuth.js',
+  './js/cloudRecords.js',
+  './js/journalMerge.js',
+  './js/journalRecovery.js',
+  './js/journalSafetyView.js',
+  './js/journalDraft.js',
+  './js/attendanceUtils.js',
   './js/formGuard.js',
   './js/bellsPresets.js',
   './data/schedule.json',

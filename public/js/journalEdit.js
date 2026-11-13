@@ -4,6 +4,8 @@
 import { state } from './state.js';
 import { updateJournalStudents } from './journalAttendance.js';
 import { autoFillTopicForGroup } from './journalView.js';
+import { resetJournalDraft, boundJournalEntry } from './journalDraft.js';
+import { normalizeGroup, normalizeSubgroup, matchesJournalTeacher } from './lessonProgress.js';
 
 export function findExistingJournalEntry(group, lessonNum, date, subgroup, teacher) {
   if (!state.journalEntries || !Array.isArray(state.journalEntries)) return null;
@@ -12,25 +14,13 @@ export function findExistingJournalEntry(group, lessonNum, date, subgroup, teach
   const targetLesson = Number(lessonNum);
   const targetSub = subgroup && subgroup !== 'all' ? Number(subgroup) : null;
 
-  if (targetSub) {
-    const exact = state.journalEntries.find((e) => {
-      const matchGroup = e.group === group;
-      const matchDate = e.date === targetDate;
-      const matchLesson = Number(e.lessonNumber) === targetLesson;
-      const matchTeacher = Boolean(currentTeacher) && e.teacher === currentTeacher;
-      const matchSub = Number(e.subgroup) === targetSub;
-      return matchGroup && matchDate && matchLesson && matchTeacher && matchSub;
-    });
-    if (exact) return exact;
-  }
-
-  return state.journalEntries.find((e) => {
-    const matchGroup = e.group === group;
-    const matchDate = e.date === targetDate;
-    const matchLesson = Number(e.lessonNumber) === targetLesson;
-    const matchTeacher = Boolean(currentTeacher) && e.teacher === currentTeacher;
-    return matchGroup && matchDate && matchLesson && matchTeacher && (Number(e.subgroup) || null) === targetSub;
-  }) || null;
+  const bound = boundJournalEntry(group, targetLesson, targetDate, targetSub, currentTeacher);
+  if (bound) return state.journalEntries.find(entry => entry.id === bound.id) || bound;
+  const candidates = state.journalEntries.filter(entry => normalizeGroup(entry.group) === normalizeGroup(group)
+    && entry.date === targetDate && Number(entry.lessonNumber) === targetLesson
+    && matchesJournalTeacher(entry, currentTeacher) && normalizeSubgroup(entry.subgroup) === normalizeSubgroup(targetSub));
+  // Ambiguous IDs/subjects need an explicit history-card choice; never update the first one accidentally.
+  return candidates.length === 1 ? candidates[0] : null;
 }
 
 export function loadEntryToForm(entry) {
@@ -44,7 +34,13 @@ export function loadEntryToForm(entry) {
   const courseBadge = document.getElementById('coursePairBadge');
   const subgSel = document.getElementById('journalSubgroupSelect');
 
-  if (groupSel) groupSel.value = entry.group;
+  if (groupSel) {
+    if (![...groupSel.options].some(option => option.value === entry.group)) {
+      const option = document.createElement('option'); option.value = entry.group; option.textContent = `Группа ${entry.group}`;
+      groupSel.appendChild(option);
+    }
+    groupSel.value = entry.group;
+  }
   if (subgSel) subgSel.value = entry.subgroup ? String(entry.subgroup) : 'all';
   if (lessonSel) lessonSel.value = String(entry.lessonNumber);
   if (dateInput) dateInput.value = entry.date;
@@ -56,42 +52,8 @@ export function loadEntryToForm(entry) {
     courseBadge.textContent = `${typeLbl} №${entry.courseLessonNumber} (по программе)`;
   }
 
+  resetJournalDraft(entry);
   updateJournalStudents();
-
-  const att = entry.attendance || {};
-  document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
-    const student = row.getAttribute('data-student');
-    const studentAtt = att[student];
-    if (studentAtt) {
-      const btns = row.querySelectorAll('.status-btn');
-      btns.forEach((b) => {
-        if (b.getAttribute('data-val') === studentAtt.status) {
-          b.classList.add('active');
-        } else {
-          b.classList.remove('active');
-        }
-      });
-
-      const badge = row.querySelector('[data-badge]');
-      if (badge) {
-        if (studentAtt.status === 'present') {
-          badge.className = 'student-badge badge-present';
-          badge.textContent = 'Был';
-        } else if (studentAtt.status === 'absent') {
-          badge.className = 'student-badge badge-absent';
-          badge.textContent = '✕ Не был';
-        } else if (studentAtt.status === 'excused') {
-          badge.className = 'student-badge badge-excused';
-          badge.textContent = '📋 Уважит.';
-        }
-      }
-
-      const gradeSel = row.querySelector('.grade-select');
-      if (gradeSel) {
-        gradeSel.value = studentAtt.grade || '';
-      }
-    }
-  });
 
   showEditModeNotice(entry);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -121,6 +83,7 @@ function showEditModeNotice(entry) {
 
   document.getElementById('cancelEditNoticeBtn')?.addEventListener('click', () => {
     notice.classList.add('hidden');
+    resetJournalDraft();
     const g = document.getElementById('journalGroupSelect')?.value;
     const l = document.getElementById('journalLessonNumSelect')?.value;
     updateJournalStudents();

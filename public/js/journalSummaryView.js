@@ -2,14 +2,15 @@
 // JOURNAL SUMMARY VIEW: GROUP STATS, SEMESTER GRADES & EXPORT (PDF/EXCEL)
 // ==========================================================================
 import { state } from './state.js';
+import { studentAttendance, normalizeStudentName, attendanceText, escapeHtml } from './attendanceUtils.js';
 
 import { countJournalTypes, findProgram, journalGroupEntries, lessonType,
-  matchesJournalTeacher, normalizeGroup } from './lessonProgress.js';
+  matchesJournalTeacher, normalizeGroup, uniqueEntries } from './lessonProgress.js';
 
 const shortTypes = { theory: 'Л', practice: 'П', exam: 'Экз.' };
 
 function getGroupEntries(group) {
-  return journalGroupEntries(state, group)
+  return uniqueEntries(journalGroupEntries(state, group))
     .sort((a, b) => a.date.localeCompare(b.date) || Number(a.lessonNumber) - Number(b.lessonNumber));
 }
 
@@ -17,11 +18,16 @@ function getGroupStudents(group) {
   const key = normalizeGroup(group);
   const found = new Set();
   for (const [name, students] of Object.entries(state.studentsByGroup)) {
-    if (normalizeGroup(name) === key) students.forEach(student => found.add(student));
+    if (normalizeGroup(name) === key) students.forEach(student => found.add(normalizeStudentName(student)));
   }
   const entries = getGroupEntries(group);
   entries.forEach((e) => {
-    Object.keys(e.attendance || {}).forEach((s) => found.add(s));
+    const names = Object.keys(e.attendance || {});
+    names.forEach(name => {
+      const normalized = normalizeStudentName(name);
+      const ambiguous = names.filter(value => normalizeStudentName(value) === normalized).length > 1;
+      found.add(ambiguous ? name : normalized);
+    });
   });
   return Array.from(found);
 }
@@ -33,13 +39,14 @@ export function calculateStudentStats(student, entries) {
   const grades = [];
 
   entries.forEach((entry) => {
-    const att = entry.attendance?.[student];
+    const att = studentAttendance(entry, student);
     if (!att) return;
-    if (att.status === 'absent') absentCount++;
+    if (att._alternatives?.status) { /* displayed as a conflict, not counted as certain */ }
+    else if (att.status === 'absent') absentCount++;
     else if (att.status === 'excused') excusedCount++;
     else presentCount++;
 
-    if (att.grade && !isNaN(Number(att.grade))) {
+    if (!att._alternatives?.grade && att.grade && !isNaN(Number(att.grade))) {
       grades.push(Number(att.grade));
     }
   });
@@ -90,12 +97,12 @@ export function renderSummaryTable(group) {
     totalAbsences += stats.absentCount + stats.excusedCount;
 
     const cellsHtml = entries.map((entry) => {
-      const att = entry.attendance?.[student];
+      const att = studentAttendance(entry, student);
       if (!att) return `<td class="cell-mark cell-empty">—</td>`;
-      if (att.status === 'absent') return `<td class="cell-mark cell-absent" title="${student}: Отсутствовал (Н)">Н</td>`;
-      if (att.status === 'excused') return `<td class="cell-mark cell-excused" title="${student}: Уважительная причина (У)">У</td>`;
-      if (att.grade) return `<td class="cell-mark cell-grade grade-${att.grade}" title="${student}: Оценка ${att.grade}">${att.grade}</td>`;
-      return `<td class="cell-mark cell-present" title="${student}: Был">·</td>`;
+      const conflicts = att._alternatives && Object.keys(att._alternatives).length;
+      const cls = conflicts ? 'cell-conflict' : att.status === 'absent' ? 'cell-absent'
+        : att.status === 'excused' ? 'cell-excused' : att.grade ? 'cell-grade grade-' + escapeHtml(att.grade) : 'cell-present';
+      return `<td class="cell-mark ${cls}" title="${escapeHtml(student)}: ${escapeHtml(att.comment || attendanceText(att))}">${escapeHtml(attendanceText(att))}${conflicts ? '<small>разные записи</small>' : ''}</td>`;
     }).join('');
 
     const avgBadge = stats.avgGrade
@@ -105,7 +112,7 @@ export function renderSummaryTable(group) {
     return `
       <tr>
         <td class="cell-num">${idx + 1}</td>
-        <td class="cell-name" title="${student}">${student}</td>
+        <td class="cell-name" title="${escapeHtml(student)}">${escapeHtml(student)}</td>
         ${cellsHtml}
         <td class="cell-stat text-rose-400 font-bold">${stats.absentCount || '0'}</td>
         <td class="cell-stat text-amber-400 font-medium">${stats.excusedCount || '0'}</td>
@@ -133,7 +140,7 @@ export function renderSummaryTable(group) {
   const footAbsents = entries.map((e) => {
     let abs = 0;
     Object.values(e.attendance || {}).forEach((a) => {
-      if (a.status === 'absent' || a.status === 'excused') abs++;
+      if (!a._alternatives?.status && (a.status === 'absent' || a.status === 'excused')) abs++;
     });
     return `<td class="cell-foot-abs">${abs}</td>`;
   }).join('');
@@ -253,14 +260,12 @@ export function exportSummaryToCsv(group) {
 
   students.forEach((student, idx) => {
     const stats = calculateStudentStats(student, entries);
-    const row = [idx + 1, `"${student}"`];
+    const row = [idx + 1, `"${student.replace(/"/g, '""')}"`];
 
     entries.forEach((e) => {
-      const att = e.attendance?.[student];
+      const att = studentAttendance(e, student);
       if (!att) row.push('');
-      else if (att.status === 'absent') row.push('Н');
-      else if (att.status === 'excused') row.push('У');
-      else row.push(att.grade ? att.grade : '+');
+      else row.push(attendanceText(att));
     });
 
     row.push(stats.absentCount, stats.excusedCount, `"${stats.grades.join(', ')}"`, stats.avgGrade || '');

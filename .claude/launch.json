@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pwa-isolated-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/preview-server.cjs"],
+      "port": 8765
+    }
+  ]
+}

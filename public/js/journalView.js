@@ -2,7 +2,7 @@
 // JOURNAL VIEW: LESSON ENTRY, TOPIC AUTOFILL & FORM LOGIC
 // ==========================================================================
 import { scheduleOnDate, findProgram } from './lessonProgress.js';
-import { state, isStaticHost } from './state.js';
+import { state } from './state.js';
 import {
   getRecommendedLesson,
   updateTopicDatalist,
@@ -15,9 +15,12 @@ import {
   renderJournalHistory,
   deleteJournalEntry,
 } from './journalHistory.js';
-import { pushJournalEntryToCloud } from './supabaseSync.js';
 import { loadEntryToForm, findExistingJournalEntry } from './journalEdit.js';
-import { enqueueJournalEntry } from './syncQueue.js';
+import { enqueueJournalEntry, flushSyncQueue } from './syncQueue.js';
+import { clearJournalTombstone } from './syncStorage.js';
+import { captureJournalMarks, boundJournalEntry, getJournalDraft } from './journalDraft.js';
+import { mergeJournalEntry } from './journalMerge.js';
+import { ensureJournalRecovery, archiveJournalConflicts } from './journalRecovery.js';
 import { markJournalClean } from './formGuard.js';
 
 export { updateJournalStudents, loadJournalHistory, renderJournalHistory, deleteJournalEntry };
@@ -101,7 +104,14 @@ export function setupJournalListeners() {
 
   groupSel?.addEventListener('change', handleFormSelectionChange);
   lessonSel?.addEventListener('change', handleFormSelectionChange);
-  subgSel?.addEventListener('change', handleFormSelectionChange);
+  subgSel?.addEventListener('change', () => {
+    // Subgroup is a roster filter while editing; do not rehydrate over an unsaved draft.
+    const loaded = getJournalDraft().entry;
+    if (!loaded) { handleFormSelectionChange(); return; }
+    captureJournalMarks();
+    updateJournalStudents();
+    renderJournalStats(groupSel?.value);
+  });
   dateInput?.addEventListener('change', handleFormSelectionChange);
 
   topicInput?.addEventListener('click', () => {
@@ -150,6 +160,8 @@ export function setupJournalListeners() {
 
   document.getElementById('saveJournalBtn')?.addEventListener('click', async () => {
     const group = groupSel?.value;
+    if (!group?.trim()) { alert('Выберите группу перед сохранением.'); return; }
+    if (state.isGuestMode) { alert('Для изменения отметок войдите как преподаватель.'); return; }
     const lessonNumber = Number(lessonSel?.value || 1);
     const date = dateInput?.value || new Date().toISOString().split('T')[0];
     const topic = topicInput?.value || 'Практическое занятие';
@@ -157,36 +169,36 @@ export function setupJournalListeners() {
 
     const currentTeacher = state.currentTeacher || 'Преподаватель';
     const subgroupSel = subgSel?.value;
-    const subgroupVal = (subgroupSel === '1' || subgroupSel === '2') ? Number(subgroupSel) : null;
+    const loaded = getJournalDraft().entry;
+    const selectedSubgroup = (subgroupSel === '1' || subgroupSel === '2') ? Number(subgroupSel) : null;
+    const subgroupVal = loaded ? Number(loaded.subgroup) || null : selectedSubgroup;
     const foundLesson = scheduleOnDate(state, date).find(l => l.group === group
       && Number(l.lessonNumber) === lessonNumber
       && (Number(l.subgroup) || null) === subgroupVal);
-    const existing = findExistingJournalEntry(group, lessonNumber, date, subgroupSel);
-    const currentSubject = foundLesson?.subject || existing?.subject || state.schedule?.subject || '';
+    const existing = loaded || boundJournalEntry(group, lessonNumber, date, subgroupSel) || findExistingJournalEntry(group, lessonNumber, date, subgroupSel);
+    const currentSubject = existing?.subject || foundLesson?.subject || state.schedule?.subject || '';
     const rec = getRecommendedLesson(group, lessonNumber, date, { subgroup: subgroupSel, subject: currentSubject });
     const program = findProgram(state.curriculumPrograms, group);
     const selectedLesson = program?.lessons?.find(l => (l.text || l.topic) === topic);
-    const entryType = selectedLesson?.type || (rec?.text === topic ? rec.type : null) || 'other';
+    const entryType = selectedLesson?.type || (rec?.text === topic ? rec.type : null) || existing?.type || 'other';
     const courseLessonNumber = rec?.text === topic ? rec.number : selectedLesson
-      ? program.lessons.filter(l => l.type === selectedLesson.type).indexOf(selectedLesson) + 1 : null;
+      ? program.lessons.filter(l => l.type === selectedLesson.type).indexOf(selectedLesson) + 1 : existing?.courseLessonNumber ?? null;
 
-    const attendance = {};
-    document.querySelectorAll('#journalStudentsList .student-row').forEach((row) => {
-      const student = row.getAttribute('data-student');
-      const activeBtn = row.querySelector('.status-btn.active');
-      const status = activeBtn ? activeBtn.getAttribute('data-val') : 'present';
-      const grade = row.querySelector('.grade-select')?.value;
-      attendance[student] = { status, grade: grade || undefined };
-    });
+    const latest = (state.journalEntries || []).find(entry => entry.id === existing?.id);
+    const reconciled = mergeJournalEntry({ ...existing, attendance: captureJournalMarks() }, latest, existing, true);
+    if (reconciled.fields.length) archiveJournalConflicts([{ id: existing.id, local: reconciled.entry,
+      remote: latest, fields: reconciled.fields, paths: reconciled.paths }]);
+    const attendance = reconciled.entry.attendance;
 
     const subg = subgroupVal ? `_sub${subgroupVal}` : '';
 
     let entryId = existing?.id || `${group}${subg}_${date}_${lessonNumber}_${encodeURIComponent(currentTeacher)}`;
 
     const entry = {
+      ...existing,
       id: entryId,
       date,
-      dateFormatted: date,
+      dateFormatted: existing?.dateFormatted || date,
       group,
       subgroup: subgroupVal,
       teacher: currentTeacher,
@@ -203,29 +215,24 @@ export function setupJournalListeners() {
     const idx = saved.findIndex((e) => e.id === entry.id);
     if (idx !== -1) saved[idx] = entry;
     else saved.push(entry);
-    localStorage.setItem('pwa_journal', JSON.stringify(saved));
-    state.journalEntries = saved;
-
-    markJournalClean();
-
-    pushJournalEntryToCloud(entry).catch(() => {
+    try {
+      // Persist intent before any request so a tab close cannot lose an in-flight edit.
+      ensureJournalRecovery();
       enqueueJournalEntry(entry);
-    });
-
-    if (!isStaticHost) {
-      fetch('./api/journal/mark', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
-      }).catch(() => {
-        enqueueJournalEntry(entry);
-      });
+      clearJournalTombstone(entry.id);
+      localStorage.setItem('pwa_journal', JSON.stringify(saved));
+    } catch (error) {
+      alert('Не удалось сохранить занятие на устройстве. Освободите место и повторите сохранение.');
+      return;
     }
+    state.journalEntries = saved;
+    markJournalClean();
+    void flushSyncQueue();
 
     // Сохраняем форму в режиме редактирования с обновленными данными
     loadEntryToForm(entry);
 
-    alert(`✅ Занятие (${currentTeacher}) успешно сохранено в журнал!`);
+    alert(`✅ Занятие (${currentTeacher}) сохранено на устройстве. Статус отправки — в индикаторе синхронизации.`);
     renderJournalHistory();
     renderJournalStats(group);
   });

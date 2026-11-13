@@ -2,7 +2,9 @@
 // PWA CACHE AND NETWORK HELPERS
 // ==========================================================================
 
-export const PWA_VERSION = 'v57';
+import { ensureJournalRecovery } from './journalRecovery.js';
+
+export const PWA_VERSION = 'v58';
 
 export const isStaticHost = typeof window !== 'undefined' && (
   window.location.hostname.includes('github.io') ||
@@ -57,6 +59,10 @@ export async function safeFetchJson(url, timeoutMs = 4000) {
 }
 
 export async function clearPwaCacheAndReload() {
+  try { ensureJournalRecovery(); } catch {
+    alert('Очистка остановлена: сначала выгрузите резервную копию журнала.');
+    return;
+  }
   try {
     localStorage.removeItem('pwa_custom_schedule');
     localStorage.removeItem('pwa_kiosk_schedules_all');

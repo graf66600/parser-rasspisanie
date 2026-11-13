@@ -5,6 +5,7 @@ import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compa
 import { scheduleDate, scheduleWeekday, scheduleCoversDate } from './scheduleDates.js';
 import { loadPublishedScheduleMetadata } from './scheduleFreshness.js';
 import { fetchRemoteStudents, fetchRemoteScheduleData } from './supabaseSync.js';
+import { matchesJournalTeacher } from './lessonProgress.js';
 export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames };
 
 export const DAY_NAMES = {
@@ -105,6 +106,9 @@ export function populateGroupSelects(onGroupChange) {
     });
   }
   Object.keys(state.studentsByGroup).forEach((g) => groups.add(g));
+  (state.journalEntries || []).forEach(entry => {
+    if (entry.group && matchesJournalTeacher(entry, state.currentTeacher)) groups.add(entry.group);
+  });
 
   const selects = [
     document.getElementById('journalGroupSelect'),

@@ -8,7 +8,7 @@ import { CurriculumService } from './services/curriculumService.js';
 import { JournalService } from './services/journalService.js';
 import { StudentService } from './services/studentService.js';
 import { CONFIG, DEFAULT_BELLS } from './config/config.js';
-import { serveStaticFile, sendError } from './server/httpUtils.js';
+import { serveStaticFile, sendError, errorStatus } from './server/httpUtils.js';
 import { handleScheduleRoutes } from './server/routes/scheduleRoutes.js';
 import { handleStudentRoutes } from './server/routes/studentRoutes.js';
 import { handleJournalRoutes } from './server/routes/journalRoutes.js';
@@ -103,7 +103,7 @@ export class WebAppServer {
       serveStaticFile(res, this.publicDir, pathname);
     } catch (err: any) {
       console.error('Ошибка обработки запроса:', err);
-      sendError(res, err.message || 'Internal Server Error', 500);
+      sendError(res, err?.message || 'Internal Server Error', errorStatus(err));
     }
   }
 }
