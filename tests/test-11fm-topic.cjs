@@ -6,7 +6,7 @@ const { SourceTextModule, SyntheticModule, createContext } = require('node:vm');
 
 test('topicHelper: recommended lesson for 11fm (subgroup 2, Tripolsky)', async () => {
   const curriculum = JSON.parse(readFileSync('data/curriculum.json', 'utf8'));
-  const schedule = JSON.parse(readFileSync('data/schedule.json', 'utf8'));
+  const schedule = JSON.parse(readFileSync('tests/fixtures/schedule-20261109.json', 'utf8'));
   const state = {
     schedule,
     curriculumPrograms: curriculum,

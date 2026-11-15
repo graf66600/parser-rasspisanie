@@ -25,7 +25,7 @@ async function load(state, document = { getElementById: () => null }) {
 function fixture() {
   return { currentTeacher: 'Трипольский',
     curriculumPrograms: JSON.parse(readFileSync('data/curriculum.json', 'utf8')),
-    schedule: JSON.parse(readFileSync('data/schedule.json', 'utf8')), journalEntries: [] };
+    schedule: JSON.parse(readFileSync('tests/fixtures/schedule-20261109.json', 'utf8')), journalEntries: [] };
 }
 const entry = overrides => ({ group: '11фм', teacher: 'Трипольский', subject: 'Информатика',
   subgroup: 2, date: '2026-11-02', lessonNumber: 3, type: 'practice', ...overrides });
