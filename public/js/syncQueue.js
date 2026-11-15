@@ -6,6 +6,8 @@ import { checkedFetch } from './syncTransport.js';
 import { getSyncQueue, enqueueMutation, acknowledgeMutation, sameMutation } from './syncStorage.js';
 export { getSyncQueue } from './syncStorage.js';
 let isFlushing = false;
+let lastSyncError = '';
+export const getSyncStatus = () => ({ syncing: isFlushing, error: lastSyncError });
 
 export function enqueueJournalEntry(entry) {
   const count = enqueueMutation({ id: entry.id, type: 'journal', action: 'save', entry });
@@ -48,11 +50,16 @@ async function sendApi(item) {
 }
 
 export async function flushSyncQueue() {
-  if (isFlushing || !navigator.onLine) { renderSyncBadge(); return; }
+  if (isFlushing || !navigator.onLine) { renderSyncBadge(isFlushing); return; }
   isFlushing = true;
+  lastSyncError = '';
   renderSyncBadge(true);
   try {
     for (const item of getSyncQueue()) {
+      if (isStaticHost && item.confirmed?.cloud) {
+        acknowledgeMutation(item, null);
+        continue;
+      }
       // Check the live queue: this snapshot may already have been replaced/deleted.
       if (!getSyncQueue().some(current => sameMutation(current, item))) continue;
       let apiItem = item;
@@ -62,6 +69,7 @@ export async function flushSyncQueue() {
           if (sentEntry?.id && item.type === 'journal') apiItem = { ...item, entry: sentEntry };
           acknowledgeMutation(item, isStaticHost ? null : 'cloud');
         } catch (error) {
+          lastSyncError = error.message;
           console.warn('Облако не подтвердило запись; она остаётся в очереди:', error);
           if (error.code === 'JOURNAL_CONFLICT') continue;
         }
@@ -71,10 +79,11 @@ export async function flushSyncQueue() {
         try {
           await sendApi(apiItem);
           acknowledgeMutation(item, 'api');
-        } catch (error) { console.warn('API не подтвердил запись; она остаётся в очереди:', error); }
+        } catch (error) { lastSyncError = error.message; console.warn('API не подтвердил запись; она остаётся в очереди:', error); }
       }
     }
   } catch (error) {
+    lastSyncError = error.message;
     console.warn('Синхронизация остановлена; сохранённые данные не перезаписаны:', error);
   } finally { isFlushing = false; renderSyncBadge(); }
 }
@@ -88,6 +97,9 @@ export function renderSyncBadge(syncingNow = false) {
     badge = document.createElement('div');
     badge.id = 'pwaSyncStatusBadge';
     badge.className = 'fixed bottom-20 right-4 z-40 transition-all duration-300';
+    badge.style.maxWidth = 'calc(100vw - 32px)';
+    badge.style.overflowWrap = 'anywhere';
+    badge.setAttribute('role', 'status');
     document.body.appendChild(badge);
   }
 
@@ -139,6 +151,14 @@ export function renderSyncBadge(syncingNow = false) {
     badge.querySelector('#manualFlushQueueBtn')?.addEventListener('click', () => {
       flushSyncQueue();
     });
+    const button = badge.querySelector('#manualFlushQueueBtn');
+    if (button) button.style.minHeight = '44px';
+    if (lastSyncError) {
+      const detail = document.createElement('div');
+      detail.className = 'px-3 py-2 bg-slate-950 text-amber-200 text-xs rounded-xl';
+      detail.textContent = lastSyncError;
+      badge.appendChild(detail);
+    }
   }
 }
 

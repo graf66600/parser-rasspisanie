@@ -161,3 +161,42 @@ test('different cloud marks block upload and retain both versions for recovery',
   assert.equal(conflicts[0].local.attendance.A.grade, '5');
   assert.equal(conflicts[0].remote.attendance.A.grade, '3');
 });
+
+test('old schema accepts whole-group entries but retains real subgroups', async () => {
+  const sent = [];
+  const app = await setup({ fetch: async (url, options) => {
+    const row = JSON.parse(options.body);
+    sent.push(row);
+    return Object.hasOwn(row, 'subgroup') ? { ok: false, status: 400,
+      json: async () => ({ code: 'PGRST204', message: "Could not find the 'subgroup' column" }) }
+      : { ok: true };
+  } });
+  app.enqueueJournalEntry({ id: 'whole' });
+  await app.flushSyncQueue();
+  assert.equal(app.getSyncQueue().length, 0);
+  assert.equal(sent.length, 2);
+  app.enqueueJournalEntry({ id: 'subgroup', subgroup: 2 });
+  await app.flushSyncQueue();
+  assert.equal(app.getSyncQueue().length, 1);
+  assert.match(app.getSyncStatus().error, /подгруппы/);
+  assert.equal(sent.length, 3);
+});
+
+test('static host clears already cloud-confirmed entries without another write', async () => {
+  const app = await setup({ initial: [{ id: 'a', type: 'journal', confirmed: { cloud: true } }],
+    fetch: async () => { throw new Error('must not resend'); } });
+  await app.flushSyncQueue();
+  assert.equal(app.getSyncQueue().length, 0);
+});
+
+test('failed manual sync exposes the reason and successful retry clears it', async () => {
+  let ok = false;
+  const app = await setup({ fetch: async () => ({ ok, status: 500 }) });
+  app.enqueueJournalEntry({ id: 'a' });
+  await app.flushSyncQueue();
+  assert.match(app.getSyncStatus().error, /HTTP 500/);
+  ok = true;
+  await app.flushSyncQueue();
+  assert.equal(app.getSyncStatus().error, '');
+  assert.equal(app.getSyncQueue().length, 0);
+});

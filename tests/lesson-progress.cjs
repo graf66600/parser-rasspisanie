@@ -87,7 +87,8 @@ test('stats separate semesters, teachers, subgroups, subjects, duplicates and le
   state.journalEntries = [entry({}), entry({}), entry({ subgroup: 1 }), entry({ teacher: 'Иванова' }),
     entry({ teacher: undefined }), entry({ subject: 'Химия' }), entry({ date: '2027-02-01' }), entry({ type: 'theory', lessonNumber: 4 })];
   const stats = api.calculateGroupStats('11фм', '2', '2026-11-09');
-  assert.equal(stats.practiceConducted, 1); assert.equal(stats.theoryConducted, 0);
+  // The legacy record without a teacher is also included by the grade sheet.
+  assert.equal(stats.practiceConducted, 2); assert.equal(stats.theoryConducted, 0);
   assert.equal(stats.practiceTotal, 27); assert.equal(stats.theoryTotal, 0);
 });
 
@@ -193,4 +194,20 @@ test('summary uses the same full-name spacing resolver and shows grade alongside
   assert.equal(stats.absentCount, 1);
   assert.equal(stats.grades[0], 3);
   assert.equal(api.attendanceText(api.studentAttendance(record, 'Иванов Иван')), 'Н · 3');
+});
+
+test('51F legacy entries remain counted in semester cards and summary', async () => {
+  const state = fixture();
+  state.studentsByGroup = {};
+  state.schedule = { lessons: [{ group: '51ф', subject: 'Информатика' }] };
+  state.journalEntries = Array.from({ length: 9 }, (_, i) => ({
+    id: `legacy-${i}`, group: '51F', date: `2026-10-${String(i + 1).padStart(2, '0')}`,
+    lessonNumber: 1, type: i < 7 ? 'theory' : 'practice',
+  }));
+  const api = await load(state);
+  const stats = api.calculateGroupStats('51ф', '', '2026-11-15');
+  assert.equal(stats.theoryConducted, 7);
+  assert.equal(stats.practiceConducted, 2);
+  state.currentTeacher = 'Иванова';
+  assert.equal(api.calculateGroupStats('51ф', '', '2026-11-15').totalConducted, 0);
 });

@@ -1,8 +1,8 @@
 import { teacherLoad, semesterForDate } from './teachingLoad.js';
 import { state } from './state.js';
 import { findProgramForGroup } from './topicHelper.js';
-import { normalizeGroup, normalizeSubgroup, scopedEntries, uniqueEntries,
-  lessonType, programMatchesSubject, journalGroupEntries, countJournalTypes } from './lessonProgress.js';
+import { normalizeGroup, normalizeSubgroup, uniqueEntries,
+  lessonType, programMatchesSubject, journalGroupEntries, countJournalTypes, normalizeSubject } from './lessonProgress.js';
 
 export function calculateGroupStats(group, subgroup = '', date = new Date().toLocaleDateString('sv-SE')) {
   const semester = semesterForDate(date);
@@ -14,7 +14,8 @@ export function calculateGroupStats(group, subgroup = '', date = new Date().toLo
   const candidate = findProgramForGroup(group);
   const prog = programMatchesSubject(candidate, subject) ? candidate : null;
   const practiceOnly = load?.theoryHours === 0;
-  const entries = uniqueEntries(scopedEntries(state, group, subject)).filter(e => {
+  const entries = uniqueEntries(journalGroupEntries(state, group)).filter(e => {
+    if (subject && e.subject && normalizeSubject(e.subject) !== normalizeSubject(subject)) return false;
     if (e.date < start || e.date > end) return false;
     const type = lessonType(e, prog);
     if (practiceOnly && type !== 'practice') return false;
@@ -50,7 +51,7 @@ export function renderJournalStats(group) {
   const selected = document.getElementById('journalSubgroupSelect')?.value;
   const subgroups = new Set([
     ...(state.schedule?.lessons || []).filter(l => normalizeGroup(l.group) === normalizeGroup(group)).map(l => normalizeSubgroup(l.subgroup)),
-    ...scopedEntries(state, group).map(e => normalizeSubgroup(e.subgroup)),
+    ...journalGroupEntries(state, group).map(e => normalizeSubgroup(e.subgroup)),
   ].filter(Boolean));
   const scopes = selected && selected !== 'all' ? [selected] : subgroups.size ? [...subgroups].sort() : [''];
   const entries = uniqueEntries(journalGroupEntries(state, group));
@@ -107,7 +108,7 @@ function renderStatsContent(group, subgroup) {
         <div class="stats-title-box">
           <span class="stats-icon-badge">📊</span>
           <div class="stats-title-text-wrap">
-            <h3 class="stats-main-title">Учёт занятий: Гр. ${stats.group}${subgroup ? ` • ${subgroup} п/г` : ''}</h3>
+            <h3 class="stats-main-title">Прогресс за ${stats.semester} семестр: Гр. ${stats.group}${subgroup ? ` • ${subgroup} п/г` : ''}</h3>
             <p class="stats-sub-title">${stats.programTitle} • ${stats.load ? `${stats.semester} семестр • План по ведомости нагрузки. Нагрузка преподавателя: ${stats.load.teacherHours} акад. ч.; практика: ${stats.load.practiceHours} ч. × ${stats.load.practiceMultiplier}.` : 'План нагрузки не подтверждён; оценка по списку тем.'} 1 пара = 2 акад. ч. ${stats.topicsVerified ? 'Темы сверены с рабочей программой.' : 'Список тем требует сверки с КТП.'} Журнал может быть неполным.${stats.unknown ? ` Не определён тип у ${stats.unknown} записей.` : ''}</p>
           </div>
         </div>

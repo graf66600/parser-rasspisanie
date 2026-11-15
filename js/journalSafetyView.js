@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { getSyncQueue, enqueueJournalEntry, flushSyncQueue } from './syncQueue.js';
+import { getSyncQueue, enqueueJournalEntry, flushSyncQueue, getSyncStatus } from './syncQueue.js';
 import { ensureJournalRecovery, getJournalConflicts, makeJournalBackup, readLocalJournal,
   rememberJournalBaseline, resolveJournalConflict } from './journalRecovery.js';
 import { mergeJournalEntry } from './journalMerge.js';
@@ -27,13 +27,14 @@ export function renderJournalSafety() {
   if (!container) return;
   try {
     const pending = getSyncQueue().length;
+    const sync = getSyncStatus();
     const conflicts = getJournalConflicts().filter(item => !item.resolvedAt && matchesJournalTeacher(item.local || item.remote || {}, state.currentTeacher));
     const label = container.querySelector('[data-safety-status]');
     const detail = container.querySelector('[data-safety-detail]');
-    label.textContent = conflicts.length ? 'Нужно сравнить отметки' : pending ? 'Изменения ждут отправки'
+    label.textContent = sync.syncing ? 'Отправка изменений…' : conflicts.length ? 'Нужно сравнить отметки' : pending ? 'Изменения ждут отправки'
       : navigator.onLine ? 'Локальная копия сохранена' : 'Работа без интернета';
     detail.textContent = conflicts.length ? `Различий между версиями: ${conflicts.length}. Обе копии сохранены.`
-      : pending ? `В очереди: ${pending}. Не очищайте данные приложения.`
+      : pending ? `В очереди: ${pending}. ${sync.error || 'Не очищайте данные приложения.'}`
       : 'Ведомость использует те же сохранённые записи, что и журнал.';
     container.dataset.state = conflicts.length ? 'conflict' : pending ? 'pending' : 'saved';
     const compare = container.querySelector('[data-compare]');

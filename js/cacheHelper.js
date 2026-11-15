@@ -4,7 +4,7 @@
 
 import { ensureJournalRecovery } from './journalRecovery.js';
 
-export const PWA_VERSION = 'v58';
+export const PWA_VERSION = 'v59';
 
 export const isStaticHost = typeof window !== 'undefined' && (
   window.location.hostname.includes('github.io') ||

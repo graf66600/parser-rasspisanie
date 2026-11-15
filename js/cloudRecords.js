@@ -80,14 +80,22 @@ export async function pushJournalEntryToCloud(entry, isCurrent = () => true) {
       attendance: entry.attendance || {},
     };
 
-    await checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries`, {
+    const saveRow = payload => checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries`, {
       method: 'POST',
       headers: {
         ...HEADERS,
         Prefer: 'resolution=merge-duplicates',
       },
-      body: JSON.stringify(row),
+      body: JSON.stringify(payload),
     });
+    try { await saveRow(row); }
+    catch (error) {
+      // Old databases can still store whole-group lessons without losing information.
+      // Never drop a real subgroup to make a rejected write appear successful.
+      if (row.subgroup !== null || error.code !== 'PGRST204' || !/subgroup/.test(error.detail)) throw error;
+      const { subgroup, ...wholeGroupRow } = row;
+      await saveRow(wholeGroupRow);
+    }
     if (isCurrent()) {
       const saved = JSON.parse(localStorage.getItem('pwa_journal') || '[]');
       const index = saved.findIndex(item => item.id === entry.id && JSON.stringify(item) === original);
