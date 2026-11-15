@@ -88,7 +88,7 @@ test('stats separate semesters, teachers, subgroups, subjects, duplicates and le
     entry({ teacher: undefined }), entry({ subject: 'Химия' }), entry({ date: '2027-02-01' }), entry({ type: 'theory', lessonNumber: 4 })];
   const stats = api.calculateGroupStats('11фм', '2', '2026-11-09');
   // The legacy record without a teacher is also included by the grade sheet.
-  assert.equal(stats.practiceConducted, 2); assert.equal(stats.theoryConducted, 0);
+  assert.equal(stats.practiceConducted, 2); assert.equal(stats.theoryConducted, 1);
   assert.equal(stats.practiceTotal, 27); assert.equal(stats.theoryTotal, 0);
 });
 
@@ -210,4 +210,52 @@ test('51F legacy entries remain counted in semester cards and summary', async ()
   assert.equal(stats.practiceConducted, 2);
   state.currentTeacher = 'Иванова';
   assert.equal(api.calculateGroupStats('51ф', '', '2026-11-15').totalConducted, 0);
+});
+
+const programs = JSON.parse(readFileSync('data/curriculum.json', 'utf8'));
+for (const group of [...new Set(programs.flatMap(p => p.groups))]) {
+  test(`${group}: summary, journal and semester totals retain recorded lessons`, async () => {
+    const state = fixture();
+    const program = programs.find(p => p.groups.includes(group));
+    state.schedule = { lessons: [{ group, subject: program.title }] };
+    state.studentsByGroup = {};
+    state.journalEntries = Array.from({ length: 9 }, (_, i) => ({
+      id: `${group}-${i}`, group: group.toUpperCase().replace(/Ф/g, 'F').replace(/М/g, 'M'),
+      teacher: i % 2 ? 'Трипольский' : undefined,
+      date: `2026-10-${String(i + 1).padStart(2, '0')}`, lessonNumber: 1,
+      type: i < 7 ? 'theory' : 'practice', subject: program.title,
+    }));
+    state.journalEntries.push({ ...state.journalEntries[0], id: 'foreign', teacher: 'Иванова' });
+    const widget = {}, summary = {};
+    const api = await load(state, { getElementById: id => ({ journalStatsWidget: widget,
+      summaryTableContainer: summary, journalDateInput: { value: '2026-11-15' } })[id] });
+    const before = JSON.stringify(state.journalEntries);
+    api.renderSummaryTable(group);
+    api.renderJournalStats(group);
+    assert.match(widget.innerHTML, /Записей: 9 · Лекций: 7 · Практик: 2/);
+    assert.match(summary.innerHTML, /Лекций:<\/span> <b>7<\/b>/);
+    assert.match(summary.innerHTML, /Практик:<\/span> <b>2<\/b>/);
+    const stats = api.calculateGroupStats(group, '', '2026-11-15');
+    assert.equal(stats.theoryConducted, 7);
+    assert.equal(stats.practiceConducted, 2);
+    assert.equal(JSON.stringify(state.journalEntries), before);
+    assert.equal(api.calculateGroupStats(group, '', '2027-02-15').totalConducted, 0);
+  });
+}
+
+test('unassigned practices remain visible beside separate subgroup progress', async () => {
+  const state = fixture();
+  state.schedule = { lessons: [{ group: '31фм', subject: 'Информатика', subgroup: 1 },
+    { group: '31фм', subject: 'Информатика', subgroup: 2 }] };
+  state.journalEntries = [entry({ id: 'unassigned', group: '31фм', subgroup: null }),
+    entry({ id: 'first', group: '31фм', subgroup: 1 }),
+    entry({ id: 'second', group: '31фм', subgroup: 2 })];
+  const widget = {};
+  const api = await load(state, { getElementById: id => ({ journalStatsWidget: widget,
+    journalDateInput: { value: '2026-11-15' } })[id] });
+  api.renderJournalStats('31фм');
+  assert.match(widget.innerHTML, /Без подгруппы/);
+  for (const subgroup of ['', '1', '2']) {
+    assert.equal(api.calculateGroupStats('31фм', subgroup, '2026-11-15').practiceConducted, 1);
+  }
 });
