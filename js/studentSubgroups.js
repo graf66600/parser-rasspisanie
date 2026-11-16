@@ -2,7 +2,7 @@
 // STUDENT SUBGROUPS MANAGEMENT & CLOUD SYNC
 // ==========================================================================
 import { state } from './state.js';
-import { SUPABASE_URL, HEADERS } from './supabaseClient.js';
+import { SUPABASE_URL, getSessionHeaders } from './supabaseClient.js';
 
 const STORAGE_KEY = 'pwa_student_subgroups';
 
@@ -155,9 +155,11 @@ function saveSubgroupsLocally() {
 export async function pushSubgroupsToCloud() {
   if (typeof window === 'undefined' || !navigator.onLine) return;
   try {
+    const headers = await getSessionHeaders();
+    if (!headers) return;
     await fetch(`${SUPABASE_URL}/rest/v1/app_metadata?on_conflict=key`, {
       method: 'POST',
-      headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates' },
+      headers: { ...headers, Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify({
         key: 'student_subgroups',
         data: state.studentSubgroups,
@@ -170,7 +172,9 @@ export async function pushSubgroupsToCloud() {
 export async function fetchRemoteSubgroups() {
   if (typeof window === 'undefined' || !navigator.onLine) return null;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_metadata?key=eq.student_subgroups&select=data`, { headers: HEADERS });
+    const headers = await getSessionHeaders();
+    if (!headers) return null;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_metadata?key=eq.student_subgroups&select=data`, { headers });
     if (!res.ok) return null;
     const rows = await res.json();
     if (Array.isArray(rows) && rows[0]?.data) {

@@ -29,9 +29,9 @@ async function loadSubgroupsModule() {
       }, { context });
     }
     if (specifier === './supabaseClient.js') {
-      return new SyntheticModule(['SUPABASE_URL', 'HEADERS'], function () {
+      return new SyntheticModule(['SUPABASE_URL', 'getSessionHeaders'], function () {
         this.setExport('SUPABASE_URL', 'https://example.supabase.co');
-        this.setExport('HEADERS', { apikey: 'anon-key' });
+        this.setExport('getSessionHeaders', async () => null);
       }, { context });
     }
     throw new Error(`Unexpected specifier: ${specifier}`);

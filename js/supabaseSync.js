@@ -6,7 +6,7 @@ import { loadJournalHistory } from './journalHistory.js';
 import { notifyScheduleChanges } from './notifications.js';
 import { canUseRemoteSchedule } from './scheduleFreshness.js';
 
-import { SUPABASE_URL, HEADERS, getSupabaseClient } from './supabaseClient.js';
+import { SUPABASE_URL, getSessionHeaders, getSupabaseClient } from './supabaseClient.js';
 import { hasPendingJournalMutation } from './syncStorage.js';
 import { ensureJournalRecovery, archiveJournalConflicts } from './journalRecovery.js';
 export { SUPABASE_URL, SUPABASE_ANON_KEY, getSupabaseClient } from './supabaseClient.js';
@@ -90,8 +90,10 @@ export function convertAppDataToPwa(appData) {
 // ==========================================================================
 export async function fetchRemoteScheduleData() {
   try {
+    const headers = await getSessionHeaders();
+    if (!headers) return null;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/schedule_data?id=eq.default&select=data,version,updated_at`, {
-      headers: HEADERS,
+      headers,
     });
     if (!res.ok) return null;
     const rows = await res.json();

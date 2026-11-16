@@ -24,3 +24,11 @@ export function getSupabaseClient() {
   }
   return null;
 }
+
+export async function getSessionHeaders() {
+  const client = getSupabaseClient();
+  if (!client) return null;
+  const { data, error } = await client.auth.getSession();
+  const token = data?.session?.access_token;
+  return !error && token ? { ...HEADERS, Authorization: 'Bearer ' + token } : null;
+}
