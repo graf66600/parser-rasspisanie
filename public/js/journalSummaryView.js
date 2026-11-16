@@ -2,6 +2,7 @@
 // JOURNAL SUMMARY VIEW: GROUP STATS, SEMESTER GRADES & EXPORT (PDF/EXCEL)
 // ==========================================================================
 import { state } from './state.js';
+import { formatScheduleDate } from './scheduleDates.js';
 import { studentAttendance, normalizeStudentName, attendanceText, escapeHtml } from './attendanceUtils.js';
 
 import { countJournalTypes, findProgram, journalGroupEntries, lessonType,
@@ -127,10 +128,10 @@ export function renderSummaryTable(group) {
 
   // Заголовки дат занятий
   const dateHeaders = entries.map((e, idx) => {
-    const d = e.date ? e.date.slice(5).replace('-', '.') : `Урок ${idx + 1}`;
+    const d = e.date ? formatScheduleDate(e.date, false) : `Урок ${idx + 1}`;
     const typeShort = shortTypes[lessonType(e, program)] || '—';
     const subgLbl = e.subgroup ? ` (${e.subgroup})` : '';
-    return `<th class="header-lesson" title="Пара №${idx + 1}${e.subgroup ? ` (подгр. ${e.subgroup})` : ''} (${e.dateFormatted || e.date}): ${e.topic || 'Без темы'}">
+    return `<th class="header-lesson" title="Пара №${idx + 1}${e.subgroup ? ` (подгр. ${e.subgroup})` : ''} (${e.date ? formatScheduleDate(e.date) : 'дата не указана'}): ${e.topic || 'Без темы'}">
       <div class="h-date">${d}</div>
       <div class="h-type">${typeShort}${subgLbl}</div>
     </th>`;
@@ -252,7 +253,7 @@ export function exportSummaryToCsv(group) {
   const program = findProgram(state.curriculumPrograms, group);
   const header = ['№', 'ФИО Студента'];
   entries.forEach((e, idx) => {
-    header.push(`${e.date || `Урок_${idx + 1}`} (${shortTypes[lessonType(e, program)] || '—'})`);
+    header.push(`${e.date ? formatScheduleDate(e.date) : `Урок_${idx + 1}`} (${shortTypes[lessonType(e, program)] || '—'})`);
   });
   header.push('Пропусков (Н)', 'Уважительных (У)', 'Все оценки', 'Семестровая (Ср.балл)');
 

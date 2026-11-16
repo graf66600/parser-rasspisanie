@@ -18,3 +18,8 @@ export function scheduleCoversDate(schedule, date) {
   return !schedule.weekStart || (date >= schedule.weekStart
     && date <= (schedule.weekEnd || shiftScheduleDate(schedule.weekStart, 6)));
 }
+
+export function formatScheduleDate(isoDate, includeYear = true) {
+  const [year, month, day] = isoDate.split('-');
+  return includeYear ? [day, month, year].join('.') : [day, month].join('.');
+}

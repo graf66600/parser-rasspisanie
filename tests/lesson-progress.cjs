@@ -259,3 +259,14 @@ test('unassigned practices remain visible beside separate subgroup progress', as
     assert.equal(api.calculateGroupStats('31фм', subgroup, '2026-11-15').practiceConducted, 1);
   }
 });
+
+test('summary lesson headers display day before month', async () => {
+  const state = fixture();
+  state.studentsByGroup = {};
+  state.journalEntries = [entry({ date: '2026-09-08' })];
+  const container = {};
+  const api = await load(state, { getElementById: id => id === 'summaryTableContainer' ? container : null });
+  api.renderSummaryTable('11фм');
+  assert.match(container.innerHTML, /class="h-date">08\.09<\/div>/);
+  assert.match(container.innerHTML, /08\.09\.2026/);
+});
