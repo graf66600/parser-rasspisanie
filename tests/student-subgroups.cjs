@@ -28,10 +28,10 @@ async function loadSubgroupsModule() {
         this.setExport('state', stateModule.state);
       }, { context });
     }
-    if (specifier === './supabaseSync.js') {
-      return new SyntheticModule(['SUPABASE_URL', 'SUPABASE_ANON_KEY'], function () {
+    if (specifier === './supabaseClient.js') {
+      return new SyntheticModule(['SUPABASE_URL', 'HEADERS'], function () {
         this.setExport('SUPABASE_URL', 'https://example.supabase.co');
-        this.setExport('SUPABASE_ANON_KEY', 'anon-key');
+        this.setExport('HEADERS', { apikey: 'anon-key' });
       }, { context });
     }
     throw new Error(`Unexpected specifier: ${specifier}`);

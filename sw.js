@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v62';
+const CACHE_NAME = 'schedule-pwa-v63';
 const STATIC_ASSETS = [
   './',
   './index.html',
