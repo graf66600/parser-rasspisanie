@@ -195,7 +195,6 @@ async function initApp() {
   window.addEventListener('pwa_sync_updated', renderJournalHistory);
   window.addEventListener('pwa_journal_updated', renderJournalHistory);
   window.addEventListener('pwa_journal_refresh', async () => {
-    await loadJournalHistory();
     await flushSyncQueue();
     await loadJournalHistory();
   });

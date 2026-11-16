@@ -8,7 +8,7 @@ async function load(initial = {}) {
     getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value),
   } });
   const mod = new SourceTextModule(readFileSync('js/journalRecovery.js', 'utf8'), { context });
-  await mod.link(() => {}); await mod.evaluate(); return { api: mod.namespace, values };
+  await mod.link(name => new SourceTextModule(readFileSync('js/' + name.slice(2), 'utf8'), { context })); await mod.evaluate(); return { api: mod.namespace, values };
 }
 
 test('the first recovery copy is immutable across later edits and exports no login secrets', async () => {
@@ -46,3 +46,16 @@ for (const invalid of ['{broken', '{}', '[null]', '[{"topic":"no-id"}]']) {
     assert.equal(JSON.parse(values.get('pwa_journal_recovery_v1')).values.pwa_journal, invalid);
   });
 }
+
+test('interrupted saves and deletions are restored from the outbox', async () => {
+  const edited = { id: 'a', attendance: { A: { grade: '5' } } };
+  const queue = [{ id: 'a', type: 'journal', action: 'save', entry: edited },
+    { id: 'b', type: 'journal', action: 'delete' }];
+  const original = JSON.stringify([{ id: 'a' }, { id: 'b' }]);
+  const { api, values } = await load({ pwa_journal: original, pwa_sync_queue: JSON.stringify(queue) });
+  api.recoverQueuedJournal(queue);
+  assert.deepEqual(JSON.parse(values.get('pwa_journal')), [edited]);
+  assert.ok(JSON.parse(values.get('pwa_journal_tombstones')).b);
+  assert.equal(JSON.parse(values.get('pwa_journal_recovery_v1')).values.pwa_journal, original);
+  assert.deepEqual(JSON.parse(values.get('pwa_sync_queue')), queue);
+});

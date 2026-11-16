@@ -9,9 +9,9 @@ import { refreshOpenJournalSummary } from './journalSummaryView.js';
 import { createHistoryCardElement } from './journalCard.js';
 import { fetchRemoteJournal } from './supabaseSync.js';
 import { enqueueJournalDeletion, flushSyncQueue } from './syncQueue.js';
-import { getJournalTombstones, hasPendingJournalMutation, markJournalTombstone } from './syncStorage.js';
+import { getSyncQueue, getJournalTombstones, hasPendingJournalMutation, markJournalTombstone } from './syncStorage.js';
 import { mergeJournalLists } from './journalMerge.js';
-import { readLocalJournal, ensureJournalRecovery, getJournalBaseline, rememberJournalBaseline, archiveJournalConflicts } from './journalRecovery.js';
+import { readLocalJournal, recoverQueuedJournal, ensureJournalRecovery, getJournalBaseline, rememberJournalBaseline, archiveJournalConflicts } from './journalRecovery.js';
 
 export function deleteJournalEntry(id) {
   if (!confirm('Удалить эту запись занятия из журнала?')) return;
@@ -46,15 +46,19 @@ export async function loadJournalHistory() {
     console.warn('Обновление журнала остановлено для сохранности данных:', error);
     return;
   }
-  const baselineAtStart = getJournalBaseline();
-  const pendingAtStart = new Set(local.filter(entry => hasPendingJournalMutation(entry.id)).map(entry => entry.id));
-  const currentTeacher = state.currentTeacher || '';
+  try { local = recoverQueuedJournal(getSyncQueue()); } catch (error) {
+    console.warn('Не удалось восстановить записи из очереди:', error);
+  }
   state.journalEntries = local;
   renderJournalHistory();
-  const g = document.getElementById('journalGroupSelect')?.value;
-  renderJournalStats(g);
+  renderJournalStats(document.getElementById('journalGroupSelect')?.value);
+  let pendingAtStart;
+  try { pendingAtStart = new Set(local.filter(entry => hasPendingJournalMutation(entry.id)).map(entry => entry.id)); }
+  catch { return; }
+  const currentTeacher = state.currentTeacher || '';
 
   try {
+    const baselineAtStart = getJournalBaseline();
     const api = async () => {
       if (isStaticHost) return null;
       try {
@@ -67,6 +71,7 @@ export async function loadJournalHistory() {
     const [apiEntries, cloudEntries] = await Promise.all([
       api(), fetchRemoteJournal(currentTeacher).catch(() => null),
     ]);
+    if (!apiEntries && !cloudEntries) return;
     const freshEntries = [...(apiEntries || []), ...(cloudEntries || [])];
 
     if (freshEntries) {

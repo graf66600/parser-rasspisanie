@@ -36,7 +36,7 @@ async function loadView(file, state, document, stored = [], { now, remote, stati
       initBellsPreset: noop,
     },
     './syncQueue.js': { enqueueJournalDeletion: noop, flushSyncQueue: noop },
-    './syncStorage.js': { getJournalTombstones: () => ({}), hasPendingJournalMutation: isPending, markJournalTombstone: noop },
+    './syncStorage.js': { getSyncQueue: () => [], clearJournalTombstone: noop, getJournalTombstones: () => ({}), hasPendingJournalMutation: isPending, markJournalTombstone: noop },
     './supabaseSync.js': {
       fetchRemoteJournal: remote || (async () => null), deleteJournalEntryFromCloud: noop,
     },

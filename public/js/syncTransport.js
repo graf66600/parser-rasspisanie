@@ -19,8 +19,11 @@ export async function checkedFetch(url, options = {}) {
     }
     return response;
   } catch (error) {
-    if (error.name === 'AbortError') throw new Error('Облако не ответило за 12 секунд. Повторите отправку позже.');
-    if (error instanceof TypeError) throw new Error('Не удалось соединиться с облаком. Проверьте интернет и повторите отправку.');
+    if (error.name === 'AbortError' || error.name === 'TypeError') {
+      const networkError = new Error('Облако недоступно. Изменения сохранены на устройстве и ждут отправки.', { cause: error });
+      networkError.code = 'SYNC_NETWORK';
+      throw networkError;
+    }
     throw error;
   } finally { clearTimeout(timer); }
 }

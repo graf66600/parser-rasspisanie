@@ -1,4 +1,6 @@
 // Phone storage is not the repository. Snapshot it before any reconciliation.
+import { clearJournalTombstone, getJournalTombstones, markJournalTombstone } from './syncStorage.js';
+
 const RECOVERY_KEY = 'pwa_journal_recovery_v1';
 const CONFLICT_KEY = 'pwa_journal_conflicts';
 const BASE_KEY = 'pwa_journal_cloud_baseline';
@@ -14,6 +16,37 @@ export function readLocalJournal() {
     throw new Error('Журнал на устройстве имеет неизвестный формат. Сначала выгрузите резервную копию.');
   }
   return entries;
+}
+
+export function recoverQueuedJournal(queue) {
+  const entries = readLocalJournal();
+  const journal = new Map(entries.map(entry => [entry.id, entry]));
+  let changed = false;
+  const tombstones = getJournalTombstones();
+  for (const item of queue) {
+    if (item?.type !== 'journal') continue;
+    if (item.action === 'delete') {
+      if (!tombstones[item.id]) {
+        ensureJournalRecovery();
+        markJournalTombstone(item.id);
+      }
+      changed = journal.delete(item.id) || changed;
+    } else if (item.entry?.id && item.entry.id === item.id && !item.confirmed?.cloud) {
+      if (tombstones[item.id]) {
+        ensureJournalRecovery();
+        clearJournalTombstone(item.id);
+      }
+      if (JSON.stringify(journal.get(item.id)) !== JSON.stringify(item.entry)) {
+        journal.set(item.id, item.entry);
+        changed = true;
+      }
+    }
+  }
+  if (!changed) return entries;
+  ensureJournalRecovery();
+  const recovered = [...journal.values()];
+  localStorage.setItem('pwa_journal', JSON.stringify(recovered));
+  return recovered;
 }
 
 export function ensureJournalRecovery() {

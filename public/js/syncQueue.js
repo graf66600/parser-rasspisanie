@@ -3,6 +3,7 @@ import { pushJournalEntryToCloud, deleteJournalEntryFromCloud,
   pushStudentToCloud, deleteStudentFromCloud } from './cloudRecords.js';
 import { isStaticHost } from './cacheHelper.js';
 import { checkedFetch } from './syncTransport.js';
+import { recoverQueuedJournal } from './journalRecovery.js';
 import { getSyncQueue, enqueueMutation, acknowledgeMutation, sameMutation } from './syncStorage.js';
 export { getSyncQueue } from './syncStorage.js';
 let isFlushing = false;
@@ -55,7 +56,9 @@ export async function flushSyncQueue() {
   lastSyncError = '';
   renderSyncBadge(true);
   try {
-    for (const item of getSyncQueue()) {
+    const queue = getSyncQueue();
+    if (queue.some(item => item?.type === 'journal')) recoverQueuedJournal(queue);
+    for (const item of queue) {
       if (isStaticHost && item.confirmed?.cloud) {
         acknowledgeMutation(item, null);
         continue;
@@ -71,6 +74,7 @@ export async function flushSyncQueue() {
         } catch (error) {
           lastSyncError = error.message;
           console.warn('Облако не подтвердило запись; она остаётся в очереди:', error);
+          if (isStaticHost && error.code === 'SYNC_NETWORK') break;
           if (error.code === 'JOURNAL_CONFLICT') continue;
         }
       }
@@ -91,17 +95,8 @@ export async function flushSyncQueue() {
 export function renderSyncBadge(syncingNow = false) {
   if (typeof document === 'undefined') return;
   window.dispatchEvent(new Event('pwa_sync_updated'));
-  let badge = document.getElementById('pwaSyncStatusBadge');
-
-  if (!badge) {
-    badge = document.createElement('div');
-    badge.id = 'pwaSyncStatusBadge';
-    badge.className = 'fixed bottom-20 right-4 z-40 transition-all duration-300';
-    badge.style.maxWidth = 'calc(100vw - 32px)';
-    badge.style.overflowWrap = 'anywhere';
-    badge.setAttribute('role', 'status');
-    document.body.appendChild(badge);
-  }
+  const badge = document.getElementById('pwaSyncStatusBadge');
+  if (!badge) return;
 
   const isOnline = navigator.onLine;
   let count;
@@ -155,7 +150,7 @@ export function renderSyncBadge(syncingNow = false) {
     if (button) button.style.minHeight = '44px';
     if (lastSyncError) {
       const detail = document.createElement('div');
-      detail.className = 'px-3 py-2 bg-slate-950 text-amber-200 text-xs rounded-xl';
+      detail.className = 'mt-1 px-3 py-2 text-amber-200 text-xs';
       detail.textContent = lastSyncError;
       badge.appendChild(detail);
     }
