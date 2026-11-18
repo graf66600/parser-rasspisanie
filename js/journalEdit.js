@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { updateJournalStudents } from './journalAttendance.js';
 import { autoFillTopicForGroup } from './journalView.js';
 import { resetJournalDraft, boundJournalEntry } from './journalDraft.js';
-import { normalizeGroup, normalizeSubgroup, matchesJournalTeacher } from './lessonProgress.js';
+import { normalizeGroup, normalizeSubgroup, matchesJournalTeacher, matchingGroupOption } from './lessonProgress.js';
 
 export function findExistingJournalEntry(group, lessonNum, date, subgroup, teacher) {
   if (!state.journalEntries || !Array.isArray(state.journalEntries)) return null;
@@ -35,11 +35,12 @@ export function loadEntryToForm(entry) {
   const subgSel = document.getElementById('journalSubgroupSelect');
 
   if (groupSel) {
-    if (![...groupSel.options].some(option => option.value === entry.group)) {
+    const optionValue = matchingGroupOption(groupSel, entry.group);
+    if (!optionValue) {
       const option = document.createElement('option'); option.value = entry.group; option.textContent = `Группа ${entry.group}`;
       groupSel.appendChild(option);
     }
-    groupSel.value = entry.group;
+    groupSel.value = optionValue || entry.group;
   }
   if (subgSel) subgSel.value = entry.subgroup ? String(entry.subgroup) : 'all';
   if (lessonSel) lessonSel.value = String(entry.lessonNumber);

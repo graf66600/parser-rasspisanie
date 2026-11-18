@@ -16,6 +16,7 @@ import { setupFormGuard, checkCanSwitchTab } from './js/formGuard.js';
 import { fetchRemoteSubgroups } from './js/studentSubgroups.js';
 import { setupJournalSafety } from './js/journalSafetyView.js';
 import { flushSyncQueue } from './js/syncQueue.js';
+import { matchingGroupOption } from './js/lessonProgress.js';
 
 // Инициализация PWA и Service Worker с безопасной фоновой регистрацией
 if ('serviceWorker' in navigator) {
@@ -136,7 +137,7 @@ function onOpenLessonInJournal(group, lessonNum, date, subgroup) {
   const dateInput = document.getElementById('journalDateInput');
 
   const targetDate = date || formatLocalDate();
-  if (gSel && group) gSel.value = group;
+  if (gSel && group) gSel.value = matchingGroupOption(gSel, group) || group;
   if (lSel && lessonNum) lSel.value = String(lessonNum);
   if (dateInput) dateInput.value = targetDate;
   if (subgSel) {

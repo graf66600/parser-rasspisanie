@@ -6,7 +6,7 @@ import { scheduleDate, scheduleWeekday, scheduleCoversDate } from './scheduleDat
 import { loadPublishedScheduleMetadata } from './scheduleFreshness.js';
 import { fetchRemoteStudents, fetchRemoteScheduleData } from './supabaseSync.js';
 import { getSyncQueue } from './syncStorage.js';
-import { matchesJournalTeacher } from './lessonProgress.js';
+import { matchesJournalTeacher, normalizeGroup, uniqueGroupNames } from './lessonProgress.js';
 export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames };
 
 export const DAY_NAMES = {
@@ -100,16 +100,11 @@ export function updateTeacherDisplay() {
 }
 
 export function populateGroupSelects(onGroupChange) {
-  const groups = new Set();
-  if (state.schedule?.lessons) {
-    state.schedule.lessons.forEach((l) => {
-      if (l.group && l.group !== '—') groups.add(l.group);
-    });
-  }
-  Object.keys(state.studentsByGroup).forEach((g) => groups.add(g));
-  (state.journalEntries || []).forEach(entry => {
-    if (entry.group && matchesJournalTeacher(entry, state.currentTeacher)) groups.add(entry.group);
-  });
+  const groups = uniqueGroupNames([
+    ...Object.keys(state.studentsByGroup),
+    ...(state.schedule?.lessons || []).map(lesson => lesson.group),
+    ...(state.journalEntries || []).filter(entry => matchesJournalTeacher(entry, state.currentTeacher)).map(entry => entry.group),
+  ]);
 
   const selects = [
     document.getElementById('journalGroupSelect'),
@@ -120,14 +115,15 @@ export function populateGroupSelects(onGroupChange) {
     if (!sel) return;
     const currentVal = sel.value;
     sel.innerHTML = '';
-    Array.from(groups).sort(compareGroupNames).forEach((g) => {
+    Array.from(groups.values()).sort(compareGroupNames).forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g;
       opt.textContent = `Группа ${g}`;
       sel.appendChild(opt);
     });
-    if (currentVal && groups.has(currentVal)) {
-      sel.value = currentVal;
+    const selected = groups.get(normalizeGroup(currentVal));
+    if (selected) {
+      sel.value = selected;
     }
   });
 

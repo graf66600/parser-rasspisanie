@@ -6,7 +6,7 @@ import { formatScheduleDate } from './scheduleDates.js';
 import { studentAttendance, normalizeStudentName, attendanceText, escapeHtml } from './attendanceUtils.js';
 
 import { countJournalTypes, journalReport, lessonType, solePracticeSubgroup,
-  matchesJournalTeacher, normalizeGroup, normalizeSubgroup } from './lessonProgress.js';
+  matchesJournalTeacher, normalizeGroup, normalizeSubgroup, uniqueGroupNames } from './lessonProgress.js';
 
 const shortTypes = { theory: 'Л', practice: 'П', exam: 'Экз.' };
 
@@ -219,15 +219,15 @@ export function openJournalSummary(group) {
       Object.keys(state.studentsByGroup || {}).forEach((g) => groups.add(g));
     }
     sel.innerHTML = '';
-    Array.from(groups).sort().forEach((g) => {
+    const unique = uniqueGroupNames(groups);
+    Array.from(unique.values()).sort().forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g;
       opt.textContent = `Группа ${g}`;
       if (g === group) opt.selected = true;
       sel.appendChild(opt);
     });
-    const selectedGroup = groups.has(group) ? group
-      : [...groups].find(name => normalizeGroup(name) === normalizeGroup(group));
+    const selectedGroup = unique.get(normalizeGroup(group));
     if (selectedGroup) sel.value = selectedGroup;
   }
 

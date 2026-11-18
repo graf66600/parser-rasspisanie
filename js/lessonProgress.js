@@ -7,6 +7,20 @@ export const normalizeTeacher = value => String(value || '').trim().toLowerCase(
 export const normalizeSubgroup = value => value && value !== 'all' ? String(value) : '';
 export const normalizeSubject = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 
+export function uniqueGroupNames(names) {
+  const groups = new Map();
+  for (const name of names) {
+    const key = normalizeGroup(name);
+    if (key && !groups.has(key)) groups.set(key, name);
+  }
+  return groups;
+}
+
+export function matchingGroupOption(select, group) {
+  const key = normalizeGroup(group);
+  return Array.from(select.options).find(option => normalizeGroup(option.value) === key)?.value;
+}
+
 export function findProgram(programs, group) {
   const key = normalizeGroup(group);
   return key ? (programs || []).find(p => (p.groups || []).some(g => normalizeGroup(g) === key)) || null : null;
