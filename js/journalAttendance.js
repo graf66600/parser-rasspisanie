@@ -89,32 +89,33 @@ export function updateJournalStudents() {
       initialBadgeClass = 'student-badge badge-excused';
     }
 
+    const disabled = state.isGuestMode ? 'disabled' : '';
     row.innerHTML = `
       <div class="student-header">
         <div class="student-info">
           <span class="student-num">${idx + 1}</span>
           <span class="student-name"></span>
-          <button type="button" class="subgroup-toggle-badge text-[10px] font-semibold px-2 py-0.5 rounded border transition cursor-pointer ${badgeClass}" title="Подгруппа ${item.subgroup}. Нажмите, чтобы переключить в ${isSub1 ? '2-ю' : '1-ю'}">${item.subgroup} п/г ⇄</button>
+          <button ${disabled} type="button" class="subgroup-toggle-badge text-[10px] font-semibold px-2 py-0.5 rounded border transition cursor-pointer ${badgeClass}" title="Подгруппа ${item.subgroup}. Нажмите, чтобы переключить в ${isSub1 ? '2-ю' : '1-ю'}">${item.subgroup} п/г ⇄</button>
         </div>
         <span class="${initialBadgeClass}" data-badge>${initialBadgeText}</span>
       </div>
 
       <div class="student-controls">
         <div class="attendance-toggle" role="group">
-          <button type="button" data-val="present" class="status-btn ${initialStatus === 'present' ? 'active' : ''} status-present" title="Присутствовал">
+          <button ${disabled} type="button" data-val="present" class="status-btn ${initialStatus === 'present' ? 'active' : ''} status-present" title="Присутствовал">
             <span class="status-icon">✓</span> <span>Был</span>
           </button>
-          <button type="button" data-val="absent" class="status-btn ${initialStatus === 'absent' ? 'active' : ''} status-absent" title="Отсутствовал">
+          <button ${disabled} type="button" data-val="absent" class="status-btn ${initialStatus === 'absent' ? 'active' : ''} status-absent" title="Отсутствовал">
             <span class="status-icon">✕</span> <span>Н</span>
           </button>
-          <button type="button" data-val="excused" class="status-btn ${initialStatus === 'excused' ? 'active' : ''} status-excused" title="Уважительная причина (справка)">
+          <button ${disabled} type="button" data-val="excused" class="status-btn ${initialStatus === 'excused' ? 'active' : ''} status-excused" title="Уважительная причина (справка)">
             <span class="status-icon">📋</span> <span>У</span>
           </button>
         </div>
 
         <div class="grade-wrapper">
           <label class="grade-label">Оценка:</label>
-          <select class="grade-select" title="Оценка за занятие">
+          <select ${disabled} class="grade-select" title="Оценка за занятие">
             <option value="" ${initialGrade === '' ? 'selected' : ''}>—</option>
             <option value="5" ${initialGrade === '5' ? 'selected' : ''}>5</option>
             <option value="4" ${initialGrade === '4' ? 'selected' : ''}>4</option>
@@ -132,6 +133,7 @@ export function updateJournalStudents() {
     }
 
     row.querySelector('.subgroup-toggle-badge')?.addEventListener('click', (e) => {
+      if (state.isGuestMode) return;
       e.preventDefault();
       e.stopPropagation();
       const nextSub = item.subgroup === 1 ? 2 : 1;
@@ -143,6 +145,7 @@ export function updateJournalStudents() {
     const btns = row.querySelectorAll('.status-btn');
     btns.forEach((b) => {
       b.addEventListener('click', () => {
+        if (state.isGuestMode) return;
         btns.forEach((other) => other.classList.remove('active'));
         b.classList.add('active');
         const val = b.getAttribute('data-val');

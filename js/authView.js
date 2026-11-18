@@ -170,7 +170,7 @@ export function updateAuthModeUI() {
   if (resetBtn) resetBtn.style.display = isGuest ? 'none' : 'inline-block';
 
   // Селекторы оценок в списке студентов
-  document.querySelectorAll('.grade-select, .status-btn').forEach((el) => {
+  document.querySelectorAll('.grade-select, .status-btn, .subgroup-toggle-badge').forEach((el) => {
     el.disabled = isGuest;
     if (isGuest) el.classList.add('pointer-events-none', 'opacity-80');
     else el.classList.remove('pointer-events-none', 'opacity-80');
