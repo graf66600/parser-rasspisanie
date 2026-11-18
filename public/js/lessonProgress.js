@@ -48,6 +48,29 @@ export function journalGroupEntries(state, group) {
     && matchesJournalTeacher(entry, state.currentTeacher));
 }
 
+export function solePracticeSubgroup(state, group) {
+  if (normalizeTeacher(state.currentTeacher).split(' ')[0] !== 'трипольский') return '';
+  return ['11мс', '11м', '11ф', '11фм'].includes(normalizeGroup(group)) ? '2' : '';
+}
+
+export function journalReport(state, group, subgroup, date = new Date().toLocaleDateString('sv-SE')) {
+  const semester = semesterForDate(date);
+  const year = date.slice(0, 4);
+  const [from, to] = semester === 1 ? ['09-01', '12-31'] : ['01-01', '08-31'];
+  const subject = state.schedule?.lessons?.find(l => normalizeGroup(l.group) === normalizeGroup(group))?.subject || state.schedule?.subject;
+  const candidate = findProgram(state.curriculumPrograms, group);
+  const program = programMatchesSubject(candidate, subject) ? candidate : null;
+  const onlySubgroup = solePracticeSubgroup(state, group);
+  const entries = uniqueEntries(journalGroupEntries(state, group)).filter(entry => {
+    if (entry.date < year + '-' + from || entry.date > year + '-' + to) return false;
+    if (subject && entry.subject && normalizeSubject(entry.subject) !== normalizeSubject(subject)) return false;
+    const recorded = normalizeSubgroup(entry.subgroup);
+    return subgroup === null || recorded === subgroup
+      || (!recorded && (subgroup === onlySubgroup || lessonType(entry, program) === 'theory'));
+  });
+  return { entries, program, semester, counts: countJournalTypes(entries, program) };
+}
+
 export function countJournalTypes(entries, program) {
   const counts = { theory: 0, practice: 0, other: 0 };
   for (const entry of entries) {

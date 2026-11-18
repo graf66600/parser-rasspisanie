@@ -1,7 +1,7 @@
 // ==========================================================================
 // JOURNAL VIEW: LESSON ENTRY, TOPIC AUTOFILL & FORM LOGIC
 // ==========================================================================
-import { scheduleOnDate, findProgram } from './lessonProgress.js';
+import { scheduleOnDate, findProgram, solePracticeSubgroup } from './lessonProgress.js';
 import { state } from './state.js';
 import {
   getRecommendedLesson,
@@ -102,7 +102,11 @@ export function setupJournalListeners() {
     renderJournalStats(group);
   }
 
-  groupSel?.addEventListener('change', handleFormSelectionChange);
+  groupSel?.addEventListener('change', () => {
+    const subgroup = solePracticeSubgroup(state, groupSel.value);
+    if (subgroup && subgSel) subgSel.value = subgroup;
+    handleFormSelectionChange();
+  });
   lessonSel?.addEventListener('change', handleFormSelectionChange);
   subgSel?.addEventListener('change', () => {
     // Subgroup is a roster filter while editing; do not rehydrate over an unsaved draft.

@@ -1,31 +1,18 @@
-import { teacherLoad, semesterForDate } from './teachingLoad.js';
+import { teacherLoad } from './teachingLoad.js';
 import { state } from './state.js';
 import { findProgramForGroup } from './topicHelper.js';
 import { normalizeGroup, normalizeSubgroup, uniqueEntries,
-  lessonType, programMatchesSubject, journalGroupEntries, countJournalTypes, normalizeSubject } from './lessonProgress.js';
+  lessonType, journalGroupEntries, journalReport, solePracticeSubgroup } from './lessonProgress.js';
 
 export function calculateGroupStats(group, subgroup = '', date = new Date().toLocaleDateString('sv-SE')) {
-  const semester = semesterForDate(date);
+  const { semester, program: prog, entries, counts } = journalReport(state, group, subgroup, date);
   const load = teacherLoad(state.currentTeacher, group, semester);
-  const year = Number(date.slice(0, 4));
-  const start = semester === 1 ? `${year}-09-01` : `${year}-01-01`;
-  const end = semester === 1 ? `${year}-12-31` : `${year}-08-31`;
-  const subject = state.schedule?.lessons?.find(l => normalizeGroup(l.group) === normalizeGroup(group))?.subject || state.schedule?.subject;
-  const candidate = findProgramForGroup(group);
-  const prog = programMatchesSubject(candidate, subject) ? candidate : null;
   const practiceOnly = load?.theoryHours === 0;
-  const entries = uniqueEntries(journalGroupEntries(state, group)).filter(e => {
-    if (subject && e.subject && normalizeSubject(e.subject) !== normalizeSubject(subject)) return false;
-    if (e.date < start || e.date > end) return false;
-    const type = lessonType(e, prog);
-    return normalizeSubgroup(e.subgroup) === normalizeSubgroup(subgroup)
-      || (type === 'theory' && !normalizeSubgroup(e.subgroup));
-  });
   const lessons = (prog?.lessons || []).filter(l => !practiceOnly || l.type === 'practice');
   const theoryTotal = load ? load.theoryHours / 2 : lessons.filter(l => l.type === 'theory').length;
   const practiceTotal = load ? load.practiceHours / 2 : lessons.filter(l => l.type === 'practice').length;
-  const theoryConducted = entries.filter(e => lessonType(e, prog) === 'theory').length;
-  const practiceConducted = entries.filter(e => lessonType(e, prog) === 'practice').length;
+  const theoryConducted = counts.theory;
+  const practiceConducted = counts.practice;
   const totalLessons = theoryTotal + practiceTotal;
   const totalConducted = theoryConducted + practiceConducted;
   const theoryLeft = Math.max(0, theoryTotal - theoryConducted);
@@ -47,7 +34,7 @@ export function renderJournalStats(group) {
     group = gSel?.value || '51ф';
   }
 
-  const selected = document.getElementById('journalSubgroupSelect')?.value;
+  const selected = solePracticeSubgroup(state, group) || document.getElementById('journalSubgroupSelect')?.value;
   const subgroups = new Set([
     ...(state.schedule?.lessons || []).filter(l => normalizeGroup(l.group) === normalizeGroup(group)).map(l => normalizeSubgroup(l.subgroup)),
     ...journalGroupEntries(state, group).map(e => normalizeSubgroup(e.subgroup)),
@@ -57,9 +44,11 @@ export function renderJournalStats(group) {
   const program = findProgramForGroup(group);
   const unassigned = entries.some(e => !normalizeSubgroup(e.subgroup) && lessonType(e, program) !== 'theory');
   if ((!selected || selected === 'all') && subgroups.size && unassigned) scopes.unshift('');
-  const counts = countJournalTypes(entries, program);
+  const date = document.getElementById('journalDateInput')?.value || undefined;
+  const report = journalReport(state, group, selected && selected !== 'all' ? selected : null, date);
+  const { counts } = report;
   const other = counts.other ? ` · Другие записи: ${counts.other}` : '';
-  container.innerHTML = `<div class="stats-card">Сводная по группе · Записей: ${entries.length} · Лекций: ${counts.theory} · Практик: ${counts.practice}${other}</div>`
+  container.innerHTML = `<div class="stats-card">Сводная по группе · Записей: ${report.entries.length} · Лекций: ${counts.theory} · Практик: ${counts.practice}${other}</div>`
     + scopes.map(sub => renderStatsContent(group, sub, subgroups.size > 0)).join('');
 }
 

@@ -5,13 +5,21 @@ import { state } from './state.js';
 import { formatScheduleDate } from './scheduleDates.js';
 import { studentAttendance, normalizeStudentName, attendanceText, escapeHtml } from './attendanceUtils.js';
 
-import { countJournalTypes, findProgram, journalGroupEntries, lessonType,
-  matchesJournalTeacher, normalizeGroup, uniqueEntries } from './lessonProgress.js';
+import { countJournalTypes, journalReport, lessonType, solePracticeSubgroup,
+  matchesJournalTeacher, normalizeGroup, normalizeSubgroup } from './lessonProgress.js';
 
 const shortTypes = { theory: 'Л', practice: 'П', exam: 'Экз.' };
 
+function reportForGroup(group) {
+  const formGroup = document.getElementById('journalGroupSelect')?.value;
+  const selected = normalizeGroup(formGroup) === normalizeGroup(group)
+    ? normalizeSubgroup(document.getElementById('journalSubgroupSelect')?.value) : '';
+  const subgroup = solePracticeSubgroup(state, group) || selected || null;
+  return journalReport(state, group, subgroup, document.getElementById('journalDateInput')?.value || undefined);
+}
+
 function getGroupEntries(group) {
-  return uniqueEntries(journalGroupEntries(state, group))
+  return reportForGroup(group).entries
     .sort((a, b) => a.date.localeCompare(b.date) || Number(a.lessonNumber) - Number(b.lessonNumber));
 }
 
@@ -123,7 +131,7 @@ export function renderSummaryTable(group) {
     `;
   }).join('');
 
-  const program = findProgram(state.curriculumPrograms, group);
+  const program = reportForGroup(group).program;
   const counts = countJournalTypes(entries, program);
 
   // Заголовки дат занятий
@@ -250,7 +258,7 @@ export function exportSummaryToCsv(group) {
     return;
   }
 
-  const program = findProgram(state.curriculumPrograms, group);
+  const program = reportForGroup(group).program;
   const header = ['№', 'ФИО Студента'];
   entries.forEach((e, idx) => {
     header.push(`${e.date ? formatScheduleDate(e.date) : `Урок_${idx + 1}`} (${shortTypes[lessonType(e, program)] || '—'})`);

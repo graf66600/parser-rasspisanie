@@ -270,3 +270,25 @@ test('summary lesson headers display day before month', async () => {
   assert.match(container.innerHTML, /class="h-date">08\.09<\/div>/);
   assert.match(container.innerHTML, /08\.09\.2026/);
 });
+
+test('11FM reports agree for subgroup 2 and exclude another semester and subgroup', async () => {
+  const state = fixture();
+  state.schedule = { lessons: [{ group: '11фм', subject: 'Информатика' }] };
+  state.studentsByGroup = {};
+  state.journalEntries = [
+    { id: 'wanted', subgroup: 2, date: '2026-11-09' },
+    { id: 'legacy', date: '2026-11-10' },
+    { id: 'other-subgroup', subgroup: 1, date: '2026-11-11' },
+    { id: 'other-semester', subgroup: 2, date: '2027-02-11' },
+  ].map(entry => ({ group: '11фм', teacher: 'Трипольский', subject: 'Информатика',
+    lessonNumber: 1, type: 'practice', ...entry }));
+  const widget = {}, summary = {};
+  const api = await load(state, { getElementById: id => ({ journalStatsWidget: widget,
+    summaryTableContainer: summary, journalDateInput: { value: '2026-11-15' } })[id] });
+  api.renderJournalStats('11фм');
+  api.renderSummaryTable('11фм');
+  assert.match(widget.innerHTML, /Записей: 2 · Лекций: 0 · Практик: 2/);
+  assert.match(summary.innerHTML, /Лекций:<\/span> <b>0<\/b>/);
+  assert.match(summary.innerHTML, /Практик:<\/span> <b>2<\/b>/);
+  assert.equal(api.calculateGroupStats('11фм', '2', '2026-11-15').practiceConducted, 2);
+});

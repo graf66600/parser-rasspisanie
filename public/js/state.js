@@ -5,6 +5,7 @@ import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compa
 import { scheduleDate, scheduleWeekday, scheduleCoversDate } from './scheduleDates.js';
 import { loadPublishedScheduleMetadata } from './scheduleFreshness.js';
 import { fetchRemoteStudents, fetchRemoteScheduleData } from './supabaseSync.js';
+import { getSyncQueue } from './syncStorage.js';
 import { matchesJournalTeacher } from './lessonProgress.js';
 export { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames };
 
@@ -378,31 +379,14 @@ export async function loadStudents(onStudentsLoaded) {
       const apiData = await safeFetchJson('./api/students', 1500);
       if (apiData?.success && apiData.studentsByGroup) fresh = apiData.studentsByGroup;
     }
-    const [base, remote] = await Promise.all([
-      Promise.resolve(null),
-      fetchRemoteStudents(),
-    ]);
-
-    const merged = { ...(base || {}) };
-    [remote, fresh, state.studentsByGroup].forEach((src) => {
-      if (src) {
-        Object.keys(src).forEach((g) => {
-          if (Array.isArray(src[g]) && src[g].length > 0) merged[g] = src[g];
-        });
-      }
-    });
-
-    if (Array.isArray(state.journalEntries)) {
-      state.journalEntries.forEach((e) => {
-        if (e.group && e.attendance) {
-          if (!merged[e.group]) merged[e.group] = [];
-          Object.keys(e.attendance).forEach((n) => {
-            const clean = n.trim();
-            if (clean && !merged[e.group].includes(clean)) merged[e.group].push(clean);
-          });
-          merged[e.group].sort((a, b) => a.localeCompare(b, 'ru'));
-        }
-      });
+    const remote = await fetchRemoteStudents();
+    const roster = remote ?? fresh ?? state.studentsByGroup;
+    const merged = { ...roster };
+    for (const { type, group, name, action } of getSyncQueue()) {
+      if (type !== 'student') continue;
+      const names = (merged[group] || []).filter(student => student !== name);
+      if (action === 'save') names.push(name);
+      merged[group] = names.sort((a, b) => a.localeCompare(b, 'ru'));
     }
 
     state.studentsByGroup = merged;

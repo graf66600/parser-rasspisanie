@@ -126,7 +126,7 @@ export async function fetchRemoteStudents() {
     const res = await checkedFetch(`${SUPABASE_URL}/rest/v1/students?select=group_name,full_name&order=group_name.asc,full_name.asc`, { headers: HEADERS });
     if (!res.ok) return null;
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) return null;
+    if (!Array.isArray(rows)) return null;
     const map = {};
     rows.forEach((r) => {
       const g = r.group_name;
