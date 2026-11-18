@@ -24,7 +24,7 @@ async function getSafeSWRegistration() {
 }
 
 export async function showNotification(title, body, tag = 'general', customData = {}) {
-  playNotificationSound();
+  void playNotificationSound();
   triggerVibration();
   showInAppToast({ title, body, icon: '🔔', duration: 8000 });
 
@@ -39,6 +39,7 @@ export async function showNotification(title, body, tag = 'general', customData 
     badge: iconUrl,
     tag: String(tag),
     renotify: true,
+    silent: false,
     vibrate: [200, 100, 200],
     data: { url: './', ...customData },
   };

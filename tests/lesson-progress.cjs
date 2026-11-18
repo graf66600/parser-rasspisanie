@@ -312,3 +312,24 @@ test('31FM subgroup summary shows its own roster and keeps marks from historical
   assert.match(summary.innerHTML, /Вторая Подгруппа/);
   assert.match(summary.innerHTML, /Прежний Учащийся/);
 });
+
+test('summary retains past schedule weeks and replaces a scheduled column with saved marks', async () => {
+  const state = fixture();
+  state.studentsByGroup = { '11фм': ['Учащийся'] };
+  state.schedule = { teacher: 'Трипольский', weekStart: '2026-11-09', lessons: [
+    { group: '11фм', dayOfWeek: 1, lessonNumber: 3, subgroup: 2 },
+  ] };
+  const summary = {};
+  const api = await load(state, { getElementById: id => ({ summaryTableContainer: summary,
+    journalDateInput: { value: '2026-11-18' } })[id] });
+  api.rememberScheduleWeek(state.schedule);
+  state.schedule = { teacher: 'Трипольский', weekStart: '2026-11-16', lessons: [
+    { group: '11фм', dayOfWeek: 2, lessonNumber: 4, subgroup: 2 },
+  ] };
+  api.renderSummaryTable('11фм');
+  assert.equal((summary.innerHTML.match(/ · план/g) || []).length, 2);
+  state.journalEntries = [entry({ id: 'saved', date: '2026-11-09', attendance: { 'Учащийся': { grade: '5' } } })];
+  api.renderSummaryTable('11фм');
+  assert.equal((summary.innerHTML.match(/ · план/g) || []).length, 1);
+  assert.match(summary.innerHTML, /grade-5/);
+});

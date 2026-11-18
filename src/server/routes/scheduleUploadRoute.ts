@@ -46,6 +46,7 @@ export async function handleScheduleUpload(
 
     const allTeachersSet = new Set<string>();
     const lessonsByTeacher: Record<string, Lesson[]> = {};
+    const uploadedLessons: Record<string, Lesson[]> = Object.create(null);
     let tripolskyLessons: Lesson[] = [];
     const processedFiles: string[] = [];
 
@@ -74,9 +75,11 @@ export async function handleScheduleUpload(
       for (const [teacher, lessons] of Object.entries(multiResult.lessonsByTeacher)) {
         if (!lessonsByTeacher[teacher]) lessonsByTeacher[teacher] = [];
         lessonsByTeacher[teacher].push(...lessons);
+        (uploadedLessons[teacher] ||= []).push(...lessons);
       }
       const trip = await parseScheduleBuffer(fileItem.buffer, DEFAULT_BELLS, 'Трипольский', 'Информатика');
       if (trip.lessons.length) tripolskyLessons.push(...trip.lessons);
+      if (trip.lessons.length) (uploadedLessons['Трипольский'] ||= []).push(...trip.lessons);
       const storedName = isPdfBuffer(fileItem.buffer) ? `uploaded_${fileItem.filename}` : 'latest_schedule.xlsx';
       const destination = path.resolve(CONFIG.DATA_DIR, storedName);
       if (destination.startsWith(`${path.resolve(CONFIG.DATA_DIR)}${path.sep}`)) {
@@ -102,13 +105,17 @@ export async function handleScheduleUpload(
       throw new HttpError(500, 'Не удалось сохранить файлы расписания');
     }
     const cloud = await publishScheduleToCloud(sortedTeachers, lessonsByTeacher);
+    for (const teacher of Object.keys(uploadedLessons)) {
+      uploadedLessons[teacher] = deduplicateLessons(uploadedLessons[teacher]);
+    }
+    const archiveData = { uploadedLessons, updatedAt: scheduleData.updatedAt };
     if (!cloud.ok) {
       sendJson(res, { success: false, localSaved: true, cloudSynced: false,
-        message: 'Расписание сохранено локально. Supabase не подтвердил публикацию.', error: cloud.error }, 502);
+        message: 'Расписание сохранено локально. Supabase не подтвердил публикацию.', error: cloud.error, ...archiveData }, 502);
       return true;
     }
     const totalLessons = Object.values(lessonsByTeacher).reduce((sum, lessons) => sum + lessons.length, 0);
-    sendJson(res, { success: true, message: `Успешно объединено файлов: ${processedFiles.length} (${processedFiles.join(', ')}). Преподавателей: ${sortedTeachers.length}, пар: ${totalLessons}. Пар Трипольского: ${tripolskyLessons.length}.`, processedFiles, totalLessons, teachersCount: sortedTeachers.length, teachers: sortedTeachers, lessons: tripolskyLessons });
+    sendJson(res, { success: true, message: `Успешно объединено файлов: ${processedFiles.length} (${processedFiles.join(', ')}). Преподавателей: ${sortedTeachers.length}, пар: ${totalLessons}. Пар Трипольского: ${tripolskyLessons.length}.`, processedFiles, totalLessons, teachersCount: sortedTeachers.length, teachers: sortedTeachers, lessons: tripolskyLessons, ...archiveData });
     return true;
   }
   return false;

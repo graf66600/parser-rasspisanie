@@ -2,7 +2,8 @@
 // JOURNAL SUMMARY VIEW: GROUP STATS, SEMESTER GRADES & EXPORT (PDF/EXCEL)
 // ==========================================================================
 import { state } from './state.js';
-import { formatScheduleDate } from './scheduleDates.js';
+import { formatScheduleDate, scheduleDate } from './scheduleDates.js';
+import { scheduledReportEntries } from './scheduleArchive.js';
 import { studentAttendance, normalizeStudentName, attendanceText, escapeHtml } from './attendanceUtils.js';
 import { getStudentSubgroup } from './studentSubgroups.js';
 
@@ -21,7 +22,9 @@ function reportForGroup(group) {
 }
 
 function getGroupEntries(group) {
-  return reportForGroup(group).entries
+  const { entries, subgroup } = reportForGroup(group);
+  const date = document.getElementById('journalDateInput')?.value || scheduleDate();
+  return [...entries, ...scheduledReportEntries(state, group, subgroup, date, entries)]
     .sort((a, b) => a.date.localeCompare(b.date) || Number(a.lessonNumber) - Number(b.lessonNumber));
 }
 
@@ -95,8 +98,7 @@ export function renderSummaryTable(group) {
   if (entries.length === 0) {
     container.innerHTML = `
       <div class="summary-empty-state">
-        <p class="text-sm font-semibold text-slate-300">В группе ${group} пока нет сохраненных занятий</p>
-        <p class="text-xs text-slate-500 mt-1">Проведите и сохраните хотя бы одно занятие в журнале, чтобы сформировать ведомость.</p>
+        <p class="text-sm font-semibold text-slate-300">В группе ${escapeHtml(group)} пока нет занятий за выбранный семестр</p>
       </div>`;
     return;
   }
@@ -141,7 +143,8 @@ export function renderSummaryTable(group) {
   }).join('');
 
   const program = reportForGroup(group).program;
-  const counts = countJournalTypes(entries, program);
+  const counts = countJournalTypes(entries.filter(entry => !entry.scheduleOnly), program);
+  const scheduledCount = entries.filter(entry => entry.scheduleOnly).length;
 
   // Заголовки дат занятий
   const dateHeaders = entries.map((e, idx) => {
@@ -150,7 +153,7 @@ export function renderSummaryTable(group) {
     const subgLbl = e.subgroup ? ` (${e.subgroup})` : '';
     return `<th class="header-lesson" title="Пара №${idx + 1}${e.subgroup ? ` (подгр. ${e.subgroup})` : ''} (${e.date ? formatScheduleDate(e.date) : 'дата не указана'}): ${e.topic || 'Без темы'}">
       <div class="h-date">${d}</div>
-      <div class="h-type">${typeShort}${subgLbl}</div>
+      <div class="h-type">${typeShort}${subgLbl}${e.scheduleOnly ? ' · план' : ''}</div>
     </th>`;
   }).join('');
 
@@ -160,14 +163,15 @@ export function renderSummaryTable(group) {
     Object.values(e.attendance || {}).forEach((a) => {
       if (!a._alternatives?.status && (a.status === 'absent' || a.status === 'excused')) abs++;
     });
-    return `<td class="cell-foot-abs">${abs}</td>`;
+    return `<td class="cell-foot-abs">${e.scheduleOnly ? '—' : abs}</td>`;
   }).join('');
 
   const groupAvg = totalGradesCount > 0 ? (totalGradesSum / totalGradesCount).toFixed(2) : '—';
 
   container.innerHTML = `
     <div class="summary-meta-bar">
-      <div class="meta-item"><span>Занятий:</span> <b>${entries.length}</b></div>
+      <div class="meta-item"><span>Занятий:</span> <b>${entries.length - scheduledCount}</b></div>
+      ${scheduledCount ? `<div class="meta-item"><span>По расписанию без отметок:</span> <b>${scheduledCount}</b></div>` : ''}
       <div class="meta-item"><span>Лекций:</span> <b>${counts.theory}</b></div>
       <div class="meta-item"><span>Практик:</span> <b>${counts.practice}</b></div>
       <div class="meta-item"><span>Студентов:</span> <b>${students.length}</b></div>
@@ -270,7 +274,7 @@ export function exportSummaryToCsv(group) {
   const program = reportForGroup(group).program;
   const header = ['№', 'ФИО Студента'];
   entries.forEach((e, idx) => {
-    header.push(`${e.date ? formatScheduleDate(e.date) : `Урок_${idx + 1}`} (${shortTypes[lessonType(e, program)] || '—'})`);
+    header.push(`${e.date ? formatScheduleDate(e.date) : `Урок_${idx + 1}`} (${shortTypes[lessonType(e, program)] || '—'}${e.scheduleOnly ? ', план' : ''})`);
   });
   header.push('Пропусков (Н)', 'Уважительных (У)', 'Все оценки', 'Семестровая (Ср.балл)');
 

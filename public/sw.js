@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-pwa-v74';
+const CACHE_NAME = 'schedule-pwa-v75';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -44,6 +44,7 @@ const STATIC_ASSETS = [
   './js/journalAttendance.js',
   './js/topicHelper.js',
   './js/lessonProgress.js',
+  './js/scheduleArchive.js',
   './js/teachingLoad.js',
   './js/studentsView.js',
   './js/studentSubgroups.js',
@@ -178,6 +179,7 @@ self.addEventListener('push', (event) => {
     badge: './icon-192.png',
     tag: data.tag || 'schedule-alert',
     renotify: true,
+    silent: false,
     data: data.data || { url: './' },
   };
   event.waitUntil(self.registration.showNotification(data.title || '🔔 Расписание', options));

@@ -1,4 +1,6 @@
 // ==========================================================================
+import { scheduleDate, scheduleWeekday, shiftScheduleDate } from './scheduleDates.js';
+import { rememberScheduleWeek } from './scheduleArchive.js';
 // SCHEDULE UPLOAD VIEW (MULTI-FILE EXCEL, PDF & CAMERA PHOTO SUPPORT)
 // ==========================================================================
 
@@ -36,6 +38,12 @@ export async function handleFiles(filesList, onUploadSuccess) {
   const mergeCheckbox = document.getElementById('mergeScheduleCheckbox');
   const isMerge = mergeCheckbox ? mergeCheckbox.checked : true;
   const mode = isMerge ? 'append' : 'replace';
+  const weekStart = document.getElementById('scheduleUploadWeek')?.value;
+  if (!weekStart || scheduleWeekday(weekStart) !== 1) {
+    sStatus.classList.remove('hidden');
+    sStatus.textContent = 'Выберите понедельник той недели, к которой относится расписание.';
+    return;
+  }
 
   const fileNames = files.map((f) => f.name).join(', ');
   sStatus.classList.remove('hidden');
@@ -54,8 +62,13 @@ export async function handleFiles(filesList, onUploadSuccess) {
       body: formData,
     });
 
+    const data = await res.json();
+    if (data.success || data.localSaved) {
+      for (const [teacher, lessons] of Object.entries(data.uploadedLessons || {})) {
+        rememberScheduleWeek({ teacher, lessons, weekStart, updatedAt: data.updatedAt }, isMerge);
+      }
+    }
     if (res.ok) {
-      const data = await res.json();
       if (data.success) {
         sStatus.style.cssText = 'padding: 12px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 12px;';
         const tripCount = data.lessons?.length ?? 0;
@@ -71,6 +84,10 @@ export async function handleFiles(filesList, onUploadSuccess) {
         if (typeof onUploadSuccess === 'function') onUploadSuccess();
         return;
       }
+    } else if (data.localSaved) {
+      sStatus.textContent = data.message;
+      if (typeof onUploadSuccess === 'function') onUploadSuccess();
+      return;
     }
   } catch (e) {
     console.warn('Серверный API загрузки недоступен:', e);
@@ -136,6 +153,9 @@ export function setupPhotoCaptureListeners() {
 }
 
 export function setupUploadListeners(onUploadSuccess) {
+  const weekInput = document.getElementById('scheduleUploadWeek');
+  const today = scheduleDate();
+  if (weekInput && !weekInput.value) weekInput.value = shiftScheduleDate(today, 1 - scheduleWeekday(today));
   const sDrop = document.getElementById('scheduleDropZone');
   const sInput = document.getElementById('scheduleFileInput');
 

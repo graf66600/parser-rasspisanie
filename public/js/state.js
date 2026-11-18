@@ -3,6 +3,7 @@
 // ==========================================================================
 import { PWA_VERSION, isStaticHost, safeFetchJson, clearPwaCacheAndReload, compareGroupNames } from './cacheHelper.js';
 import { scheduleDate, scheduleWeekday, scheduleCoversDate } from './scheduleDates.js';
+import { rememberScheduleWeek } from './scheduleArchive.js';
 import { loadPublishedScheduleMetadata } from './scheduleFreshness.js';
 import { fetchRemoteStudents, fetchRemoteScheduleData } from './supabaseSync.js';
 import { getSyncQueue } from './syncStorage.js';
@@ -354,6 +355,12 @@ export async function loadSchedule(onScheduleLoaded, targetTeacher = state.curre
     }
 
     if (freshData?.lessons) {
+      rememberScheduleWeek(state.schedule);
+      rememberScheduleWeek(freshData);
+      if (!freshData.weekStart) {
+        const published = await safeFetchJson(`./data/schedule.json?v=${PWA_VERSION}`, 2000);
+        if (published?.teacher === targetTeacher) rememberScheduleWeek(published);
+      }
       state.schedule = freshData;
       state.bells = freshData.bells || freshData.settings?.bellsSchedule || state.bells;
       try {

@@ -8,35 +8,30 @@ let isAudioUnlocked = false;
 /**
  * Инициализировать / разблокировать AudioContext по первому жесту пользователя
  */
-export function unlockAudio() {
-  if (isAudioUnlocked && audioContext && audioContext.state === 'running') return;
+export async function unlockAudio() {
+  if (isAudioUnlocked && audioContext?.state === 'running') return true;
 
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
+    if (!AudioContextClass) return false;
 
     if (!audioContext) {
       audioContext = new AudioContextClass();
     }
 
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().then(() => {
-        isAudioUnlocked = true;
-      }).catch(() => {});
-    } else {
-      isAudioUnlocked = true;
-    }
+    if (audioContext.state !== 'running') await audioContext.resume();
+    isAudioUnlocked = audioContext.state === 'running';
+    return isAudioUnlocked;
   } catch (e) {
-    // Web Audio не поддерживается или заблокирован
+    return false;
   }
 }
 
 // Слушаем любые клики и тапы для гарантированной разблокировки звука
 if (typeof window !== 'undefined') {
   const unlockEvents = ['click', 'touchstart', 'keydown'];
-  const handleUserGesture = () => {
-    unlockAudio();
-    unlockEvents.forEach((ev) => window.removeEventListener(ev, handleUserGesture));
+  const handleUserGesture = async () => {
+    if (await unlockAudio()) unlockEvents.forEach((ev) => window.removeEventListener(ev, handleUserGesture));
   };
   unlockEvents.forEach((ev) => window.addEventListener(ev, handleUserGesture, { passive: true }));
 }
@@ -49,16 +44,7 @@ export async function playNotificationSound() {
   if (soundPref === 'false') return;
 
   try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    if (!audioContext) {
-      audioContext = new AudioContextClass();
-    }
-
-    if (audioContext.state === 'suspended') {
-      await audioContext.resume().catch(() => {});
-    }
+    if (!await unlockAudio()) return;
 
     const ctx = audioContext;
     const now = ctx.currentTime;
