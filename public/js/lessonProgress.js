@@ -6,12 +6,13 @@ export const normalizeGroup = value => String(value || '').toLowerCase()
 export const normalizeTeacher = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 export const normalizeSubgroup = value => value && value !== 'all' ? String(value) : '';
 export const normalizeSubject = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+export const isParserTestGroup = value => normalizeGroup(value) === 'тест99ф';
 
 export function uniqueGroupNames(names) {
   const groups = new Map();
   for (const name of names) {
     const key = normalizeGroup(name);
-    if (key && !groups.has(key)) groups.set(key, name);
+    if (key && !isParserTestGroup(key) && !groups.has(key)) groups.set(key, name);
   }
   return groups;
 }

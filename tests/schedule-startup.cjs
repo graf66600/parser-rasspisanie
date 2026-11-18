@@ -24,7 +24,7 @@ async function loadView(file, state, document, stored = [], { now, remote, stati
       formatLocalDate: () => '2026-10-26',
     },
     './topicHelper.js': { getRecommendedLesson: () => null },
-    './lessonProgress.js': { matchesJournalTeacher: (entry, teacher) => entry.teacher === teacher },
+    './lessonProgress.js': { isParserTestGroup: () => false, matchesJournalTeacher: (entry, teacher) => entry.teacher === teacher },
     './journalSummaryView.js': { refreshOpenJournalSummary: noop },
     './journalStats.js': { renderJournalStats: noop },
     './journalView.js': { autoFillTopicForGroup: noop, loadEntryToForm: noop },

@@ -73,7 +73,7 @@ async function runTests(): Promise<void> {
 
     const journal = JournalService.getInstance();
     const entry = journal.recordLesson({
-      group: 'тест99ф', subject: 'Информатика', lessonNumber: 1,
+      group: 'тест99ф', subject: 'Информатика', lessonNumber: 1, syncCloud: false,
       startTime: '08:00', endTime: '09:20', topic: 'Лекция №1', date: '2026-10-01',
     });
     assert.equal(journal.getGroupHistory('тест99ф').length, 1);

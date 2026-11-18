@@ -4,7 +4,7 @@
 import { state, PWA_VERSION, isStaticHost } from './state.js';
 import { renderJournalStats } from './journalStats.js';
 import { autoFillTopicForGroup, loadEntryToForm } from './journalView.js';
-import { matchesJournalTeacher } from './lessonProgress.js';
+import { isParserTestGroup, matchesJournalTeacher } from './lessonProgress.js';
 import { refreshOpenJournalSummary } from './journalSummaryView.js';
 import { createHistoryCardElement } from './journalCard.js';
 import { fetchRemoteJournal } from './supabaseSync.js';
@@ -112,7 +112,8 @@ export function renderJournalHistory() {
   if (!container) return;
 
   const currentTeacher = state.currentTeacher || '';
-  const teacherEntries = (state.journalEntries || []).filter(entry => matchesJournalTeacher(entry, currentTeacher));
+  const teacherEntries = (state.journalEntries || []).filter(entry =>
+    !isParserTestGroup(entry.group) && matchesJournalTeacher(entry, currentTeacher));
 
   if (teacherEntries.length === 0) {
     container.innerHTML = `
