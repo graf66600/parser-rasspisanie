@@ -162,6 +162,35 @@ test('different cloud marks block upload and retain both versions for recovery',
   assert.equal(conflicts[0].remote.attendance.A.grade, '3');
 });
 
+test('a changed cloud revision leaves the local edit queued without writing to the replica', async () => {
+  const writes = [];
+  const app = await setup({ staticHost: false, remoteRows: [{ id: 'a', revision: 'read-revision' }],
+    fetch: async (url, options) => {
+      writes.push({ url, method: options.method, prefer: options.headers.Prefer });
+      return { ok: true, json: async () => [] };
+    } });
+  app.enqueueJournalEntry({ id: 'a' });
+  await app.flushSyncQueue();
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].method, 'PATCH');
+  assert.equal(writes[0].prefer, 'return=representation');
+  assert.match(writes[0].url, /revision=eq\.read-revision/);
+  assert.equal(app.getSyncQueue().length, 1);
+  assert.match(app.getSyncStatus().error, /другом устройстве/);
+});
+
+test('a concurrent insert cannot replace the record already in the cloud', async () => {
+  const app = await setup({ fetch: async (_url, options) => {
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers.Prefer, 'return=minimal');
+    return { ok: false, status: 409, json: async () => ({ code: '23505' }) };
+  } });
+  app.enqueueJournalEntry({ id: 'a' });
+  await app.flushSyncQueue();
+  assert.equal(app.getSyncQueue().length, 1);
+  assert.match(app.getSyncStatus().error, /другом устройстве/);
+});
+
 test('old schema accepts whole-group entries but retains real subgroups', async () => {
   const sent = [];
   const app = await setup({ fetch: async (url, options) => {

@@ -49,7 +49,8 @@ export async function pushJournalEntryToCloud(entry, isCurrent = () => true) {
   const response = await checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries?id=eq.${encodeURIComponent(entry.id)}&select=*`, { headers: HEADERS });
   const existing = await response.json();
   if (!Array.isArray(existing)) throw new Error('Облако вернуло неизвестный формат журнала');
-  const remote = existing[0] ? journalRowToEntry(existing[0]) : null;
+  const stored = existing[0];
+  const remote = stored ? journalRowToEntry(stored) : null;
   const merged = mergeJournalEntry(entry, remote, getJournalBaseline()[entry.id], true);
   if (merged.fields.length) {
     archiveJournalConflicts([{ id: entry.id, local: entry, remote, fields: merged.fields, paths: merged.paths }]);
@@ -80,14 +81,30 @@ export async function pushJournalEntryToCloud(entry, isCurrent = () => true) {
       attendance: entry.attendance || {},
     };
 
-    const saveRow = payload => checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries`, {
-      method: 'POST',
-      headers: {
-        ...HEADERS,
-        Prefer: 'resolution=merge-duplicates',
-      },
-      body: JSON.stringify(payload),
-    });
+    if (stored && !stored.revision) {
+      const error = new Error('Облако не вернуло версию записи. Локальная правка сохранена.');
+      error.code = 'JOURNAL_CONFLICT';
+      throw error;
+    }
+    const endpoint = `${SUPABASE_URL}/rest/v1/journal_entries`;
+    const saveRow = async payload => {
+      const url = stored ? `${endpoint}?id=eq.${encodeURIComponent(row.id)}&revision=eq.${encodeURIComponent(stored.revision)}&select=id` : endpoint;
+      try {
+        const saved = await checkedFetch(url, {
+          method: stored ? 'PATCH' : 'POST',
+          headers: { ...HEADERS, Prefer: stored ? 'return=representation' : 'return=minimal' },
+          body: JSON.stringify(payload),
+        });
+        if (!stored) return;
+        const rows = await saved.json();
+        if (Array.isArray(rows) && rows.length === 1 && rows[0].id === row.id) return;
+      } catch (error) {
+        if (stored || error.code !== '23505') throw error;
+      }
+      const error = new Error('Запись изменилась на другом устройстве. Правка сохранена в очереди для повторной сверки.');
+      error.code = 'JOURNAL_CONFLICT';
+      throw error;
+    };
     try { await saveRow(row); }
     catch (error) {
       // Old databases can still store whole-group lessons without losing information.
