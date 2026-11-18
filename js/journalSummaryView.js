@@ -4,6 +4,7 @@
 import { state } from './state.js';
 import { formatScheduleDate } from './scheduleDates.js';
 import { studentAttendance, normalizeStudentName, attendanceText, escapeHtml } from './attendanceUtils.js';
+import { getStudentSubgroup } from './studentSubgroups.js';
 
 import { countJournalTypes, journalReport, lessonType, solePracticeSubgroup,
   matchesJournalTeacher, normalizeGroup, normalizeSubgroup, uniqueGroupNames } from './lessonProgress.js';
@@ -15,7 +16,8 @@ function reportForGroup(group) {
   const selected = normalizeGroup(formGroup) === normalizeGroup(group)
     ? normalizeSubgroup(document.getElementById('journalSubgroupSelect')?.value) : '';
   const subgroup = solePracticeSubgroup(state, group) || selected || null;
-  return journalReport(state, group, subgroup, document.getElementById('journalDateInput')?.value || undefined);
+  return { ...journalReport(state, group, subgroup,
+    document.getElementById('journalDateInput')?.value || undefined), subgroup };
 }
 
 function getGroupEntries(group) {
@@ -26,11 +28,18 @@ function getGroupEntries(group) {
 function getGroupStudents(group) {
   const key = normalizeGroup(group);
   const found = new Set();
-  for (const [name, students] of Object.entries(state.studentsByGroup)) {
-    if (normalizeGroup(name) === key) students.forEach(student => found.add(normalizeStudentName(student)));
-  }
-  const entries = getGroupEntries(group);
+  const { subgroup, entries } = reportForGroup(group);
+  const roster = [...new Set(Object.entries(state.studentsByGroup)
+    .filter(([name]) => normalizeGroup(name) === key)
+    .flatMap(([, students]) => students))];
+  const soleSubgroup = solePracticeSubgroup(state, group);
+  roster.forEach((student, index) => {
+    if (!subgroup || soleSubgroup === subgroup || String(getStudentSubgroup(group, student, index, roster.length)) === subgroup) {
+      found.add(normalizeStudentName(student));
+    }
+  });
   entries.forEach((e) => {
+    if (subgroup && normalizeSubgroup(e.subgroup) !== subgroup) return;
     const names = Object.keys(e.attendance || {});
     names.forEach(name => {
       const normalized = normalizeStudentName(name);

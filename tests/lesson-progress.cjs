@@ -292,3 +292,23 @@ test('11FM reports agree for subgroup 2 and exclude another semester and subgrou
   assert.match(summary.innerHTML, /Практик:<\/span> <b>2<\/b>/);
   assert.equal(api.calculateGroupStats('11фм', '2', '2026-11-15').practiceConducted, 2);
 });
+
+test('31FM subgroup summary shows its own roster and keeps marks from historical members', async () => {
+  const state = fixture();
+  state.schedule = { lessons: [{ group: '31фм', subject: 'Информатика' }] };
+  state.studentsByGroup = { '31фм': ['Первая Подгруппа', 'Вторая Подгруппа'] };
+  state.journalEntries = [
+    entry({ id: 'shared', group: '31фм', subgroup: null, type: 'theory',
+      attendance: { 'Первая Подгруппа': { grade: '4' }, 'Вторая Подгруппа': { grade: '5' } } }),
+    entry({ id: 'second', group: '31фм', lessonNumber: 4,
+      attendance: { 'Прежний Учащийся': { grade: '5' } } }),
+  ];
+  const summary = {};
+  const api = await load(state, { getElementById: id => ({ summaryTableContainer: summary,
+    journalGroupSelect: { value: '31фм' }, journalSubgroupSelect: { value: '2' },
+    journalDateInput: { value: '2026-11-15' } })[id] });
+  api.renderSummaryTable('31фм');
+  assert.doesNotMatch(summary.innerHTML, /Первая Подгруппа/);
+  assert.match(summary.innerHTML, /Вторая Подгруппа/);
+  assert.match(summary.innerHTML, /Прежний Учащийся/);
+});
