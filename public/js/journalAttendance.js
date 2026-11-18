@@ -20,7 +20,11 @@ export function updateJournalStudents() {
 
   const allStudents = journalStudents(group, state.studentsByGroup[group] || []);
   let filteredStudents = allStudents.map((s, idx) => {
-    const sub = getStudentSubgroup(group, s, idx, allStudents.length);
+    const recorded = draft.entry?.attendance;
+    const recordedSubgroup = Number(draft.entry?.subgroup);
+    const wasMarked = recorded && Object.hasOwn(recorded, attendanceKey(recorded, s));
+    const sub = wasMarked && (recordedSubgroup === 1 || recordedSubgroup === 2)
+      ? recordedSubgroup : getStudentSubgroup(group, s, idx, allStudents.length);
     return { name: s, subgroup: sub, originalIndex: idx };
   });
 

@@ -60,7 +60,7 @@ export function createHistoryCardElement(entry, { onDelete, onEdit }) {
         </div>
       ` : `
         <div class="history-tag-row tag-row-present">
-          <span class="tag-title">✓ Все были</span>
+          <span class="tag-title">${totalStudents ? '✓ Все были' : 'Посещаемость не отмечена'}</span>
         </div>
       `}
 
