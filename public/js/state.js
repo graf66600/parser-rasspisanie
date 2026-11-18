@@ -372,7 +372,10 @@ export async function loadSchedule(onScheduleLoaded, targetTeacher = state.curre
   if (typeof onScheduleLoaded === 'function') onScheduleLoaded();
 }
 
+let studentLoadVersion = 0;
+
 export async function loadStudents(onStudentsLoaded) {
+  const version = ++studentLoadVersion;
   try {
     let fresh = null;
     if (!isStaticHost) {
@@ -380,6 +383,7 @@ export async function loadStudents(onStudentsLoaded) {
       if (apiData?.success && apiData.studentsByGroup) fresh = apiData.studentsByGroup;
     }
     const remote = await fetchRemoteStudents();
+    if (version !== studentLoadVersion) return;
     const roster = remote ?? fresh ?? state.studentsByGroup;
     const merged = { ...roster };
     for (const { type, group, name, action } of getSyncQueue()) {

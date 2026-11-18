@@ -18,24 +18,7 @@ export function updateJournalStudents() {
   const currentMarks = captureJournalMarks();
   const draft = getJournalDraft();
 
-  let allStudents = state.studentsByGroup[group] || [];
-  if (allStudents.length === 0 && Array.isArray(state.journalEntries)) {
-    const recovered = new Set();
-    state.journalEntries.forEach((e) => {
-      if (e.group === group && e.attendance) {
-        Object.keys(e.attendance).forEach((n) => n.trim() && recovered.add(n.trim()));
-      }
-    });
-    if (recovered.size > 0) {
-      allStudents = Array.from(recovered).sort((a, b) => a.localeCompare(b, 'ru'));
-      state.studentsByGroup[group] = allStudents;
-      try {
-        localStorage.setItem('pwa_custom_students', JSON.stringify(state.studentsByGroup));
-      } catch (err) {}
-    }
-  }
-
-  allStudents = journalStudents(group, allStudents);
+  const allStudents = journalStudents(group, state.studentsByGroup[group] || []);
   let filteredStudents = allStudents.map((s, idx) => {
     const sub = getStudentSubgroup(group, s, idx, allStudents.length);
     return { name: s, subgroup: sub, originalIndex: idx };

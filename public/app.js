@@ -176,7 +176,15 @@ async function initApp() {
   setupNotifications();
   setupJournalListeners();
   setupSummaryListeners();
-  setupAuthListeners(() => updateAuthModeUI());
+  setupAuthListeners(() => {
+    updateAuthModeUI();
+    if (!state.currentUser || state.isGuestMode) return;
+    loadStudents(() => {
+      populateGroupSelects(updateJournalStudents);
+      renderManageStudents(updateJournalStudents);
+    });
+    loadJournalHistory();
+  });
   updateAuthModeUI();
   setupRealtimeSubscription(() => {
     renderSchedule(onOpenLessonInJournal);
