@@ -12,10 +12,19 @@ async function runTests(): Promise<void> {
   const previousFetch = globalThis.fetch;
   const requests: Array<{ url: string; method: string }> = [];
   let teachers: string[] = [];
+  let publicationStatus = 200;
+  let publishedRows: Array<{ teacher_name: string; group_name: string }> = [];
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method || 'GET';
     requests.push({ url, method });
+    if (url.endsWith('/rpc/publish_imported_schedule')) {
+      assert.equal(method, 'POST');
+      const payload = JSON.parse(String(init?.body));
+      assert.ok(payload.teacher_names.includes('Трипольский'));
+      publishedRows = payload.lesson_rows;
+      return new Response(JSON.stringify(publishedRows.length), { status: publicationStatus });
+    }
     if (url.includes('/teachers') && method === 'POST') {
       teachers = JSON.parse(String(init?.body)).map((row: { name: string }) => row.name);
     }
@@ -29,6 +38,7 @@ async function runTests(): Promise<void> {
     const { JournalService } = await import('./services/journalService.js');
     const { CurriculumService } = await import('./services/curriculumService.js');
     const { SupabaseService } = await import('./services/supabaseService.js');
+    const { publishScheduleToCloud } = await import('./services/scheduleCloudPublication.js');
     assert.equal(CONFIG.DATA_DIR, temporaryDir);
     assert.equal(CONFIG.SCHEDULES_FILE, path.join(temporaryDir, 'schedules.json'));
 
@@ -74,6 +84,18 @@ async function runTests(): Promise<void> {
     assert.equal(await cloud.saveTeachers(['Трипольский', 'Иванов']), true);
     assert.deepEqual(await cloud.getTeachers(), ['Трипольский', 'Иванов']);
     assert.ok(requests.length >= 2);
+    process.env.SUPABASE_SCHEDULE_PUBLISH_KEY = 'mock-server-key';
+    publicationStatus = 400;
+    const firstPublicationRequest = requests.length;
+    const publication = await publishScheduleToCloud(all.teachers, all.lessonsByTeacher);
+    assert.equal(publication.ok, false);
+    const publicationRequests = requests.slice(firstPublicationRequest)
+      .filter(({ url }) => /\/rest\/v1\/(?:rpc\/publish_imported_schedule|lessons|teachers)(?:\?|$)/.test(url));
+    assert.equal(publicationRequests.length, 1);
+    assert.match(publicationRequests[0].url, /\/rpc\/publish_imported_schedule$/);
+    publicationStatus = 200;
+    assert.deepEqual(await publishScheduleToCloud(all.teachers, all.lessonsByTeacher), { ok: true });
+    assert.equal(publishedRows.filter(row => row.teacher_name === 'Трипольский').length, 2);
     // Allow JournalService's dynamic import/sync to finish before cleanup.
     await new Promise<void>((resolve) => setImmediate(resolve));
     console.log('Parser, local services and mocked Supabase tests passed.');

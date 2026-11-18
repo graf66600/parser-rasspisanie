@@ -4,7 +4,7 @@
 import { Lesson } from '../types/schedule.js';
 import { JournalEntry } from '../types/journal.js';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pojegdivnkuvyiizmesa.supabase.co';
+export const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pojegdivnkuvyiizmesa.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvamVnZGl2bmt1dnlpaXptZXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MzUxMDEsImV4cCI6MjEwNTIxMTEwMX0.y0U_bhB5hFTNaN4dXsji-K7fp93HpENuB9UHEv_c0qA';
 
 export class SupabaseService {
@@ -75,58 +75,6 @@ export class SupabaseService {
     } catch (e) {
       console.warn('⚠️ Supabase: ошибка получения преподавателей:', e);
       return null;
-    }
-  }
-
-  /**
-   * Сохранить расписание для преподавателя
-   */
-  public async saveLessons(teacher: string, lessons: Lesson[]): Promise<boolean> {
-    try {
-      // 1. Убедимся, что преподаватель есть в таблице teachers
-      await this.saveTeachers([teacher]);
-
-      // 2. Удаляем старые пары преподавателя
-      await fetch(
-        `${this.url}/rest/v1/lessons?teacher_name=eq.${encodeURIComponent(teacher)}`,
-        {
-          method: 'DELETE',
-          headers: this.headers,
-        }
-      );
-
-      if (lessons.length === 0) return true;
-
-      // 3. Добавляем новые уроки
-      const rows = lessons.map((l, index) => ({
-        id: `${encodeURIComponent(teacher)}_${l.dayOfWeek}_${l.lessonNumber}_${encodeURIComponent(l.group)}_${encodeURIComponent(l.subgroup || '0')}_${index}`,
-        teacher_name: teacher,
-        day_of_week: l.dayOfWeek,
-        day_name: l.dayName,
-        lesson_number: l.lessonNumber,
-        start_time: l.startTime,
-        end_time: l.endTime,
-        subject: l.subject,
-        group_name: l.group,
-        subgroup: l.subgroup || null,
-        classroom: l.classroom || null,
-        week_type: l.weekType || 'all',
-        updated_at: new Date().toISOString(),
-      }));
-
-      const res = await fetch(`${this.url}/rest/v1/lessons`, {
-        method: 'POST',
-        headers: {
-          ...this.headers,
-          Prefer: 'resolution=merge-duplicates',
-        },
-        body: JSON.stringify(rows),
-      });
-
-      return res.ok;
-    } catch (e) {
-      console.warn(`⚠️ Supabase: ошибка сохранения пар для ${teacher}:`, e);
-      return false;
     }
   }
 

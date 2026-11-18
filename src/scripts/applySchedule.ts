@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { SupabaseService } from '../services/supabaseService.js';
+import { publishScheduleToCloud } from '../services/scheduleCloudPublication.js';
 import { StorageService } from '../services/storageService.js';
 import { DEFAULT_BELLS, CONFIG } from '../config/config.js';
 import { Lesson } from '../types/schedule.js';
@@ -206,33 +206,19 @@ export async function applySchedule(inputFiles?: string | string[]) {
     fs.copyFileSync(schedP1, schedP2);
   }
 
-  // Синхронизация с Supabase
-  try {
-    const supabase = SupabaseService.getInstance();
-    console.log('☁️ Синхронизация преподавателей и пар с Supabase...');
-    const syncPromise = (async () => {
-      await supabase.saveTeachers(sortedTeachers);
-      for (const [tName, tLessons] of Object.entries(lessonsByTeacher)) {
-        await supabase.saveLessons(tName, tLessons);
-      }
-    })();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Supabase sync timeout (5s)')), 5000)
-    );
-    await Promise.race([syncPromise, timeoutPromise]);
-    console.log('✅ Данные успешно синхронизированы с облаком Supabase!');
-  } catch (err) {
-    console.warn('⚠️ Пропуск синхронизации с Supabase (таймаут или оффлайн):', (err as Error)?.message || err);
+  const cloud = await publishScheduleToCloud(sortedTeachers, lessonsByTeacher);
+  if (!cloud.ok) {
+    console.error('Локальное расписание сохранено. Облачная публикация не подтверждена:', cloud.error);
+    return false;
   }
-
-  console.log('🎉 Расписание успешно применено во все файлы системы!');
+  console.log('Расписание сохранено локально и опубликовано в Supabase.');
   return true;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
   const argFiles = process.argv.slice(2).filter(Boolean);
   applySchedule(argFiles.length > 0 ? argFiles : undefined)
-    .then(() => process.exit(0))
+    .then(ok => { process.exitCode = ok ? 0 : 1; })
     .catch((e) => {
       console.error('Ошибка выполнения:', e);
       process.exit(1);

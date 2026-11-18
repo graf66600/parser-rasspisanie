@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { StorageService } from '../../services/storageService.js';
-import { SupabaseService } from '../../services/supabaseService.js';
+import { publishScheduleToCloud } from '../../services/scheduleCloudPublication.js';
 import { CONFIG, DEFAULT_BELLS } from '../../config/config.js';
 import { sendJson, sendError, readBody, HttpError, MAX_UPLOAD_BODY_BYTES, isSupportedUploadSignature, safeUploadFilename } from '../httpUtils.js';
 import { parseMultipart, multipartBoundary } from '../multipartParser.js';
@@ -14,7 +14,6 @@ export async function handleScheduleUpload(
   req: http.IncomingMessage, res: http.ServerResponse, pathname: string,
   storage: StorageService, defaultUserId: number
 ): Promise<boolean> {
-  const supabase = SupabaseService.getInstance();
   if (pathname === '/api/upload-schedule' && req.method === 'POST') {
     const contentType = req.headers['content-type'] || '';
     const bodyBuffer = await readBody(req, MAX_UPLOAD_BODY_BYTES);
@@ -98,9 +97,16 @@ export async function handleScheduleUpload(
         const publicPath = path.resolve(process.cwd(), 'public', 'data', name);
         if (publicPath.startsWith(`${path.resolve(process.cwd(), 'public', 'data')}${path.sep}`)) fs.writeFileSync(publicPath, JSON.stringify(value, null, 2), 'utf8');
       }
-    } catch (error) { console.error('Ошибка записи обновленных данных на диск:', error); }
-    supabase.saveTeachers(sortedTeachers).catch(() => {});
-    for (const [teacher, lessons] of Object.entries(lessonsByTeacher)) supabase.saveLessons(teacher, lessons).catch(() => {});
+    } catch (error) {
+      console.error('Ошибка записи обновленных данных на диск:', error);
+      throw new HttpError(500, 'Не удалось сохранить файлы расписания');
+    }
+    const cloud = await publishScheduleToCloud(sortedTeachers, lessonsByTeacher);
+    if (!cloud.ok) {
+      sendJson(res, { success: false, localSaved: true, cloudSynced: false,
+        message: 'Расписание сохранено локально. Supabase не подтвердил публикацию.', error: cloud.error }, 502);
+      return true;
+    }
     const totalLessons = Object.values(lessonsByTeacher).reduce((sum, lessons) => sum + lessons.length, 0);
     sendJson(res, { success: true, message: `Успешно объединено файлов: ${processedFiles.length} (${processedFiles.join(', ')}). Преподавателей: ${sortedTeachers.length}, пар: ${totalLessons}. Пар Трипольского: ${tripolskyLessons.length}.`, processedFiles, totalLessons, teachersCount: sortedTeachers.length, teachers: sortedTeachers, lessons: tripolskyLessons });
     return true;

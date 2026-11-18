@@ -37,10 +37,6 @@ export async function handleScheduleRoutes(
             const buf = fs.readFileSync(file);
             const parsed = await parseScheduleBufferAllTeachers(buf, DEFAULT_BELLS);
             teachers = parsed.teachers;
-            supabase.saveTeachers(teachers).catch(() => {});
-            for (const [tName, tLessons] of Object.entries(parsed.lessonsByTeacher)) {
-              supabase.saveLessons(tName, tLessons).catch(() => {});
-            }
             break;
           } catch (e) {
             console.error('Ошибка извлечения преподавателей из файла:', e);
@@ -86,7 +82,6 @@ export async function handleScheduleRoutes(
               );
               if (resParsed.lessons.length > 0) {
                 lessons = resParsed.lessons;
-                supabase.saveLessons(teacherParam, lessons).catch(() => {});
                 break;
               }
             } catch (e) {
