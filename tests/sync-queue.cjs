@@ -3,9 +3,12 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { createContext, SourceTextModule, SyntheticModule } = require('node:vm');
 
-async function setup({ fetch = async () => ({ ok: true }), staticHost = true, initial = [], remoteRows = [] } = {}) {
+async function setup({ fetch = async () => ({ ok: true }), staticHost = true, initial = [], remoteRows = [], signedIn = true } = {}) {
   const storage = new Map([['pwa_sync_queue', JSON.stringify(initial)]]);
   const context = createContext({ AbortController, setTimeout, clearTimeout,
+    window: { supabase: { createClient: () => ({ auth: { getSession: async () => ({
+      data: { session: signedIn ? { access_token: 'test-session' } : null },
+    }) } }) } },
     fetch: async (url, options) => !options?.method
       ? { ok: true, json: async () => remoteRows } : fetch(url, options),
     console: { warn() {} }, navigator: { onLine: true },
@@ -30,6 +33,14 @@ async function setup({ fetch = async () => ({ ok: true }), staticHost = true, in
   const persistence = modules.get('./syncStorage.js').namespace;
   return { ...queue.namespace, records, persistence, storage, context };
 }
+
+test('locked cloud calls keep queued journal edits and do not send anonymous requests', async () => {
+  const app = await setup({ signedIn: false, fetch: async () => { assert.fail('unexpected cloud write'); } });
+  app.enqueueJournalEntry({ id: 'a' });
+  await app.flushSyncQueue();
+  assert.equal(app.getSyncQueue().length, 1);
+  assert.match(app.getSyncStatus().error, /войдите в аккаунт/);
+});
 
 for (const status of [400, 401, 500]) {
   test(`HTTP ${status} retains durable journal operation`, async () => {

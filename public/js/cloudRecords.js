@@ -1,8 +1,16 @@
 import { state } from './state.js';
-import { SUPABASE_URL, HEADERS } from './supabaseClient.js';
+import { SUPABASE_URL, getSessionHeaders } from './supabaseClient.js';
 import { checkedFetch } from './syncTransport.js';
 import { mergeJournalEntry } from './journalMerge.js';
 import { ensureJournalRecovery, archiveJournalConflicts, getJournalBaseline, rememberJournalBaseline } from './journalRecovery.js';
+
+async function requireCloudSession() {
+  const headers = await getSessionHeaders();
+  if (headers) return headers;
+  const error = new Error('Для синхронизации журнала и списка студентов войдите в аккаунт.');
+  error.code = 'CLOUD_AUTH_REQUIRED';
+  throw error;
+}
 
 export const journalRowToEntry = r => ({
       id: r.id,
@@ -28,11 +36,12 @@ export const journalRowToEntry = r => ({
 
 export async function fetchRemoteJournal(teacherName) {
   try {
+    const headers = await requireCloudSession();
     let url = `${SUPABASE_URL}/rest/v1/journal_entries?order=date.asc,lesson_number.asc`;
     if (teacherName) {
       url += `&teacher_name=eq.${encodeURIComponent(teacherName)}`;
     }
-    const res = await checkedFetch(url, { headers: HEADERS });
+    const res = await checkedFetch(url, { headers });
     if (!res.ok) return null;
     const rows = await res.json();
     if (!Array.isArray(rows)) return null;
@@ -46,7 +55,8 @@ export async function fetchRemoteJournal(teacherName) {
 export async function pushJournalEntryToCloud(entry, isCurrent = () => true) {
   const original = JSON.stringify(entry);
   ensureJournalRecovery();
-  const response = await checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries?id=eq.${encodeURIComponent(entry.id)}&select=*`, { headers: HEADERS });
+  const headers = await requireCloudSession();
+  const response = await checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries?id=eq.${encodeURIComponent(entry.id)}&select=*`, { headers });
   const existing = await response.json();
   if (!Array.isArray(existing)) throw new Error('Облако вернуло неизвестный формат журнала');
   const stored = existing[0];
@@ -92,7 +102,7 @@ export async function pushJournalEntryToCloud(entry, isCurrent = () => true) {
       try {
         const saved = await checkedFetch(url, {
           method: stored ? 'PATCH' : 'POST',
-          headers: { ...HEADERS, Prefer: stored ? 'return=representation' : 'return=minimal' },
+          headers: { ...headers, Prefer: stored ? 'return=representation' : 'return=minimal' },
           body: JSON.stringify(payload),
         });
         if (!stored) return;
@@ -131,16 +141,18 @@ export async function pushJournalEntryToCloud(entry, isCurrent = () => true) {
 
 export async function deleteJournalEntryFromCloud(entryId) {
   try {
+    const headers = await requireCloudSession();
     await checkedFetch(`${SUPABASE_URL}/rest/v1/journal_entries?id=eq.${encodeURIComponent(entryId)}`, {
       method: 'DELETE',
-      headers: HEADERS,
+      headers,
     });
   } catch (err) { throw err; }
 }
 
 export async function fetchRemoteStudents() {
   try {
-    const res = await checkedFetch(`${SUPABASE_URL}/rest/v1/students?select=group_name,full_name&order=group_name.asc,full_name.asc`, { headers: HEADERS });
+    const headers = await requireCloudSession();
+    const res = await checkedFetch(`${SUPABASE_URL}/rest/v1/students?select=group_name,full_name&order=group_name.asc,full_name.asc`, { headers });
     if (!res.ok) return null;
     const rows = await res.json();
     if (!Array.isArray(rows)) return null;
@@ -158,9 +170,10 @@ export async function fetchRemoteStudents() {
 
 export async function pushStudentToCloud(group, studentName) {
   try {
+    const headers = await requireCloudSession();
     await checkedFetch(`${SUPABASE_URL}/rest/v1/students?on_conflict=group_name,full_name`, {
       method: 'POST',
-      headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates' },
+      headers: { ...headers, Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify({ group_name: group, full_name: studentName }),
     });
   } catch (e) { throw e; }
@@ -168,10 +181,11 @@ export async function pushStudentToCloud(group, studentName) {
 
 export async function pushBulkStudentsToCloud(group, studentNames) {
   try {
+    const headers = await requireCloudSession();
     const rows = studentNames.map((name) => ({ group_name: group, full_name: name }));
     await checkedFetch(`${SUPABASE_URL}/rest/v1/students?on_conflict=group_name,full_name`, {
       method: 'POST',
-      headers: { ...HEADERS, Prefer: 'resolution=merge-duplicates' },
+      headers: { ...headers, Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify(rows),
     });
   } catch (e) { throw e; }
@@ -179,9 +193,10 @@ export async function pushBulkStudentsToCloud(group, studentNames) {
 
 export async function deleteStudentFromCloud(group, studentName) {
   try {
+    const headers = await requireCloudSession();
     await checkedFetch(`${SUPABASE_URL}/rest/v1/students?group_name=eq.${encodeURIComponent(group)}&full_name=eq.${encodeURIComponent(studentName)}`, {
       method: 'DELETE',
-      headers: HEADERS,
+      headers,
     });
   } catch (e) { throw e; }
 }
