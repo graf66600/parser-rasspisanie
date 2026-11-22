@@ -187,26 +187,30 @@ test('a late stale read cannot erase marks after the pending save was acknowledg
 });
 
 // Current publication is checked separately from the frozen November 9 regression fixture.
-test('November 16 import has all groups, correct Tripolsky slots and identical public data', () => {
+test('November 23 import has all groups, correct Tripolsky slots and identical public data', () => {
   const schedule = JSON.parse(readFileSync('data/schedule.json', 'utf8'));
   const source = JSON.parse(readFileSync('data/schedule-source.json', 'utf8'));
   const all = JSON.parse(readFileSync('data/schedules_all.json', 'utf8'));
-  assert.equal(schedule.weekStart, '2026-11-16');
-  assert.equal(schedule.weekEnd, '2026-11-21');
+  assert.equal(schedule.weekStart, '2026-11-23');
+  assert.equal(schedule.weekEnd, '2026-11-28');
   assert.equal(source.groups.length, 26);
   assert.deepEqual(schedule.lessons.map(l => `${l.dayOfWeek}/${l.lessonNumber}/${l.group}/${l.subgroup}`), [
-    '1/4/31фм/1', '1/5/31фм/2', '2/1/11фм/2', '2/2/31фм/2', '2/3/31фм/1', '2/4/11ф/2',
-    '4/1/31фм/2', '4/3/11МС/2', '4/4/31фм/1', '5/1/11ф/2', '5/3/11МС/2', '5/4/11фм/2',
+    '2/1/11фм/2', '4/3/11МС/2', '4/4/11ф/2', '5/1/11ф/2', '5/3/11МС/2', '5/4/11фм/2',
   ]);
+  assert.deepEqual(schedule.lessons, all['Трипольский']);
   const lessons = Object.values(all).flat();
   assert.equal(lessons.length, source.lessons);
+  assert.deepEqual(new Set(lessons.map(l => l.group)), new Set(source.groups));
   assert.equal(new Set(lessons.map(l => l.id)).size, lessons.length);
-  assert.ok(lessons.every(l => l.id.startsWith('photo_20261116_')));
-  for (const group of ['41ф', '42ф', '43ф']) {
-    assert.ok(lessons.filter(l => l.group === group).every(l => l.subject === 'Производственная практика'));
+  assert.ok(lessons.every(l => l.id.startsWith('photo_20261123_')));
+  for (const group of ['31ф', '31фм', '32ф', '33ф', '41ф', '42ф', '43ф', '51ф']) {
+    const practice = lessons.filter(l => l.group === group);
+    assert.equal(practice.length, group === '42ф' ? 42 : 41);
+    assert.ok(practice.every(l => l.subject === 'Производственная практика'));
   }
-  assert.ok(all['Вацуро'].some(l => l.group === '51ф'));
-  assert.equal(source.events[0].date, '2026-11-17');
+  assert.deepEqual(source.events, [{
+    date: '2026-11-23', startTime: '12:20', subject: 'Разговоры о важном', classroom: 'Актовый зал', groups: ['11МС', '11ф'],
+  }]);
   for (const name of ['schedule.json', 'schedules.json', 'schedules_all.json', 'teachers.json', 'schedule-source.json']) {
     assert.equal(readFileSync(`data/${name}`, 'utf8'), readFileSync(`public/data/${name}`, 'utf8'));
   }
